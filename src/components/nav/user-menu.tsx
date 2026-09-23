@@ -4,6 +4,7 @@ import { LogOut, User } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -37,10 +38,12 @@ export function UserMenu({
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex flex-col">
-          <span className="font-medium">{fullName}</span>
-          <span className="text-xs font-normal text-muted-foreground">{roleLabel}</span>
-        </DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="flex flex-col">
+            <span className="font-medium">{fullName}</span>
+            <span className="text-xs font-normal text-muted-foreground">{roleLabel}</span>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem render={<a href="/profile" />}>
           <User /> الملف الشخصي
