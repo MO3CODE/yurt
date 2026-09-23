@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# منصة متابعة السكن الطلابي
 
-## Getting Started
+منصة شاملة لمتابعة طلاب السكن والشقق: الحضور الجامعي، الصلوات الخمس، الورد القرآني، السجل الصحي، الدعم الأكاديمي، الشكاوى والمقترحات، جدول النظافة، المرافق العامة، النقاط والتحفيز، الإشعارات، والتقارير الرسمية للجهة المانحة.
 
-First, run the development server:
+**الأدوار:** إدارة عليا / إداري بصلاحيات محددة / مشرف شقة (طالب) / طالب.
+
+## التقنيات
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS v4** + **shadcn/ui** (نمط base-nova على Base UI) — تصميم عربي RTL كامل
+- **Supabase** (Postgres + Auth + Storage) لكل البيانات والصلاحيات (RLS)
+- **PWA** بسيطة (قابلة للتثبيت من المتصفح على الجوال) + إشعارات Push عبر Web Push
+- استضافة: **Vercel**
+
+## خطوات التشغيل الأول
+
+### ١. إنشاء مشروع Supabase
+
+أنشئ حساباً ومشروعاً جديداً على [supabase.com](https://supabase.com) (هذه الخطوة تحتاج منك أنت شخصياً — تسجيل حساب لا يقوم به أحد نيابة عنك).
+
+### ٢. تطبيق المخطط (Migrations)
+
+من لوحة تحكم Supabase → **SQL Editor**، نفّذ الملفات التالية بالترتيب من مجلد `supabase/migrations/`:
+
+1. `0001_init_schema.sql` — الجداول والأنواع والفهارس
+2. `0002_functions_rls.sql` — دوال الصلاحيات وسياسات RLS
+3. `0003_views_storage.sql` — لوحة صحة السكن، لوحة النقاط، ملف الطالب الشامل، حاويات التخزين
+
+أو عبر Supabase CLI إذا كنت تفضّله:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+supabase link --project-ref <PROJECT_REF>
+supabase db push
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### ٣. متغيرات البيئة
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+انسخ `.env.local.example` إلى `.env.local` وعبّي القيم من **Project Settings → API** في Supabase:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+cp .env.local.example .env.local
+```
 
-## Learn More
+### ٤. توليد أنواع TypeScript (اختياري لكن مستحسن)
 
-To learn more about Next.js, take a look at the following resources:
+الملف `src/lib/supabase/types.ts` مكتوب يدوياً ليطابق المخطط الحالي. بعد ربط مشروعك الحقيقي، ولّده تلقائياً بدل الملف اليدوي:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx supabase gen types typescript --project-id <PROJECT_REF> > src/lib/supabase/types.ts
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### ٥. إنشاء أول حساب إداري (مدير عام)
 
-## Deploy on Vercel
+من **Authentication → Users** في Supabase، أنشئ مستخدماً جديداً بالبريد الإلكتروني الذي تريده (مع تفعيل "Auto Confirm"). بعدها من **Table Editor → profiles**، عدّل صف هذا المستخدم واجعل `role = super_admin`. سجّل دخولك بهذا الحساب من `/login` وابدأ بإضافة الشقق والطلاب من لوحة التحكم — كل حساب طالب لاحق تُنشئه من داخل المنصة نفسها (صفحة "الطلاب") وسيصله بريد دعوة تلقائياً.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### ٦. التشغيل محلياً
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm install
+npm run dev
+```
+
+افتح [http://localhost:3000](http://localhost:3000).
+
+## النشر على Vercel
+
+اربط المستودع بمشروع Vercel وأضف نفس متغيرات البيئة الثلاثة من الخطوة ٣ في إعدادات المشروع على Vercel، ثم انشر.
+
+## بنية المجلدات
+
+```
+src/app/(login, profile)        صفحات عامة
+src/app/admin/*                 لوحة الإدارة (كل الوحدات)
+src/app/app/*                   واجهة الطالب (+ /app/apartment لمشرف الشقة)
+src/lib/supabase/*              عملاء Supabase (متصفح/سيرفر/صلاحيات كاملة) + الأنواع
+src/lib/auth/current-user.ts    قراءة هوية المستخدم الحالي ودوره وصلاحياته
+supabase/migrations/*           مخطط قاعدة البيانات الكامل
+```
