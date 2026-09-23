@@ -29,14 +29,15 @@ export async function createStudent(formData: FormData) {
 
   const admin = createAdminClient();
 
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email: parsed.email,
-    email_confirm: true,
-    user_metadata: { full_name: parsed.full_name, role: "student" },
+  // نداء واحد فقط: ينشئ الحساب في حالة "مدعو" ويرسل بريد الدعوة معاً.
+  // (كان الكود سابقاً يستدعي createUser ثم inviteUserByEmail على نفس البريد،
+  // فتفشل الدعوة بصمت لأن الحساب أصبح موجوداً بالفعل ولا يصل أي بريد)
+  const { data: created, error: inviteError } = await admin.auth.admin.inviteUserByEmail(parsed.email, {
+    data: { full_name: parsed.full_name, role: "student" },
   });
 
-  if (createError || !created.user) {
-    throw new Error(createError?.message ?? "تعذّر إنشاء حساب الطالب");
+  if (inviteError || !created.user) {
+    throw new Error(inviteError?.message ?? "تعذّر إرسال دعوة الطالب");
   }
 
   // handle_new_user trigger أنشأ صفوف profiles + students تلقائياً؛ نُكمل البيانات الآن
@@ -54,8 +55,6 @@ export async function createStudent(formData: FormData) {
   if (parsed.phone) {
     await admin.from("profiles").update({ phone: parsed.phone }).eq("id", created.user.id);
   }
-
-  await admin.auth.admin.inviteUserByEmail(parsed.email);
 
   revalidatePath("/admin/students");
 }
