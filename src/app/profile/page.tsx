@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/current-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileForm } from "@/components/profile-form";
+import { ChangePasswordForm } from "@/components/change-password-form";
 
 export default async function ProfilePage() {
   const user = await requireUser();
@@ -26,6 +27,14 @@ export default async function ProfilePage() {
         </CardHeader>
         <CardContent>
           <ProfileForm fullName={user.fullName} phone={profile?.phone ?? null} email={authUser?.email ?? ""} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>تغيير كلمة المرور</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChangePasswordForm />
         </CardContent>
       </Card>
     </div>

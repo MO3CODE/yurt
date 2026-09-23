@@ -5,39 +5,51 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/current-user";
+import { generatePassword } from "@/lib/generate-password";
 
 const newStudentSchema = z.object({
   full_name: z.string().min(1, "الاسم مطلوب"),
   email: z.string().email("بريد إلكتروني غير صحيح"),
-  phone: z.string().optional(),
+  phone: z.string().min(6, "رقم الجوال مطلوب (بصيغة دولية مثل 9677xxxxxxx)"),
   apartment_id: z.string().uuid().optional().or(z.literal("")),
   university_name: z.string().optional(),
   major: z.string().optional(),
 });
 
-export async function createStudent(formData: FormData) {
+export type CreateStudentResult = {
+  fullName: string;
+  email: string;
+  password: string;
+  phone: string;
+};
+
+// ننشئ الحساب مباشرة بكلمة مرور مُولَّدة بدل الاعتماد على بريد دعوة —
+// خدمة بريد Supabase الافتراضية محدودة جداً (للتجربة فقط) وسريعة الانقطاع
+// (email rate limit). كلمة المرور تُرسل للطالب يدوياً عبر واتساب من لوحة الإدارة.
+export async function createStudent(formData: FormData): Promise<CreateStudentResult> {
   await requireAdmin();
 
   const parsed = newStudentSchema.parse({
     full_name: formData.get("full_name"),
     email: formData.get("email"),
-    phone: formData.get("phone") || undefined,
+    phone: formData.get("phone"),
     apartment_id: formData.get("apartment_id") || "",
     university_name: formData.get("university_name") || undefined,
     major: formData.get("major") || undefined,
   });
 
   const admin = createAdminClient();
+  const password = generatePassword();
 
-  // نداء واحد فقط: ينشئ الحساب في حالة "مدعو" ويرسل بريد الدعوة معاً.
-  // (كان الكود سابقاً يستدعي createUser ثم inviteUserByEmail على نفس البريد،
-  // فتفشل الدعوة بصمت لأن الحساب أصبح موجوداً بالفعل ولا يصل أي بريد)
-  const { data: created, error: inviteError } = await admin.auth.admin.inviteUserByEmail(parsed.email, {
-    data: { full_name: parsed.full_name, role: "student" },
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email: parsed.email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: parsed.full_name, role: "student" },
   });
 
-  if (inviteError || !created.user) {
-    throw new Error(inviteError?.message ?? "تعذّر إرسال دعوة الطالب");
+  if (createError || !created.user) {
+    throw new Error(createError?.message ?? "تعذّر إنشاء حساب الطالب");
   }
 
   // handle_new_user trigger أنشأ صفوف profiles + students تلقائياً؛ نُكمل البيانات الآن
@@ -52,11 +64,11 @@ export async function createStudent(formData: FormData) {
 
   if (updateError) throw new Error(updateError.message);
 
-  if (parsed.phone) {
-    await admin.from("profiles").update({ phone: parsed.phone }).eq("id", created.user.id);
-  }
+  await admin.from("profiles").update({ phone: parsed.phone }).eq("id", created.user.id);
 
   revalidatePath("/admin/students");
+
+  return { fullName: parsed.full_name, email: parsed.email, password, phone: parsed.phone };
 }
 
 const updateStudentSchema = z.object({

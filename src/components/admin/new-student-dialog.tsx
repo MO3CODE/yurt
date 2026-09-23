@@ -1,64 +1,159 @@
 "use client";
 
-import { CrudDialog } from "@/components/crud-dialog";
+import { useState, useTransition } from "react";
+import { Plus, MessageCircle, Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createStudent } from "@/app/admin/students/actions";
+import { createStudent, type CreateStudentResult } from "@/app/admin/students/actions";
+import { buildCredentialsMessage, buildWhatsAppLink } from "@/lib/whatsapp";
+import { toast } from "sonner";
 
-export function NewStudentDialog({
-  trigger,
-  apartments,
-}: {
-  trigger: React.ReactNode;
-  apartments: { id: string; name: string }[];
-}) {
+export function NewStudentDialog({ apartments }: { apartments: { id: string; name: string }[] }) {
+  const [open, setOpen] = useState(false);
+  const [result, setResult] = useState<CreateStudentResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setResult(null);
+      setError(null);
+      setCopied(false);
+    }
+  }
+
+  function handleSubmit(formData: FormData) {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const created = await createStudent(formData);
+        setResult(created);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع");
+      }
+    });
+  }
+
+  const message = result
+    ? buildCredentialsMessage({
+        fullName: result.fullName,
+        email: result.email,
+        password: result.password,
+        loginUrl: typeof window !== "undefined" ? window.location.origin + "/login" : "",
+      })
+    : "";
+
+  function handleCopy() {
+    navigator.clipboard.writeText(message).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   return (
-    <CrudDialog
-      trigger={trigger}
-      title="إضافة طالب جديد"
-      description="سيتم إنشاء حساب له وإرسال دعوة على بريده الإلكتروني"
-      action={createStudent}
-      submitLabel="إضافة الطالب"
-    >
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="full_name">الاسم الكامل</FieldLabel>
-          <Input id="full_name" name="full_name" required />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="email">البريد الإلكتروني</FieldLabel>
-          <Input id="email" name="email" type="email" required />
-          <FieldDescription>راح تُرسل له دعوة لتفعيل الحساب وتعيين كلمة المرور</FieldDescription>
-        </Field>
-        <Field orientation="responsive">
-          <FieldLabel htmlFor="phone">رقم الجوال (اختياري)</FieldLabel>
-          <Input id="phone" name="phone" />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>
-          <Select name="apartment_id">
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="اختر الشقة (اختياري الآن)" />
-            </SelectTrigger>
-            <SelectContent>
-              {apartments.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  {a.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field orientation="responsive">
-          <FieldLabel htmlFor="university_name">الجامعة</FieldLabel>
-          <Input id="university_name" name="university_name" />
-        </Field>
-        <Field orientation="responsive">
-          <FieldLabel htmlFor="major">التخصص</FieldLabel>
-          <Input id="major" name="major" />
-        </Field>
-      </FieldGroup>
-    </CrudDialog>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger render={<Button><Plus /> إضافة طالب</Button>} />
+      <DialogContent>
+        {!result ? (
+          <>
+            <DialogHeader>
+              <DialogTitle>إضافة طالب جديد</DialogTitle>
+              <DialogDescription>راح تُنشأ له كلمة مرور تلقائياً لإرسالها له عبر واتساب</DialogDescription>
+            </DialogHeader>
+            <form action={handleSubmit} className="flex flex-col gap-4">
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor="full_name">الاسم الكامل</FieldLabel>
+                  <Input id="full_name" name="full_name" required />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="email">البريد الإلكتروني</FieldLabel>
+                  <Input id="email" name="email" type="email" required />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="phone">رقم الجوال (واتساب)</FieldLabel>
+                  <Input id="phone" name="phone" placeholder="9677xxxxxxx" required />
+                  <FieldDescription>بصيغة دولية بدون + أو أصفار زائدة، مثال: 9677xxxxxxx</FieldDescription>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>
+                  <Select name="apartment_id">
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="اختر الشقة (اختياري الآن)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {apartments.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field orientation="responsive">
+                  <FieldLabel htmlFor="university_name">الجامعة</FieldLabel>
+                  <Input id="university_name" name="university_name" />
+                </Field>
+                <Field orientation="responsive">
+                  <FieldLabel htmlFor="major">التخصص</FieldLabel>
+                  <Input id="major" name="major" />
+                </Field>
+              </FieldGroup>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <DialogFooter>
+                <Button type="submit" disabled={isPending}>
+                  {isPending && <Spinner />}
+                  إضافة الطالب
+                </Button>
+              </DialogFooter>
+            </form>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle>تم إنشاء حساب {result.fullName}</DialogTitle>
+              <DialogDescription>أرسل له بيانات الدخول عبر واتساب — هذي الكلمة ما راح تظهر مرة ثانية</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">اسم المستخدم</span>
+                <span className="font-medium">{result.email}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">كلمة المرور</span>
+                <span className="font-mono font-medium">{result.password}</span>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCopy}>
+                {copied ? <Check className="text-success" /> : <Copy />}
+                نسخ الرسالة
+              </Button>
+              <Button
+                nativeButton={false}
+                render={<a href={buildWhatsAppLink(result.phone, message)} target="_blank" rel="noopener noreferrer" />}
+                onClick={() => toast.success("فُتح واتساب — راجع الرسالة قبل الإرسال")}
+              >
+                <MessageCircle /> إرسال عبر واتساب
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Plus, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +32,7 @@ export default async function StudentsPage() {
       <PageHeader
         title="الطلاب"
         description="كل طلاب السكن وبياناتهم"
-        action={<NewStudentDialog apartments={apartments ?? []} trigger={<Button><Plus /> إضافة طالب</Button>} />}
+        action={<NewStudentDialog apartments={apartments ?? []} />}
       />
 
       <Card>
