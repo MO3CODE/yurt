@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 export function ChangePasswordForm() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
     setError(null);
@@ -34,12 +35,12 @@ export function ChangePasswordForm() {
         return;
       }
       toast.success("تم تغيير كلمة المرور بنجاح");
-      (document.getElementById("change-password-form") as HTMLFormElement | null)?.reset();
+      formRef.current?.reset();
     });
   }
 
   return (
-    <form id="change-password-form" action={handleSubmit} className="flex flex-col gap-4">
+    <form ref={formRef} action={handleSubmit} className="flex flex-col gap-4">
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="password">كلمة المرور الجديدة</FieldLabel>

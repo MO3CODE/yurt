@@ -48,7 +48,12 @@ export function CleaningTaskRow({
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
       <span className="font-medium">{taskName}</span>
       <div className="flex items-center gap-2">
-        <Select defaultValue={assignment?.student_id ?? undefined} onValueChange={handleAssign} disabled={isPending}>
+        <Select
+          defaultValue={assignment?.student_id ?? undefined}
+          onValueChange={handleAssign}
+          disabled={isPending}
+          items={students.map((s) => ({ value: s.id, label: s.full_name }))}
+        >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="تعيين طالب" />
           </SelectTrigger>

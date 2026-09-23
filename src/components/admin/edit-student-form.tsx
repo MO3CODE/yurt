@@ -56,7 +56,12 @@ export function EditStudentForm({
       <FieldGroup>
         <Field orientation="responsive">
           <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>
-          <Select value={apartmentId} onValueChange={(v) => v && setApartmentId(v)} name="apartment_id">
+          <Select
+            value={apartmentId}
+            onValueChange={(v) => v && setApartmentId(v)}
+            name="apartment_id"
+            items={[{ value: "none", label: "بدون شقة" }, ...apartments.map((a) => ({ value: a.id, label: a.name }))]}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -72,7 +77,12 @@ export function EditStudentForm({
         </Field>
         <Field orientation="responsive">
           <FieldLabel htmlFor="status">الحالة</FieldLabel>
-          <Select value={status} onValueChange={(v) => v && setStatus(v as StudentStatus)} name="status">
+          <Select
+            value={status}
+            onValueChange={(v) => v && setStatus(v as StudentStatus)}
+            name="status"
+            items={statusOptions}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

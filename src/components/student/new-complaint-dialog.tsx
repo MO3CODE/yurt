@@ -20,7 +20,14 @@ export function NewComplaintDialog() {
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="category">النوع</FieldLabel>
-          <Select name="category" defaultValue="complaint">
+          <Select
+            name="category"
+            defaultValue="complaint"
+            items={[
+              { value: "complaint", label: "شكوى" },
+              { value: "suggestion", label: "مقترح" },
+            ]}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

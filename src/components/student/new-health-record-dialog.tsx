@@ -24,7 +24,15 @@ export function NewHealthRecordDialog() {
         </Field>
         <Field>
           <FieldLabel htmlFor="severity">الشدة</FieldLabel>
-          <Select name="severity" defaultValue="mild">
+          <Select
+            name="severity"
+            defaultValue="mild"
+            items={[
+              { value: "mild", label: "بسيطة" },
+              { value: "moderate", label: "متوسطة" },
+              { value: "severe", label: "شديدة" },
+            ]}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

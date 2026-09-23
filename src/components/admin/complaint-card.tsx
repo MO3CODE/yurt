@@ -69,7 +69,11 @@ export function ComplaintCard({
         <p className="text-sm">{complaint.description}</p>
 
         <form action={handleSubmit} className="flex flex-col gap-2 border-t pt-3">
-          <Select name="status" defaultValue={complaint.status}>
+          <Select
+            name="status"
+            defaultValue={complaint.status}
+            items={statusOptions.map((s) => ({ value: s, label: statusLabels[s] }))}
+          >
             <SelectTrigger className="w-full sm:w-56">
               <SelectValue />
             </SelectTrigger>

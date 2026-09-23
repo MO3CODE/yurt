@@ -60,7 +60,11 @@ export function AcademicSupportCard({
 
         <form action={handleSubmit} className="flex flex-col gap-2 border-t pt-3">
           <div className="grid gap-2 sm:grid-cols-2">
-            <Select name="status" defaultValue={request.status}>
+            <Select
+              name="status"
+              defaultValue={request.status}
+              items={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>

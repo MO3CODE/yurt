@@ -29,7 +29,12 @@ export function SupervisorSelect({
   }
 
   return (
-    <Select defaultValue={currentSupervisorId ?? "none"} onValueChange={handleChange} disabled={isPending}>
+    <Select
+      defaultValue={currentSupervisorId ?? "none"}
+      onValueChange={handleChange}
+      disabled={isPending}
+      items={[{ value: "none", label: "بدون مشرف" }, ...students.map((s) => ({ value: s.id, label: s.full_name }))]}
+    >
       <SelectTrigger className="w-full sm:w-64">
         <SelectValue placeholder="اختر مشرف الشقة" />
       </SelectTrigger>

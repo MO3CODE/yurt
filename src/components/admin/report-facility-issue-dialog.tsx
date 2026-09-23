@@ -23,7 +23,7 @@ export function ReportFacilityIssueDialog({ facilities }: { facilities: { id: st
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="facility_id">المرفق</FieldLabel>
-          <Select name="facility_id">
+          <Select name="facility_id" items={facilities.map((f) => ({ value: f.id, label: f.name }))}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="اختر المرفق" />
             </SelectTrigger>
@@ -42,7 +42,16 @@ export function ReportFacilityIssueDialog({ facilities }: { facilities: { id: st
         </Field>
         <Field>
           <FieldLabel htmlFor="priority">الأولوية</FieldLabel>
-          <Select name="priority" defaultValue="medium">
+          <Select
+            name="priority"
+            defaultValue="medium"
+            items={[
+              { value: "low", label: "منخفضة" },
+              { value: "medium", label: "متوسطة" },
+              { value: "high", label: "عالية" },
+              { value: "urgent", label: "عاجلة" },
+            ]}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

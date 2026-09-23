@@ -23,7 +23,7 @@ export function AwardPointsDialog({ students }: { students: { id: string; full_n
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="student_id">الطالب</FieldLabel>
-          <Select name="student_id">
+          <Select name="student_id" items={students.map((s) => ({ value: s.id, label: s.full_name }))}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="اختر الطالب" />
             </SelectTrigger>
@@ -38,7 +38,7 @@ export function AwardPointsDialog({ students }: { students: { id: string; full_n
         </Field>
         <Field orientation="responsive">
           <FieldLabel htmlFor="category">التصنيف</FieldLabel>
-          <Select name="category" defaultValue="other">
+          <Select name="category" defaultValue="other" items={categories}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

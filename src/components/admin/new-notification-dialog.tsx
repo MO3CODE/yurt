@@ -37,7 +37,17 @@ export function NewNotificationDialog({
         </Field>
         <Field>
           <FieldLabel htmlFor="target_type">إرسال إلى</FieldLabel>
-          <Select name="target_type" value={target} onValueChange={(v) => v && setTarget(v)}>
+          <Select
+            name="target_type"
+            value={target}
+            onValueChange={(v) => v && setTarget(v)}
+            items={[
+              { value: "all", label: "كل الطلاب" },
+              { value: "apartment", label: "شقة معينة" },
+              { value: "student", label: "طالب معين" },
+              { value: "role", label: "فئة إدارية" },
+            ]}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -53,7 +63,7 @@ export function NewNotificationDialog({
         {target === "apartment" && (
           <Field>
             <FieldLabel htmlFor="target_apartment_id">الشقة</FieldLabel>
-            <Select name="target_apartment_id">
+            <Select name="target_apartment_id" items={apartments.map((a) => ({ value: a.id, label: a.name }))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="اختر الشقة" />
               </SelectTrigger>
@@ -71,7 +81,7 @@ export function NewNotificationDialog({
         {target === "student" && (
           <Field>
             <FieldLabel htmlFor="target_student_id">الطالب</FieldLabel>
-            <Select name="target_student_id">
+            <Select name="target_student_id" items={students.map((s) => ({ value: s.id, label: s.full_name }))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="اختر الطالب" />
               </SelectTrigger>
@@ -89,7 +99,13 @@ export function NewNotificationDialog({
         {target === "role" && (
           <Field>
             <FieldLabel htmlFor="target_role">الفئة</FieldLabel>
-            <Select name="target_role">
+            <Select
+              name="target_role"
+              items={[
+                { value: "student", label: "الطلاب" },
+                { value: "admin", label: "الإداريون" },
+              ]}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="اختر الفئة" />
               </SelectTrigger>

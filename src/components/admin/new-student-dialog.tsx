@@ -91,7 +91,7 @@ export function NewStudentDialog({ apartments }: { apartments: { id: string; nam
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>
-                  <Select name="apartment_id">
+                  <Select name="apartment_id" items={apartments.map((a) => ({ value: a.id, label: a.name }))}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="اختر الشقة (اختياري الآن)" />
                     </SelectTrigger>

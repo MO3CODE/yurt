@@ -23,7 +23,15 @@ export function NewCleaningTaskDialog({
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="scope">النطاق</FieldLabel>
-          <Select name="scope" value={scope} onValueChange={(v) => v && setScope(v as "apartment" | "facility")}>
+          <Select
+            name="scope"
+            value={scope}
+            onValueChange={(v) => v && setScope(v as "apartment" | "facility")}
+            items={[
+              { value: "apartment", label: "شقة" },
+              { value: "facility", label: "مرفق عام" },
+            ]}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -37,7 +45,7 @@ export function NewCleaningTaskDialog({
         {scope === "apartment" ? (
           <Field>
             <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>
-            <Select name="apartment_id">
+            <Select name="apartment_id" items={apartments.map((a) => ({ value: a.id, label: a.name }))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="اختر الشقة" />
               </SelectTrigger>
@@ -53,7 +61,7 @@ export function NewCleaningTaskDialog({
         ) : (
           <Field>
             <FieldLabel htmlFor="facility_id">المرفق</FieldLabel>
-            <Select name="facility_id">
+            <Select name="facility_id" items={facilities.map((f) => ({ value: f.id, label: f.name }))}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="اختر المرفق" />
               </SelectTrigger>

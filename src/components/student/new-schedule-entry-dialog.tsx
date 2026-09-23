@@ -20,7 +20,11 @@ export function NewScheduleEntryDialog() {
       <FieldGroup>
         <Field>
           <FieldLabel htmlFor="day_of_week">اليوم</FieldLabel>
-          <Select name="day_of_week" defaultValue="0">
+          <Select
+            name="day_of_week"
+            defaultValue="0"
+            items={Array.from({ length: 7 }, (_, i) => ({ value: String(i), label: dayName(i) }))}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
