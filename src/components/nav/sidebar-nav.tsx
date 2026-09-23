@@ -3,6 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  LayoutDashboard,
+  Users,
+  DoorOpen,
+  ClipboardCheck,
+  HandHeart,
+  BookOpen,
+  Stethoscope,
+  GraduationCap,
+  MessageSquareWarning,
+  SprayCan,
+  Building2,
+  Trophy,
+  BellRing,
+  Siren,
+  FileBarChart,
+  CalendarDays,
+  ListTodo,
+  type LucideIcon,
+} from "lucide-react";
+import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarGroupContent,
@@ -10,7 +30,27 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import type { NavGroup, NavItem } from "@/components/nav/nav-config";
+import type { NavGroup, NavItem, IconName } from "@/components/nav/nav-config";
+
+const iconMap: Record<IconName, LucideIcon> = {
+  LayoutDashboard,
+  Users,
+  DoorOpen,
+  ClipboardCheck,
+  HandHeart,
+  BookOpen,
+  Stethoscope,
+  GraduationCap,
+  MessageSquareWarning,
+  SprayCan,
+  Building2,
+  Trophy,
+  BellRing,
+  Siren,
+  FileBarChart,
+  CalendarDays,
+  ListTodo,
+};
 
 function isActive(pathname: string, href: string) {
   if (href === "/admin" || href === "/app") return pathname === href;
@@ -53,7 +93,7 @@ export function SidebarNavFlat({ items }: { items: NavItem[] }) {
 }
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
-  const Icon = item.icon;
+  const Icon = iconMap[item.icon];
   return (
     <SidebarMenuItem>
       <SidebarMenuButton render={<Link href={item.href} />} isActive={active} tooltip={item.title}>
