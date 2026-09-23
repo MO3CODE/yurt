@@ -45,7 +45,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-5" />
           <div className="flex-1" />
-          <Button variant="ghost" size="icon" aria-label="الإشعارات" render={<Link href="/app/notifications" />}>
+          <Button variant="ghost" size="icon" aria-label="الإشعارات" nativeButton={false} render={<Link href="/app/notifications" />}>
             <Bell />
           </Button>
           <ThemeToggle />

@@ -53,7 +53,7 @@ export default async function StudentHomePage() {
           <CardHeader>
             <CardTitle>صلوات اليوم</CardTitle>
             <CardAction>
-              <Button variant="link" size="sm" render={<Link href="/app/prayers" />}>
+              <Button variant="link" size="sm" nativeButton={false} render={<Link href="/app/prayers" />}>
                 التفاصيل
               </Button>
             </CardAction>
@@ -99,7 +99,7 @@ export default async function StudentHomePage() {
         <CardHeader>
           <CardTitle>مهامك</CardTitle>
           <CardAction>
-            <Button variant="link" size="sm" render={<Link href="/app/tasks" />}>
+            <Button variant="link" size="sm" nativeButton={false} render={<Link href="/app/tasks" />}>
               عرض الكل
             </Button>
           </CardAction>
@@ -113,7 +113,7 @@ export default async function StudentHomePage() {
         <div className="flex items-center gap-2 rounded-lg border bg-accent/40 p-3 text-sm">
           <BellRing className="size-4 text-primary" />
           <span>عندك إشعارات جديدة</span>
-          <Button variant="link" size="sm" className="ms-auto" render={<Link href="/app/notifications" />}>
+          <Button variant="link" size="sm" className="ms-auto" nativeButton={false} render={<Link href="/app/notifications" />}>
             عرضها
           </Button>
         </div>

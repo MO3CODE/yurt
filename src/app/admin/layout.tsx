@@ -47,7 +47,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-5" />
           <div className="flex-1" />
-          <Button variant="ghost" size="icon" aria-label="الإشعارات" render={<Link href="/admin/notifications" />}>
+          <Button variant="ghost" size="icon" aria-label="الإشعارات" nativeButton={false} render={<Link href="/admin/notifications" />}>
             <Bell />
           </Button>
           <ThemeToggle />
