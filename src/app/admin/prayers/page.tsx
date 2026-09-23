@@ -11,7 +11,7 @@ export default async function AdminPrayersPage() {
   const sinceISO = since.toISOString().slice(0, 10);
 
   const [{ data: students }, { data: records }] = await Promise.all([
-    supabase.from("students").select("id, profiles:id(full_name), apartment:apartment_id(name)").eq("status", "active"),
+    supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),
     supabase.from("prayer_records").select("student_id, status").gte("record_date", sinceISO),
   ]);
 

@@ -12,7 +12,7 @@ export default async function AlertsPage() {
   const supabase = await createClient();
   const { data: alerts } = await supabase
     .from("alerts")
-    .select("*, student:student_id(profiles:id(full_name)), apartment:apartment_id(name)")
+    .select("*, student:student_id(profiles!students_id_fkey(full_name)), apartment:apartment_id(name)")
     .eq("resolved", false)
     .order("created_at", { ascending: false });
 

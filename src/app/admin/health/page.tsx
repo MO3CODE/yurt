@@ -11,7 +11,7 @@ export default async function AdminHealthPage() {
   const supabase = await createClient();
   const { data: records } = await supabase
     .from("health_records")
-    .select("*, student:student_id(profiles:id(full_name), apartment:apartment_id(name))")
+    .select("*, student:student_id(profiles!students_id_fkey(full_name), apartment:apartment_id(name))")
     .order("created_at", { ascending: false });
 
   return (

@@ -22,7 +22,7 @@ export default async function StudentsPage() {
   const [{ data: students }, { data: apartments }] = await Promise.all([
     supabase
       .from("students")
-      .select("id, status, university_name, apartment:apartment_id(name), profiles:id(full_name)")
+      .select("id, status, university_name, apartment:apartment_id(name), profiles!students_id_fkey(full_name)")
       .order("created_at", { ascending: false }),
     supabase.from("apartments").select("id, name").order("floor_number"),
   ]);

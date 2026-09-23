@@ -19,11 +19,11 @@ export default async function AdminNotificationsPage() {
   const [{ data: notifications }, { data: apartments }, { data: students }] = await Promise.all([
     supabase
       .from("notifications")
-      .select("*, apartment:target_apartment_id(name), student:target_student_id(profiles:id(full_name))")
+      .select("*, apartment:target_apartment_id(name), student:target_student_id(profiles!students_id_fkey(full_name))")
       .order("created_at", { ascending: false })
       .limit(30),
     supabase.from("apartments").select("id, name").order("floor_number"),
-    supabase.from("students").select("id, profiles:id(full_name)"),
+    supabase.from("students").select("id, profiles!students_id_fkey(full_name)"),
   ]);
 
   const studentOptions = (students ?? []).map((s) => ({

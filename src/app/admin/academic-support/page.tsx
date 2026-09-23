@@ -8,7 +8,7 @@ export default async function AdminAcademicSupportPage() {
   const supabase = await createClient();
   const { data: requests } = await supabase
     .from("academic_support_requests")
-    .select("*, student:student_id(profiles:id(full_name))")
+    .select("*, student:student_id(profiles!students_id_fkey(full_name))")
     .order("created_at", { ascending: false });
 
   return (

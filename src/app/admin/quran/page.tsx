@@ -13,7 +13,7 @@ export default async function AdminQuranPage() {
   const today = todayISO();
 
   const [{ data: students }, { data: logs }] = await Promise.all([
-    supabase.from("students").select("id, profiles:id(full_name), apartment:apartment_id(name)").eq("status", "active"),
+    supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),
     supabase.from("quran_wird_logs").select("student_id, record_date, pages").gte("record_date", sinceISO),
   ]);
 

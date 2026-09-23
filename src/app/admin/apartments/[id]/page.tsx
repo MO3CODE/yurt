@@ -16,7 +16,7 @@ export default async function ApartmentDetailPage({ params }: PageProps<"/admin/
 
   const { data: students } = await supabase
     .from("students")
-    .select("id, university_name, status, profiles:id(full_name)")
+    .select("id, university_name, status, profiles!students_id_fkey(full_name)")
     .eq("apartment_id", id);
 
   const studentOptions = (students ?? []).map((s) => ({

@@ -10,7 +10,7 @@ export default async function AdminComplaintsPage() {
 
   const { data: complaints } = await supabase
     .from("complaints")
-    .select("*, student:student_id(profiles:id(full_name)), apartment:apartment_id(name)")
+    .select("*, student:student_id(profiles!students_id_fkey(full_name)), apartment:apartment_id(name)")
     .order("created_at", { ascending: false });
 
   return (

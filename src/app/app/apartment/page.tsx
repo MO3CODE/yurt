@@ -26,7 +26,7 @@ export default async function SupervisorApartmentPage() {
   const [{ data: apartment }, { data: students }, { data: complaints }, { data: tasks }, { data: assignments }, { data: attendance }] =
     await Promise.all([
       supabase.from("apartments").select("name").eq("id", apartmentId).single(),
-      supabase.from("students").select("id, profiles:id(full_name)").eq("apartment_id", apartmentId),
+      supabase.from("students").select("id, profiles!students_id_fkey(full_name)").eq("apartment_id", apartmentId),
       supabase
         .from("complaints")
         .select("*")

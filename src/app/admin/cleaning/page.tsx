@@ -15,7 +15,7 @@ export default async function CleaningPage() {
     supabase.from("facilities").select("id, name").order("name"),
     supabase.from("cleaning_tasks").select("*"),
     supabase.from("cleaning_assignments").select("*").eq("week_start_date", weekStart),
-    supabase.from("students").select("id, apartment_id, profiles:id(full_name)"),
+    supabase.from("students").select("id, apartment_id, profiles!students_id_fkey(full_name)"),
   ]);
 
   const assignmentByTask = new Map((assignments ?? []).map((a) => [a.task_id, a]));

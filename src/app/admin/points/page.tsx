@@ -18,7 +18,7 @@ export default async function AdminPointsPage() {
       .select("*")
       .eq("month", monthStartISO)
       .order("total_points", { ascending: false }),
-    supabase.from("students").select("id, profiles:id(full_name)"),
+    supabase.from("students").select("id, profiles!students_id_fkey(full_name)"),
   ]);
 
   const studentOptions = (students ?? []).map((s) => ({
