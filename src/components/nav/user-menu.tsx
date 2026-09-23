@@ -50,7 +50,7 @@ export function UserMenu({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <form action={signOut} className="w-full">
-          <DropdownMenuItem variant="destructive" render={<button type="submit" className="w-full" />}>
+          <DropdownMenuItem variant="destructive" nativeButton render={<button type="submit" className="w-full" />}>
             <LogOut /> تسجيل الخروج
           </DropdownMenuItem>
         </form>
