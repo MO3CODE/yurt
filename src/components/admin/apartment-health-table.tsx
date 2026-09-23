@@ -4,14 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type HealthRow = {
-  apartment_id: string;
-  name: string;
-  floor_number: number;
-  cleaning_score: number;
-  prayer_score: number;
-  attendance_score: number;
-  open_complaints: number;
-  overall_score: number;
+  apartment_id: string | null;
+  name: string | null;
+  floor_number: number | null;
+  cleaning_score: number | null;
+  prayer_score: number | null;
+  attendance_score: number | null;
+  open_complaints: number | null;
+  overall_score: number | null;
 };
 
 function scoreTone(score: number) {
@@ -57,12 +57,12 @@ export function ApartmentHealthTable({ rows }: { rows: HealthRow[] }) {
                 {row.name} <span className="text-muted-foreground">— طابق {row.floor_number}</span>
               </Link>
             </TableCell>
-            <TableCell>{row.cleaning_score}</TableCell>
-            <TableCell>{row.prayer_score}</TableCell>
-            <TableCell>{row.attendance_score}</TableCell>
-            <TableCell>{row.open_complaints}</TableCell>
+            <TableCell>{row.cleaning_score ?? 0}</TableCell>
+            <TableCell>{row.prayer_score ?? 0}</TableCell>
+            <TableCell>{row.attendance_score ?? 0}</TableCell>
+            <TableCell>{row.open_complaints ?? 0}</TableCell>
             <TableCell>
-              <ScoreBadge score={row.overall_score} />
+              <ScoreBadge score={row.overall_score ?? 0} />
             </TableCell>
           </TableRow>
         ))}

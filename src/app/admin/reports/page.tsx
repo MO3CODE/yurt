@@ -53,7 +53,7 @@ export default async function ReportsPage() {
                   <TableCell className="font-medium">{row.full_name}</TableCell>
                   <TableCell>{row.apartment_name ?? "—"}</TableCell>
                   <TableCell>{row.university_name ?? "—"}</TableCell>
-                  <TableCell>{statusLabels[row.status]}</TableCell>
+                  <TableCell>{row.status ? statusLabels[row.status] : "—"}</TableCell>
                   <TableCell>{row.total_absences}</TableCell>
                   <TableCell>{row.total_complaints}</TableCell>
                   <TableCell>{row.total_points}</TableCell>
