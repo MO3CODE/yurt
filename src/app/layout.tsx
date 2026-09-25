@@ -1,29 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Readex_Pro, Reem_Kufi } from "next/font/google";
+import { IBM_Plex_Sans_Arabic } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RegisterServiceWorker } from "@/components/register-service-worker";
 import "./globals.css";
 
-// Readex Pro للنص: واضح ومريح على الشاشات الصغيرة
-const readexPro = Readex_Pro({
+// خط موحّد لكل المنصة (عناوين ونصوص): IBM Plex Sans Arabic
+const ibmPlexArabic = IBM_Plex_Sans_Arabic({
   variable: "--font-arabic",
   subsets: ["arabic", "latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
 
-// Reem Kufi للعناوين: كوفي هندسي حديث يعطي المنصة هويتها
-const reemKufi = Reem_Kufi({
-  variable: "--font-display",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -55,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${readexPro.variable} ${reemKufi.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${ibmPlexArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider
