@@ -1,6 +1,6 @@
 "use server";
 
-import { runAction } from "@/lib/action-result";
+import { runAction, type ActionResult } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -103,5 +103,21 @@ export async function setAttendanceAsSupervisor(formData: FormData) {
     );
     if (error) throw new Error(error.message);
     revalidatePath("/app/apartment");
+  });
+}
+
+/** المشرف يوزّع مهام شقته فقط (rebalance: يعيد توزيع ما لم يُنفَّذ بعد) */
+export async function generateCleaningAsSupervisor(rebalance: boolean): Promise<ActionResult<number>> {
+  return runAction(async () => {
+    const user = await requireSupervisor();
+    const supabase = await createClient();
+    const { data, error } = await supabase.rpc("generate_cleaning_schedule", {
+      p_apartment: user.supervisedApartmentId!,
+      p_rebalance: rebalance,
+    });
+    if (error) throw new Error(error.message);
+    revalidatePath("/app/apartment");
+    revalidatePath("/app");
+    return data ?? 0;
   });
 }

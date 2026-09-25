@@ -21,6 +21,17 @@ export function weekStartISO(date = todayISO()): string {
   return addDaysISO(date, -dayOfWeekISO(date));
 }
 
+/** نطاق الأسبوع للعرض: «٢٠–٢٦ سبتمبر» أو «٢٧ سبتمبر – ٣ أكتوبر» */
+export function formatWeekRange(weekStart: string): string {
+  const start = new Date(`${weekStart}T00:00:00Z`);
+  const end = new Date(`${addDaysISO(weekStart, 6)}T00:00:00Z`);
+  const day = new Intl.DateTimeFormat("ar-u-nu-arab", { timeZone: "UTC", day: "numeric" });
+  const dayMonth = new Intl.DateTimeFormat("ar-u-nu-arab", { timeZone: "UTC", day: "numeric", month: "long" });
+  return start.getUTCMonth() === end.getUTCMonth()
+    ? `${day.format(start)}–${dayMonth.format(end)}`
+    : `${dayMonth.format(start)} – ${dayMonth.format(end)}`;
+}
+
 export function monthStartISO(date = todayISO()): string {
   return `${date.slice(0, 7)}-01`;
 }

@@ -1332,9 +1332,14 @@ export type Database = {
       }
     }
     Functions: {
+      cleaning_week_start: { Args: { d?: string }; Returns: string }
       current_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      generate_cleaning_schedule: {
+        Args: { p_apartment?: string; p_rebalance?: boolean; p_week?: string }
+        Returns: number
       }
       has_permission: { Args: { p: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }

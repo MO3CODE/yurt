@@ -7,10 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ComplaintCard } from "@/components/admin/complaint-card";
 import { CleaningTaskRow } from "@/components/admin/cleaning-task-row";
 import { SupervisorAttendanceRow } from "@/components/student/supervisor-attendance-row";
-import { todayISO, weekStartISO } from "@/lib/date";
+import { formatWeekRange, todayISO, weekStartISO } from "@/lib/date";
+import { AutoScheduleBar } from "@/components/cleaning/auto-schedule-bar";
 import {
   updateComplaintAsSupervisor,
   assignCleaningAsSupervisor,
+  generateCleaningAsSupervisor,
   setCleaningStatusAsSupervisor,
 } from "./actions";
 
@@ -91,10 +93,11 @@ export default async function SupervisorApartmentPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="cleaning">
+        <TabsContent value="cleaning" className="flex flex-col gap-4">
+          <AutoScheduleBar weekLabel={formatWeekRange(weekStart)} scopeLabel="شقتك" generate={generateCleaningAsSupervisor} />
           <Card>
             <CardHeader>
-              <CardTitle>أسبوع {weekStart}</CardTitle>
+              <CardTitle>مهام الأسبوع</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {(tasks ?? []).length > 0 ? (

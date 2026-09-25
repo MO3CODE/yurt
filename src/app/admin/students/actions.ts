@@ -81,6 +81,9 @@ export async function createStudent(formData: FormData): Promise<ActionResult<Cr
       throw new Error((studentError ?? profileError)!.message);
     }
 
+    // يملأ مهام النظافة غير المعيّنة في شقته لهذا الأسبوع (لا يغيّر ما وُزّع)
+    if (parsed.apartment_id) await admin.rpc("generate_cleaning_schedule", { p_apartment: parsed.apartment_id });
+
     revalidatePath("/admin/students");
     revalidatePath("/admin/apartments", "layout");
     revalidatePath("/admin");
