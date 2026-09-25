@@ -16,12 +16,14 @@ import {
   FileBarChart,
   CalendarDays,
   ListTodo,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/components/nav/nav-config";
 
 // خريطة أسماء الأيقونات إلى مكوّناتها (انظر الملاحظة في nav-config.ts)
 export const iconMap: Record<IconName, LucideIcon> = {
+  ShieldCheck,
   LayoutDashboard,
   Users,
   DoorOpen,

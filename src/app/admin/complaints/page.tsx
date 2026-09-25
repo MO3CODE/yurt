@@ -4,8 +4,10 @@ import { ComplaintCard } from "@/components/admin/complaint-card";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { MessageSquareWarning } from "lucide-react";
 import { updateComplaint } from "./actions";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function AdminComplaintsPage() {
+  await requirePermission("complaints");
   const supabase = await createClient();
 
   const { data: complaints } = await supabase

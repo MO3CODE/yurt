@@ -5,8 +5,10 @@ import { NewCleaningTaskDialog } from "@/components/admin/new-cleaning-task-dial
 import { CleaningTaskRow } from "@/components/admin/cleaning-task-row";
 import { weekStartISO } from "@/lib/date";
 import { assignCleaning, setCleaningStatus } from "./actions";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function CleaningPage() {
+  await requirePermission("cleaning");
   const supabase = await createClient();
   const weekStart = weekStartISO();
 

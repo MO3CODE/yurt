@@ -7,10 +7,12 @@ import { ReportFacilityIssueDialog } from "@/components/admin/report-facility-is
 import { ResolveIssueButton } from "@/components/admin/resolve-issue-button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Building2 } from "lucide-react";
+import { requirePermission } from "@/lib/auth/current-user";
 
 const priorityLabels: Record<string, string> = { low: "منخفضة", medium: "متوسطة", high: "عالية", urgent: "عاجلة" };
 
 export default async function FacilitiesPage() {
+  await requirePermission("facilities");
   const supabase = await createClient();
   const [{ data: facilities }, { data: issues }] = await Promise.all([
     supabase.from("facilities").select("*").order("name"),

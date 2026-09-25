@@ -4,7 +4,7 @@ import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin, requireUser } from "@/lib/auth/current-user";
+import { requireUser, assertPermission } from "@/lib/auth/current-user";
 
 const facilitySchema = z.object({
   name: z.string().min(1, "الاسم مطلوب"),
@@ -14,7 +14,7 @@ const facilitySchema = z.object({
 
 export async function createFacility(formData: FormData) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("facilities");
     const parsed = facilitySchema.parse({
       name: formData.get("name"),
       facility_type: formData.get("facility_type") || undefined,
@@ -53,7 +53,7 @@ export async function reportFacilityIssue(formData: FormData) {
 
 export async function resolveFacilityIssue(issueId: string) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("facilities");
     const supabase = await createClient();
     const { error } = await supabase
       .from("facility_issues")

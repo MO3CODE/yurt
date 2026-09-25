@@ -7,8 +7,10 @@ import { ResolveAlertButton } from "@/components/admin/resolve-alert-button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Siren } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function AlertsPage() {
+  await requirePermission("alerts");
   const supabase = await createClient();
   const { data: alerts } = await supabase
     .from("alerts")

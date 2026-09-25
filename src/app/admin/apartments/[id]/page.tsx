@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { SupervisorSelect } from "@/components/admin/supervisor-select";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function ApartmentDetailPage({ params }: PageProps<"/admin/apartments/[id]">) {
+  await requirePermission("apartments");
   const { id } = await params;
   const supabase = await createClient();
 

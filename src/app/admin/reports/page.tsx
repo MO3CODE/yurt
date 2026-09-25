@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PrintButton } from "@/components/admin/print-button";
 import { todayISO } from "@/lib/date";
+import { requirePermission } from "@/lib/auth/current-user";
 
 const statusLabels: Record<string, string> = {
   active: "نشط",
@@ -13,6 +14,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default async function ReportsPage() {
+  await requirePermission("reports");
   const supabase = await createClient();
 
   const { data: summary } = await supabase

@@ -4,10 +4,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Stethoscope } from "lucide-react";
+import { requirePermission } from "@/lib/auth/current-user";
 
 const severityLabels: Record<string, string> = { mild: "بسيطة", moderate: "متوسطة", severe: "شديدة" };
 
 export default async function AdminHealthPage() {
+  await requirePermission("health");
   const supabase = await createClient();
   const { data: records } = await supabase
     .from("health_records")

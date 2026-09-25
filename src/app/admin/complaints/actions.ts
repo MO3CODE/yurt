@@ -4,7 +4,7 @@ import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 
 const updateSchema = z.object({
   status: z.enum(["new", "triaged", "in_progress", "escalated", "resolved", "rejected"]),
@@ -13,7 +13,7 @@ const updateSchema = z.object({
 
 export async function updateComplaint(complaintId: string, formData: FormData) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("complaints");
     const parsed = updateSchema.parse({
       status: formData.get("status"),
       admin_response: formData.get("admin_response") || undefined,

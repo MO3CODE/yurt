@@ -3,8 +3,10 @@ import { PageHeader } from "@/components/page-header";
 import { AcademicSupportCard } from "@/components/admin/academic-support-card";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { GraduationCap } from "lucide-react";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function AdminAcademicSupportPage() {
+  await requirePermission("academic");
   const supabase = await createClient();
   const { data: requests } = await supabase
     .from("academic_support_requests")

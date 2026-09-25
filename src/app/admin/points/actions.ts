@@ -4,7 +4,7 @@ import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 
 const schema = z.object({
   student_id: z.string().uuid(),
@@ -15,7 +15,7 @@ const schema = z.object({
 
 export async function awardPoints(formData: FormData) {
   return runAction(async () => {
-    const user = await requireAdmin();
+    const user = await assertPermission("points");
     const parsed = schema.parse({
       student_id: formData.get("student_id"),
       category: formData.get("category"),

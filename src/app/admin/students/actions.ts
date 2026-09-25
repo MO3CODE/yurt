@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 import { generatePassword } from "@/lib/generate-password";
+import { issueNewPassword, type AccountCredentials } from "@/lib/auth/credentials";
 
 const newStudentSchema = z.object({
   full_name: z.string().min(1, "الاسم مطلوب"),
@@ -17,19 +18,14 @@ const newStudentSchema = z.object({
   major: z.string().optional(),
 });
 
-export type CreateStudentResult = {
-  fullName: string;
-  email: string;
-  password: string;
-  phone: string;
-};
+export type CreateStudentResult = AccountCredentials;
 
 // ننشئ الحساب مباشرة بكلمة مرور مُولَّدة بدل الاعتماد على بريد دعوة —
 // خدمة بريد Supabase الافتراضية محدودة جداً (للتجربة فقط) وسريعة الانقطاع
 // (email rate limit). كلمة المرور تُرسل للطالب يدوياً عبر واتساب من لوحة الإدارة.
 export async function createStudent(formData: FormData): Promise<ActionResult<CreateStudentResult>> {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("students");
 
     const parsed = newStudentSchema.parse({
       full_name: formData.get("full_name"),
@@ -96,25 +92,8 @@ export async function createStudent(formData: FormData): Promise<ActionResult<Cr
 // لا يوجد بريد لاستعادة كلمة المرور، فالإدارة تولّد كلمة جديدة وترسلها عبر واتساب
 export async function resetStudentPassword(studentId: string): Promise<ActionResult<CreateStudentResult>> {
   return runAction(async () => {
-    await requireAdmin();
-    const admin = createAdminClient();
-
-    const [{ data: userData, error: userError }, { data: profile }] = await Promise.all([
-      admin.auth.admin.getUserById(studentId),
-      admin.from("profiles").select("full_name, phone").eq("id", studentId).single(),
-    ]);
-    if (userError || !userData.user?.email) throw new Error(userError?.message ?? "الطالب غير موجود");
-
-    const password = generatePassword();
-    const { error } = await admin.auth.admin.updateUserById(studentId, { password });
-    if (error) throw new Error(error.message);
-
-    return {
-      fullName: profile?.full_name ?? userData.user.email,
-      email: userData.user.email,
-      password,
-      phone: profile?.phone ?? "",
-    };
+    await assertPermission("students");
+    return issueNewPassword(studentId, ["student"]);
   });
 }
 
@@ -131,7 +110,7 @@ const updateStudentSchema = z.object({
 
 export async function updateStudent(studentId: string, formData: FormData) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("students");
     const apartmentId = formData.get("apartment_id");
     const parsed = updateStudentSchema.parse({
       // "none" = خيار «بدون شقة» في القائمة

@@ -4,7 +4,7 @@ import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 
 const schema = z.object({
   title: z.string().min(1, "العنوان مطلوب"),
@@ -26,7 +26,7 @@ const schema = z.object({
 
 export async function createNotification(formData: FormData) {
   return runAction(async () => {
-    const user = await requireAdmin();
+    const user = await assertPermission("notifications");
     const parsed = schema.parse({
       title: formData.get("title"),
       body: formData.get("body"),

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { NewStudentDialog } from "@/components/admin/new-student-dialog";
+import { requirePermission } from "@/lib/auth/current-user";
 
 const statusLabels: Record<string, string> = {
   active: "نشط",
@@ -17,6 +18,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default async function StudentsPage() {
+  await requirePermission("students");
   const supabase = await createClient();
 
   const [{ data: students }, { data: apartments }] = await Promise.all([

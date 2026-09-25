@@ -4,7 +4,7 @@ import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 
 const taskSchema = z.object({
   scope: z.enum(["apartment", "facility"]),
@@ -15,7 +15,7 @@ const taskSchema = z.object({
 
 export async function createCleaningTask(formData: FormData) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("cleaning");
     const parsed = taskSchema.parse({
       scope: formData.get("scope"),
       apartment_id: formData.get("apartment_id") || undefined,
@@ -32,7 +32,7 @@ export async function createCleaningTask(formData: FormData) {
 
 export async function assignCleaning(taskId: string, weekStartDate: string, studentId: string) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("cleaning");
     const supabase = await createClient();
     const { error } = await supabase
       .from("cleaning_assignments")
@@ -47,7 +47,7 @@ export async function assignCleaning(taskId: string, weekStartDate: string, stud
 
 export async function setCleaningStatus(assignmentId: string, status: "pending" | "done" | "missed") {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("cleaning");
     const supabase = await createClient();
     const { error } = await supabase
       .from("cleaning_assignments")

@@ -4,8 +4,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { addDaysISO, todayISO } from "@/lib/date";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function AdminQuranPage() {
+  await requirePermission("quran");
   const supabase = await createClient();
   const today = todayISO();
   const sinceISO = addDaysISO(today, -6);

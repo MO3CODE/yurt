@@ -4,7 +4,7 @@ import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 
 const schema = z.object({
   status: z.enum(["open", "assigned", "in_progress", "resolved", "closed"]),
@@ -14,7 +14,7 @@ const schema = z.object({
 
 export async function updateAcademicSupportRequest(requestId: string, formData: FormData) {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("academic");
     const parsed = schema.parse({
       status: formData.get("status"),
       assigned_to_name: formData.get("assigned_to_name") || undefined,

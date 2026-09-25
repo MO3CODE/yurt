@@ -8,8 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { NewApartmentDialog } from "@/components/admin/new-apartment-dialog";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function ApartmentsPage() {
+  await requirePermission("apartments");
   const supabase = await createClient();
   const { data: apartments } = await supabase
     .from("apartments")

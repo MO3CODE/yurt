@@ -958,6 +958,8 @@ export type Database = {
           manage_facilities: boolean
           manage_religious: boolean
           manage_reports: boolean
+          /** migration 0007 — اختياري حتى تطبيقه */
+          permissions?: string[]
           phone: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
@@ -971,6 +973,8 @@ export type Database = {
           manage_facilities?: boolean
           manage_religious?: boolean
           manage_reports?: boolean
+          /** migration 0007 — اختياري حتى تطبيقه */
+          permissions?: string[]
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
@@ -984,6 +988,8 @@ export type Database = {
           manage_facilities?: boolean
           manage_religious?: boolean
           manage_reports?: boolean
+          /** migration 0007 — اختياري حتى تطبيقه */
+          permissions?: string[]
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string

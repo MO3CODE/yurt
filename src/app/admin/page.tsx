@@ -10,7 +10,9 @@ import {
   LayoutDashboard,
   ClipboardCheck,
   HandHeart,
+  ShieldAlert,
 } from "lucide-react";
+import { isPermissionKey, permissionLabel } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth/current-user";
 import { StatCard } from "@/components/stat-card";
@@ -22,8 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { greeting, hijriDate, longDate, todayISO } from "@/lib/date";
 
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({ searchParams }: PageProps<"/admin">) {
   const user = await requireAdmin();
+  const { denied } = await searchParams;
+  const deniedLabel = typeof denied === "string" && isPermissionKey(denied) ? permissionLabel(denied) : null;
   const supabase = await createClient();
   const today = todayISO();
 
@@ -54,6 +58,12 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="stagger flex flex-col gap-6">
+      {deniedLabel && (
+        <div role="alert" className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
+          <ShieldAlert className="size-4 shrink-0 text-warning-foreground dark:text-warning" />
+          ليست لديك صلاحية الوصول إلى قسم «{deniedLabel}». تواصل مع المدير العام إن كنت تحتاجها.
+        </div>
+      )}
       <HeroPanel>
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-3">

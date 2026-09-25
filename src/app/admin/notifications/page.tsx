@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { NewNotificationDialog } from "@/components/admin/new-notification-dialog";
 import { BellRing } from "lucide-react";
+import { requirePermission } from "@/lib/auth/current-user";
 
 const targetLabels: Record<string, string> = {
   all: "كل الطلاب",
@@ -14,6 +15,7 @@ const targetLabels: Record<string, string> = {
 };
 
 export default async function AdminNotificationsPage() {
+  await requirePermission("notifications");
   const supabase = await createClient();
 
   const [{ data: notifications }, { data: apartments }, { data: students }] = await Promise.all([

@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { AppRole } from "@/lib/supabase/types";
+import { ALL_PERMISSIONS, isPermissionKey, permissionLabel, type PermissionKey } from "@/lib/auth/permissions";
 
 export type CurrentUser = {
   id: string;
@@ -10,12 +11,8 @@ export type CurrentUser = {
   role: AppRole;
   isAdmin: boolean;
   isSuperAdmin: boolean;
-  permissions: {
-    manageAcademic: boolean;
-    manageReligious: boolean;
-    manageFacilities: boolean;
-    manageReports: boolean;
-  };
+  /** أقسام الإدارة المسموحة (كلها للمدير العام، ولا شيء للطالب) */
+  permissions: PermissionKey[];
   apartmentId: string | null;
   apartmentName: string | null;
   supervisedApartmentId: string | null;
@@ -66,16 +63,23 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     role: profile.role,
     isAdmin: profile.role === "admin" || profile.role === "super_admin",
     isSuperAdmin: profile.role === "super_admin",
-    permissions: {
-      manageAcademic: profile.manage_academic,
-      manageReligious: profile.manage_religious,
-      manageFacilities: profile.manage_facilities,
-      manageReports: profile.manage_reports,
-    },
+    permissions: resolvePermissions(profile.role, (profile as { permissions?: string[] | null }).permissions),
     apartmentId,
     apartmentName,
     supervisedApartmentId: supervised?.id ?? null,
   };
+}
+
+function resolvePermissions(role: AppRole, stored: string[] | null | undefined): PermissionKey[] {
+  if (role === "super_admin") return ALL_PERMISSIONS;
+  if (role !== "admin") return [];
+  // قبل تطبيق migration 0007 لا يوجد عمود permissions: يبقى الإداري بكامل صلاحياته كما كان
+  if (stored === undefined) return ALL_PERMISSIONS;
+  return (stored ?? []).filter(isPermissionKey);
+}
+
+export function hasPermission(user: Pick<CurrentUser, "permissions">, key: PermissionKey): boolean {
+  return user.permissions.includes(key);
 }
 
 export async function requireUser(): Promise<CurrentUser> {
@@ -87,5 +91,31 @@ export async function requireUser(): Promise<CurrentUser> {
 export async function requireAdmin(): Promise<CurrentUser> {
   const user = await requireUser();
   if (!user.isAdmin) redirect("/");
+  return user;
+}
+
+export async function requireSuperAdmin(): Promise<CurrentUser> {
+  const user = await requireAdmin();
+  if (!user.isSuperAdmin) redirect("/admin");
+  return user;
+}
+
+/** لصفحات الإدارة: يحوّل لمن لا يملك الصلاحية إلى لوحة التحكم */
+export async function requirePermission(key: PermissionKey): Promise<CurrentUser> {
+  const user = await requireAdmin();
+  if (!hasPermission(user, key)) redirect("/admin?denied=" + key);
+  return user;
+}
+
+/** للـ Server Actions: يرمي خطأً برسالة واضحة بدل التحويل */
+export async function assertPermission(key: PermissionKey): Promise<CurrentUser> {
+  const user = await requireAdmin();
+  if (!hasPermission(user, key)) throw new Error(`ليست لديك صلاحية «${permissionLabel(key)}»`);
+  return user;
+}
+
+export async function assertSuperAdmin(): Promise<CurrentUser> {
+  const user = await requireAdmin();
+  if (!user.isSuperAdmin) throw new Error("هذا الإجراء للمدير العام فقط");
   return user;
 }

@@ -1,6 +1,7 @@
 import { AppShell } from "@/components/nav/app-shell";
-import { adminMobileNav, adminNav } from "@/components/nav/nav-config";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { adminMobileNav, adminNav, teamNavGroup, type NavItem } from "@/components/nav/nav-config";
+import { hasPermission, requireAdmin } from "@/lib/auth/current-user";
+import { ROLE_LABELS } from "@/lib/auth/permissions";
 
 // ما يكتبه الطلاب والمشرفون ويجب أن يظهر للإدارة فوراً
 const ADMIN_LIVE_TABLES = [
@@ -15,24 +16,24 @@ const ADMIN_LIVE_TABLES = [
   "alerts",
 ];
 
-const roleLabels: Record<string, string> = {
-  super_admin: "مدير عام",
-  admin: "إداري",
-};
-
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
+  // كل إداري يرى الأقسام المسموحة له فقط
+  const allowed = (item: NavItem) => !item.permission || hasPermission(user, item.permission);
+  const groups = [...adminNav, ...(user.isSuperAdmin ? [teamNavGroup] : [])]
+    .map((g) => ({ ...g, items: g.items.filter(allowed) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <AppShell
       homeHref="/admin"
       subtitle="لوحة الإدارة"
-      groups={adminNav}
-      mobileItems={adminMobileNav}
+      groups={groups}
+      mobileItems={adminMobileNav.filter(allowed)}
       notificationsHref="/admin/notifications"
-      searchStudents
+      searchStudents={hasPermission(user, "students")}
       liveTables={ADMIN_LIVE_TABLES}
-      user={{ fullName: user.fullName, avatarUrl: user.avatarUrl, roleLabel: roleLabels[user.role] ?? "إداري" }}
+      user={{ fullName: user.fullName, avatarUrl: user.avatarUrl, roleLabel: ROLE_LABELS[user.role] ?? "إداري" }}
     >
       {children}
     </AppShell>

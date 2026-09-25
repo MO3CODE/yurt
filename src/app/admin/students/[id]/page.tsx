@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditStudentForm } from "@/components/admin/edit-student-form";
 import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
 import { CalendarX, MessageSquareWarning, Trophy, Stethoscope } from "lucide-react";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function StudentDetailPage({ params }: PageProps<"/admin/students/[id]">) {
+  await requirePermission("students");
   const { id } = await params;
   const supabase = await createClient();
 

@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/lib/supabase/types";
 import { addDaysISO, todayISO } from "@/lib/date";
+import { requirePermission } from "@/lib/auth/current-user";
 
 const dotClass: Record<AttendanceStatus, string> = {
   present: "bg-success",
@@ -14,6 +15,7 @@ const dotClass: Record<AttendanceStatus, string> = {
 };
 
 export default async function AdminAttendancePage() {
+  await requirePermission("attendance");
   const supabase = await createClient();
 
   const sinceISO = addDaysISO(todayISO(), -6);

@@ -3,11 +3,11 @@
 import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { assertPermission } from "@/lib/auth/current-user";
 
 export async function resolveAlert(alertId: string) {
   return runAction(async () => {
-    const user = await requireAdmin();
+    const user = await assertPermission("alerts");
     const supabase = await createClient();
     const { error } = await supabase
       .from("alerts")
@@ -21,7 +21,7 @@ export async function resolveAlert(alertId: string) {
 // فحص بسيط: ٣ أيام غياب متتالية، أو ٣ أيام فوّت فيها صلاة الفجر، أو حالة صحية مستمرة بلا متابعة لأكثر من ٣ أيام
 export async function generateAlerts() {
   return runAction(async () => {
-    await requireAdmin();
+    await assertPermission("alerts");
     const supabase = await createClient();
 
     const { data: students } = await supabase.from("students").select("id, apartment_id").eq("status", "active");

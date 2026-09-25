@@ -6,8 +6,10 @@ import { AwardPointsDialog } from "@/components/admin/award-points-dialog";
 import { Trophy } from "lucide-react";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { monthStartISO } from "@/lib/date";
+import { requirePermission } from "@/lib/auth/current-user";
 
 export default async function AdminPointsPage() {
+  await requirePermission("points");
   const supabase = await createClient();
   const monthStart = monthStartISO();
 
