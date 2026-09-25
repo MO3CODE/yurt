@@ -27,7 +27,7 @@ export default async function ComplaintsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الشكاوى والمقترحات" description="قدّم شكوى أو مقترح وتابع حالته" action={<NewComplaintDialog />} />
 
       {complaints && complaints.length > 0 ? (

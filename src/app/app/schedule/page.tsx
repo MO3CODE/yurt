@@ -24,7 +24,7 @@ export default async function SchedulePage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="جدولي الجامعي" description="أدخل جدول محاضراتك الأسبوعي" action={<NewScheduleEntryDialog />} />
 
       <div className="grid gap-4 md:grid-cols-2">

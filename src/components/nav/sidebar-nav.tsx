@@ -2,26 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Users,
-  DoorOpen,
-  ClipboardCheck,
-  HandHeart,
-  BookOpen,
-  Stethoscope,
-  GraduationCap,
-  MessageSquareWarning,
-  SprayCan,
-  Building2,
-  Trophy,
-  BellRing,
-  Siren,
-  FileBarChart,
-  CalendarDays,
-  ListTodo,
-  type LucideIcon,
-} from "lucide-react";
+import { iconMap } from "@/components/nav/icons";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -29,30 +10,11 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import type { NavGroup, NavItem, IconName } from "@/components/nav/nav-config";
+import type { NavGroup, NavItem } from "@/components/nav/nav-config";
 
-const iconMap: Record<IconName, LucideIcon> = {
-  LayoutDashboard,
-  Users,
-  DoorOpen,
-  ClipboardCheck,
-  HandHeart,
-  BookOpen,
-  Stethoscope,
-  GraduationCap,
-  MessageSquareWarning,
-  SprayCan,
-  Building2,
-  Trophy,
-  BellRing,
-  Siren,
-  FileBarChart,
-  CalendarDays,
-  ListTodo,
-};
-
-function isActive(pathname: string, href: string) {
+export function isActive(pathname: string, href: string) {
   if (href === "/admin" || href === "/app") return pathname === href;
   return pathname === href || pathname.startsWith(href + "/");
 }
@@ -63,7 +25,7 @@ export function SidebarNavGroups({ groups }: { groups: NavGroup[] }) {
     <>
       {groups.map((group) => (
         <SidebarGroup key={group.label}>
-          <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[0.7rem] tracking-wide text-sidebar-foreground/50">{group.label}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {group.items.map((item) => (
@@ -94,9 +56,15 @@ export function SidebarNavFlat({ items }: { items: NavItem[] }) {
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   const Icon = iconMap[item.icon];
+  const { isMobile, setOpenMobile } = useSidebar();
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton render={<Link href={item.href} />} isActive={active} tooltip={item.title}>
+      <SidebarMenuButton
+        render={<Link href={item.href} onClick={() => isMobile && setOpenMobile(false)} />}
+        isActive={active}
+        tooltip={item.title}
+        className="relative h-9 transition-colors duration-200 before:absolute before:inset-y-2 before:start-0 before:w-[3px] before:scale-y-0 before:rounded-full before:bg-sidebar-primary before:transition-transform before:duration-300 data-active:before:scale-y-100 data-active:[&_svg]:text-sidebar-primary group-data-[collapsible=icon]:before:hidden"
+      >
         <Icon />
         <span>{item.title}</span>
       </SidebarMenuButton>

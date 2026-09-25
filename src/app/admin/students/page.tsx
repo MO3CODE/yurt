@@ -28,7 +28,7 @@ export default async function StudentsPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader
         title="الطلاب"
         description="كل طلاب السكن وبياناتهم"

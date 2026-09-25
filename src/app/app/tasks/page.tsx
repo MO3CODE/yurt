@@ -17,7 +17,7 @@ export default async function TasksPage() {
     .order("due_date", { ascending: true, nullsFirst: false });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="مهامي" description="قائمة مهامك الشخصية" action={<NewTaskDialog />} />
       <Card>
         <CardContent>

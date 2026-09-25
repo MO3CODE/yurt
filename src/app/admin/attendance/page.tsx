@@ -31,7 +31,7 @@ export default async function AdminAttendancePage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الحضور الجامعي" description="آخر ٧ أيام لكل الطلاب" />
       <Card>
         <CardContent>

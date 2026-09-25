@@ -45,7 +45,7 @@ export default async function SupervisorApartmentPage() {
   const attendanceByStudent = new Map((attendance ?? []).map((a) => [a.student_id, a.status]));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title={`إدارة شقتك — ${apartment?.name ?? ""}`} description="صلاحياتك كمشرف على الشقة" />
 
       <Tabs defaultValue="attendance">

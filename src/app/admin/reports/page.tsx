@@ -22,7 +22,7 @@ export default async function ReportsPage() {
     .order("full_name");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader
         title="التقارير"
         description="تقرير شامل لكل الطلاب — جاهز للطباعة أو التصدير كـ PDF لتقديمه للجهة المانحة"

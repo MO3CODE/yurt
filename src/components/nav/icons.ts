@@ -1,0 +1,42 @@
+import {
+  LayoutDashboard,
+  Users,
+  DoorOpen,
+  ClipboardCheck,
+  HandHeart,
+  BookOpen,
+  Stethoscope,
+  GraduationCap,
+  MessageSquareWarning,
+  SprayCan,
+  Building2,
+  Trophy,
+  BellRing,
+  Siren,
+  FileBarChart,
+  CalendarDays,
+  ListTodo,
+  type LucideIcon,
+} from "lucide-react";
+import type { IconName } from "@/components/nav/nav-config";
+
+// خريطة أسماء الأيقونات إلى مكوّناتها (انظر الملاحظة في nav-config.ts)
+export const iconMap: Record<IconName, LucideIcon> = {
+  LayoutDashboard,
+  Users,
+  DoorOpen,
+  ClipboardCheck,
+  HandHeart,
+  BookOpen,
+  Stethoscope,
+  GraduationCap,
+  MessageSquareWarning,
+  SprayCan,
+  Building2,
+  Trophy,
+  BellRing,
+  Siren,
+  FileBarChart,
+  CalendarDays,
+  ListTodo,
+};

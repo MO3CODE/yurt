@@ -15,7 +15,7 @@ export default async function HealthPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="حالتي الصحية" description="سجّل أي وعكة صحية لمتابعتها" action={<NewHealthRecordDialog />} />
       <HealthRecordList records={records ?? []} />
     </div>

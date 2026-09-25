@@ -98,3 +98,18 @@ export const supervisorNavItem: NavItem = {
   href: "/app/apartment",
   icon: "Building2",
 };
+
+// الشريط السفلي في الجوال: أكثر الصفحات استخداماً يومياً بعناوين قصيرة
+export const studentMobileNav: NavItem[] = [
+  { title: "الرئيسية", href: "/app", icon: "LayoutDashboard" },
+  { title: "الصلوات", href: "/app/prayers", icon: "HandHeart" },
+  { title: "الورد", href: "/app/quran", icon: "BookOpen" },
+  { title: "مهامي", href: "/app/tasks", icon: "ListTodo" },
+];
+
+export const adminMobileNav: NavItem[] = [
+  { title: "الرئيسية", href: "/admin", icon: "LayoutDashboard" },
+  { title: "الطلاب", href: "/admin/students", icon: "Users" },
+  { title: "الحضور", href: "/admin/attendance", icon: "ClipboardCheck" },
+  { title: "الشكاوى", href: "/admin/complaints", icon: "MessageSquareWarning" },
+];

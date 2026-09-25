@@ -17,7 +17,7 @@ export default async function ApartmentsPage() {
     .order("floor_number");
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader
         title="الشقق"
         description="كل طابق شقة، ولها مشرف من الطلاب"

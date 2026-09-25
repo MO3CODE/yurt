@@ -37,7 +37,7 @@ export default async function AttendancePage() {
   const history = (records ?? []).filter((r) => r.record_date !== today);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الحضور الجامعي" description="سجّل حضورك اليوم" />
 
       <Card>

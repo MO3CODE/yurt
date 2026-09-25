@@ -28,7 +28,7 @@ export default async function StudentPointsPage() {
   const total = (entries ?? []).reduce((sum, e) => sum + e.points, 0);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="نقاطي" description="نقاطك مقابل التزامك اليومي" />
 
       <StatCard label="مجموع النقاط" value={total} icon={Trophy} tone="success" />

@@ -17,7 +17,7 @@ export default async function StudentNotificationsPage() {
   const readIds = new Set((reads ?? []).map((r) => r.notification_id));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الإشعارات" description="كل الإشعارات الموجّهة لك" />
 
       {notifications && notifications.length > 0 ? (

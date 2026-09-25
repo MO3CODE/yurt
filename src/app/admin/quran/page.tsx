@@ -24,7 +24,7 @@ export default async function AdminQuranPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الورد القرآني" description="نشاط آخر ٧ أيام" />
       <Card>
         <CardContent>

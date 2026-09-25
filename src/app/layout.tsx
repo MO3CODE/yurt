@@ -1,15 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Noto_Sans_Arabic } from "next/font/google";
+import { Geist_Mono, Readex_Pro, Reem_Kufi } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RegisterServiceWorker } from "@/components/register-service-worker";
 import "./globals.css";
 
-const notoSansArabic = Noto_Sans_Arabic({
+// Readex Pro للنص: واضح ومريح على الشاشات الصغيرة
+const readexPro = Readex_Pro({
   variable: "--font-arabic",
-  subsets: ["arabic"],
-  weight: ["400", "500", "600", "700", "800"],
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+// Reem Kufi للعناوين: كوفي هندسي حديث يعطي المنصة هويتها
+const reemKufi = Reem_Kufi({
+  variable: "--font-display",
+  subsets: ["arabic", "latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -33,8 +41,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafcfc" },
-    { media: "(prefers-color-scheme: dark)", color: "#1b262e" },
+    { media: "(prefers-color-scheme: light)", color: "#faf7f0" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1f21" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -47,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ar"
       dir="rtl"
       suppressHydrationWarning
-      className={`${notoSansArabic.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${readexPro.variable} ${reemKufi.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider

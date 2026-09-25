@@ -31,7 +31,7 @@ export default async function AcademicSupportPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader
         title="الدعم الأكاديمي"
         description="اطلب تقوية دراسية بأي مادة"

@@ -32,7 +32,7 @@ export default async function ApartmentDetailPage({ params }: PageProps<"/admin/
     .limit(5);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title={apartment.name} description={`طابق ${apartment.floor_number} — السعة ${apartment.capacity} طلاب`} />
 
       <Card>

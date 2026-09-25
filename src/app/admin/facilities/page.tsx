@@ -18,7 +18,7 @@ export default async function FacilitiesPage() {
   ]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader
         title="المرافق"
         description="المصلى، الديوانية، الحوش، المصاعد، الدرج وغيرها"

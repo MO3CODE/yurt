@@ -21,7 +21,7 @@ export default async function CleaningPage() {
   const assignmentByTask = new Map((assignments ?? []).map((a) => [a.task_id, a]));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader
         title="جدول النظافة"
         description={`أسبوع ${weekStart}`}

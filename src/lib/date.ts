@@ -25,6 +25,37 @@ export function monthStartISO(date = todayISO()): string {
   return `${date.slice(0, 7)}-01`;
 }
 
+/** التاريخ الهجري (أم القرى) مثل «٣ ربيع الآخر ١٤٤٨ هـ» */
+export function hijriDate(date = new Date()): string {
+  return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-arab", {
+    timeZone: APP_TIMEZONE,
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+/** التاريخ الميلادي الطويل مثل «الجمعة، ٢٥ سبتمبر» */
+export function longDate(date = new Date()): string {
+  return new Intl.DateTimeFormat("ar-u-nu-arab", {
+    timeZone: APP_TIMEZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(date);
+}
+
+/** تحية حسب ساعة اليوم بتوقيت المنصة */
+export function greeting(date = new Date()): string {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: APP_TIMEZONE, hour: "numeric", hourCycle: "h23" }).format(date)
+  );
+  if (hour < 5) return "طابت ليلتك";
+  if (hour < 12) return "صباح الخير";
+  if (hour < 17) return "نهارك سعيد";
+  return "مساء الخير";
+}
+
 export function formatDateTime(iso: string): string {
   return new Intl.DateTimeFormat("ar", {
     timeZone: APP_TIMEZONE,

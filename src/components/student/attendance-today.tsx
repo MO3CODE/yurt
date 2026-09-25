@@ -1,21 +1,31 @@
 "use client";
 
-import { useTransition } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useOptimistic, useTransition } from "react";
+import { CircleCheck, Clock3, FileText, CircleX, type LucideIcon } from "lucide-react";
 import { logAttendance } from "@/app/app/attendance/actions";
 import type { AttendanceStatus } from "@/lib/supabase/types";
 import { toast } from "sonner";
 import { unwrap } from "@/lib/unwrap";
+import { cn } from "@/lib/utils";
+
+const OPTIONS: { value: AttendanceStatus; label: string; icon: LucideIcon; active: string }[] = [
+  { value: "present", label: "حاضر", icon: CircleCheck, active: "border-success/40 bg-success/10 text-success" },
+  { value: "late", label: "متأخر", icon: Clock3, active: "border-warning/50 bg-warning/12 text-warning-foreground dark:text-warning" },
+  { value: "excused", label: "بعذر", icon: FileText, active: "border-primary/40 bg-primary/10 text-primary" },
+  { value: "absent", label: "غائب", icon: CircleX, active: "border-destructive/40 bg-destructive/10 text-destructive" },
+];
 
 export function AttendanceToday({ date, status }: { date: string; status?: AttendanceStatus }) {
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const [optimistic, setOptimistic] = useOptimistic(status);
 
-  function handleChange(groupValue: string[]) {
-    const value = groupValue[0];
-    if (!value) return;
+  function choose(value: AttendanceStatus) {
+    if (value === optimistic) return;
     startTransition(async () => {
+      setOptimistic(value);
       try {
-        await unwrap(logAttendance(date, value as AttendanceStatus));
+        await unwrap(logAttendance(date, value));
+        toast.success("تم تسجيل حضورك");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "تعذّر تسجيل الحضور");
       }
@@ -23,11 +33,27 @@ export function AttendanceToday({ date, status }: { date: string; status?: Atten
   }
 
   return (
-    <ToggleGroup value={status ? [status] : []} onValueChange={handleChange} disabled={isPending} className="flex-wrap">
-      <ToggleGroupItem value="present">حاضر</ToggleGroupItem>
-      <ToggleGroupItem value="late">متأخر</ToggleGroupItem>
-      <ToggleGroupItem value="excused">غياب بعذر</ToggleGroupItem>
-      <ToggleGroupItem value="absent">غائب</ToggleGroupItem>
-    </ToggleGroup>
+    <div role="radiogroup" aria-label="حضورك اليوم" className="grid grid-cols-4 gap-2">
+      {OPTIONS.map((o) => {
+        const selected = optimistic === o.value;
+        const Icon = o.icon;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => choose(o.value)}
+            className={cn(
+              "flex flex-col items-center gap-1.5 rounded-xl border px-1 py-3 text-xs font-medium transition-all duration-200 active:scale-95",
+              selected ? cn(o.active, "animate-pop") : "border-border bg-card text-muted-foreground hover:border-primary/25 hover:text-foreground"
+            )}
+          >
+            <Icon className="size-5" />
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

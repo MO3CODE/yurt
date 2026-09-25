@@ -15,7 +15,7 @@ export default async function AdminHealthPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="السجل الصحي" description="متابعة الحالات الصحية لكل الطلاب" />
 
       {records && records.length > 0 ? (

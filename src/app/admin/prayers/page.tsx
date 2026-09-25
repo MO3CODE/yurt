@@ -23,7 +23,7 @@ export default async function AdminPrayersPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الصلوات" description="نسبة الالتزام بالصلاة آخر ٧ أيام (من ٣٥ صلاة)" />
       <Card>
         <CardContent>

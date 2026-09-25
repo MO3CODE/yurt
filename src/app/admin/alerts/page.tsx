@@ -17,7 +17,7 @@ export default async function AlertsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="تنبيهات تستدعي الانتباه" description="حالات تحتاج متابعة من الإدارة" action={<GenerateAlertsButton />} />
 
       {alerts && alerts.length > 0 ? (

@@ -23,7 +23,7 @@ export default async function QuranPage() {
   const history = (logs ?? []).filter((l) => l.record_date !== today);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الورد القرآني" description="سجّل وردك اليومي من القرآن" />
 
       <Card>

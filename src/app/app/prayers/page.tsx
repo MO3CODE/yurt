@@ -39,7 +39,7 @@ export default async function PrayersPage() {
   const days = Array.from(byDate.keys()).filter((d) => d !== today).sort((a, b) => (a < b ? 1 : -1));
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="stagger flex flex-col gap-6">
       <PageHeader title="الصلوات" description="سجّل صلواتك الخمس يومياً" />
 
       <Card>
