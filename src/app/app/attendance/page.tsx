@@ -28,7 +28,7 @@ export default async function AttendancePage() {
 
   const { data: records } = await supabase
     .from("attendance_records")
-    .select("record_date, status")
+    .select("record_date, status, source")
     .eq("student_id", user.id)
     .order("record_date", { ascending: false })
     .limit(14);
@@ -45,7 +45,7 @@ export default async function AttendancePage() {
           <CardTitle>اليوم</CardTitle>
         </CardHeader>
         <CardContent>
-          <AttendanceToday date={today} status={todayRecord?.status} />
+          <AttendanceToday date={today} status={todayRecord?.status} locked={!!todayRecord && todayRecord.source !== "self"} />
         </CardContent>
       </Card>
 

@@ -67,6 +67,12 @@ export default async function AcademicSupportPage() {
                 </div>
                 {r.description && <p className="text-sm text-muted-foreground">{r.description}</p>}
                 {r.assigned_to_name && <p className="text-sm">المتابع: {r.assigned_to_name}</p>}
+                {r.admin_notes && (
+                  <p className="rounded-lg bg-muted/60 p-2.5 text-sm">
+                    <span className="font-medium">ملاحظة الإدارة: </span>
+                    {r.admin_notes}
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}

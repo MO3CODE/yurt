@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { NewComplaintDialog } from "@/components/student/new-complaint-dialog";
+import { ReportFacilityIssueDialog } from "@/components/admin/report-facility-issue-dialog";
 import { MessageSquareWarning } from "lucide-react";
 
 const statusLabels: Record<string, string> = {
@@ -20,15 +21,23 @@ export default async function ComplaintsPage() {
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: complaints } = await supabase
-    .from("complaints")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at", { ascending: false });
+  const [{ data: complaints }, { data: facilities }] = await Promise.all([
+    supabase.from("complaints").select("*").eq("student_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("facilities").select("id, name").order("name"),
+  ]);
 
   return (
     <div className="stagger flex flex-col gap-6">
-      <PageHeader title="الشكاوى والمقترحات" description="قدّم شكوى أو مقترح وتابع حالته" action={<NewComplaintDialog />} />
+      <PageHeader
+        title="الشكاوى والمقترحات"
+        description="قدّم شكوى أو مقترح وتابع حالته، أو بلّغ عن عطل في مرفق"
+        action={
+          <>
+            {facilities && facilities.length > 0 && <ReportFacilityIssueDialog facilities={facilities} />}
+            <NewComplaintDialog />
+          </>
+        }
+      />
 
       {complaints && complaints.length > 0 ? (
         <div className="flex flex-col gap-3">

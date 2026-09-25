@@ -17,6 +17,7 @@ import { CommandMenu } from "@/components/nav/command-menu";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/nav/user-menu";
+import { LiveSync } from "@/components/live-sync";
 import type { NavGroup, NavItem } from "@/components/nav/nav-config";
 import { hijriDate, longDate } from "@/lib/date";
 
@@ -28,6 +29,7 @@ export function AppShell({
   notificationsHref,
   unreadNotifications = 0,
   searchStudents = false,
+  liveTables,
   user,
   children,
 }: {
@@ -38,6 +40,8 @@ export function AppShell({
   notificationsHref: string;
   unreadNotifications?: number;
   searchStudents?: boolean;
+  /** الجداول التي يُعاد تحميل الصفحة عند تغيّرها (مزامنة بين الطالب والإدارة) */
+  liveTables: string[];
   user: { fullName: string; avatarUrl: string | null; roleLabel: string };
   children: React.ReactNode;
 }) {
@@ -103,6 +107,7 @@ export function AppShell({
       </SidebarInset>
 
       <MobileNav items={mobileItems} />
+      <LiveSync tables={liveTables} />
     </SidebarProvider>
   );
 }

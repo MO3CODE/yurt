@@ -3,6 +3,18 @@ import { studentMobileNav, studentNav, supervisorNavItem } from "@/components/na
 import { requireUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 
+// ما تكتبه الإدارة أو المشرف ويجب أن يظهر للطالب فوراً
+const STUDENT_LIVE_TABLES = [
+  "notifications",
+  "points_entries",
+  "complaints",
+  "academic_support_requests",
+  "attendance_records",
+  "cleaning_assignments",
+  "cleaning_tasks",
+  "students",
+];
+
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const items = user.supervisedApartmentId ? [...studentNav, supervisorNavItem] : studentNav;
@@ -24,6 +36,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
       mobileItems={studentMobileNav}
       notificationsHref="/app/notifications"
       unreadNotifications={unread}
+      liveTables={STUDENT_LIVE_TABLES}
       user={{ fullName: user.fullName, avatarUrl: user.avatarUrl, roleLabel: user.supervisedApartmentId ? "طالب · مشرف شقة" : "طالب" }}
     >
       {children}

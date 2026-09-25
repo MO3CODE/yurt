@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { PrayerTracker } from "@/components/student/prayer-tracker";
 import { AttendanceToday } from "@/components/student/attendance-today";
 import { TaskList } from "@/components/student/task-list";
-import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft, Coffee } from "lucide-react";
-import { todayISO, dayOfWeekISO, greeting, hijriDate, longDate } from "@/lib/date";
+import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft, Coffee, SprayCan, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { todayISO, dayOfWeekISO, greeting, hijriDate, longDate, weekStartISO } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
 
 export default async function StudentHomePage() {
@@ -28,9 +29,10 @@ export default async function StudentHomePage() {
     { data: notificationRows },
     { data: readRows },
     { data: wirdToday },
+    { data: myCleaning },
   ] = await Promise.all([
     supabase.from("prayer_records").select("prayer, status").eq("student_id", user.id).eq("record_date", today),
-    supabase.from("attendance_records").select("status").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
+    supabase.from("attendance_records").select("status, source").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
     supabase.from("tasks").select("*").eq("student_id", user.id).eq("status", "pending").order("due_date", { ascending: true }).limit(5),
     supabase
       .from("class_schedule_entries")
@@ -42,6 +44,11 @@ export default async function StudentHomePage() {
     supabase.from("notifications").select("id"),
     supabase.from("notification_reads").select("notification_id").eq("profile_id", user.id),
     supabase.from("quran_wird_logs").select("pages").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
+    supabase
+      .from("cleaning_assignments")
+      .select("id, status, task:cleaning_tasks!cleaning_assignments_task_id_fkey(name)")
+      .eq("student_id", user.id)
+      .eq("week_start_date", weekStartISO(today)),
   ]);
 
   const prayerValues: Partial<Record<PrayerName, PrayerStatus>> = {};
@@ -141,7 +148,47 @@ export default async function StudentHomePage() {
               <CardTitle>حضورك الجامعي اليوم</CardTitle>
             </CardHeader>
             <CardContent>
-              <AttendanceToday date={today} status={attendanceRow?.status} />
+              <AttendanceToday date={today} status={attendanceRow?.status} locked={!!attendanceRow && attendanceRow.source !== "self"} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>مهمتك في النظافة هذا الأسبوع</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {myCleaning && myCleaning.length > 0 ? (
+                <ul className="flex flex-col gap-2">
+                  {myCleaning.map((a) => {
+                    const taskName = (a.task as unknown as { name: string } | null)?.name ?? "مهمة نظافة";
+                    return (
+                      <li
+                        key={a.id}
+                        className={cn(
+                          "flex items-center justify-between gap-2 rounded-xl border p-2.5",
+                          a.status === "done" && "border-success/30 bg-success/[0.05]",
+                          a.status === "missed" && "border-destructive/30 bg-destructive/[0.04]"
+                        )}
+                      >
+                        <span className="flex items-center gap-2 font-medium">
+                          <SprayCan className="size-4 text-primary" /> {taskName}
+                        </span>
+                        <span
+                          className={cn(
+                            "flex items-center gap-1 text-xs font-medium",
+                            a.status === "done" ? "text-success" : a.status === "missed" ? "text-destructive" : "text-muted-foreground"
+                          )}
+                        >
+                          {a.status === "done" ? <Check className="size-3.5" /> : a.status === "missed" ? <X className="size-3.5" /> : null}
+                          {a.status === "done" ? "تمّت" : a.status === "missed" ? "لم تُنفَّذ" : "بانتظار التنفيذ"}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="py-2 text-center text-sm text-muted-foreground">لا توجد مهمة نظافة عليك هذا الأسبوع</p>
+              )}
             </CardContent>
           </Card>
 

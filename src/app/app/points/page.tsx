@@ -18,14 +18,18 @@ export default async function StudentPointsPage() {
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: entries } = await supabase
-    .from("points_entries")
-    .select("*")
-    .eq("student_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(30);
+  // السجل يعرض آخر ٣٠ فقط، أما المجموع فمن كل الإدخالات (ليطابق لوحة الطالب)
+  const [{ data: entries }, { data: allPoints }] = await Promise.all([
+    supabase
+      .from("points_entries")
+      .select("*")
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase.from("points_entries").select("points").eq("student_id", user.id),
+  ]);
 
-  const total = (entries ?? []).reduce((sum, e) => sum + e.points, 0);
+  const total = (allPoints ?? []).reduce((sum, e) => sum + e.points, 0);
 
   return (
     <div className="stagger flex flex-col gap-6">

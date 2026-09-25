@@ -152,7 +152,16 @@ export async function updateStudent(studentId: string, formData: FormData) {
       .eq("id", studentId);
 
     if (error) throw new Error(error.message);
+
+    // المشرف الذي نُقل لشقة أخرى أو لم يعد نشطاً يفقد إشرافه على الشقة القديمة
+    // (وإلا تبقى له صلاحيات RLS على طلابها)
+    let supervision = supabase.from("apartments").update({ supervisor_id: null }).eq("supervisor_id", studentId);
+    if (parsed.status === "active" && parsed.apartment_id) supervision = supervision.neq("id", parsed.apartment_id);
+    const { error: supervisionError } = await supervision;
+    if (supervisionError) throw new Error(supervisionError.message);
+
     revalidatePath(`/admin/students/${studentId}`);
     revalidatePath("/admin/students");
+    revalidatePath("/admin/apartments", "layout");
   });
 }

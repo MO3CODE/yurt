@@ -40,7 +40,8 @@ export default async function AdminPrayersPage() {
                 const fullName = (s.profiles as unknown as { full_name: string })?.full_name ?? "—";
                 const apartment = s.apartment as unknown as { name: string } | null;
                 const stat = stats.get(s.id);
-                const pct = stat && stat.total > 0 ? Math.round((stat.good / stat.total) * 100) : null;
+                // من ٣٥ صلاة (٧ أيام × ٥) — الصلاة غير المسجّلة تُحسب غير مؤدّاة
+                const pct = stat && stat.total > 0 ? Math.round((stat.good / 35) * 100) : null;
                 return (
                   <TableRow key={s.id}>
                     <TableCell className="font-medium">{fullName}</TableCell>

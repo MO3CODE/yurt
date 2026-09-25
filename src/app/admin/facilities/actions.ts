@@ -47,6 +47,7 @@ export async function reportFacilityIssue(formData: FormData) {
     const { error } = await supabase.from("facility_issues").insert({ ...parsed, reported_by: user.id });
     if (error) throw new Error(error.message);
     revalidatePath("/admin/facilities");
+    revalidatePath("/app/complaints");
   });
 }
 

@@ -13,7 +13,7 @@ async function requireSupervisor() {
 }
 
 const complaintSchema = z.object({
-  status: z.enum(["new", "triaged", "in_progress", "escalated", "resolved"]),
+  status: z.enum(["new", "triaged", "in_progress", "escalated", "resolved", "rejected"]),
   supervisor_response: z.string().optional(),
 });
 
@@ -31,7 +31,9 @@ export async function updateComplaintAsSupervisor(complaintId: string, formData:
       .update({
         status: parsed.status,
         supervisor_response: parsed.supervisor_response,
-        escalated_at: parsed.status === "escalated" ? new Date().toISOString() : null,
+        // نحفظ تاريخ التصعيد/الحل عند الوصول للحالة فقط، ولا نمسح تاريخاً سابقاً
+        ...(parsed.status === "escalated" && { escalated_at: new Date().toISOString() }),
+        ...(parsed.status === "resolved" && { resolved_at: new Date().toISOString() }),
       })
       .eq("id", complaintId);
 

@@ -11,6 +11,15 @@ export async function logAttendance(recordDate: string, status: AttendanceStatus
     const user = await requireUser();
     const supabase = await createClient();
 
+    // لا يعدّل الطالب يوماً سجّله أو اعتمده المشرف/الإدارة
+    const { data: existing } = await supabase
+      .from("attendance_records")
+      .select("source")
+      .eq("student_id", user.id)
+      .eq("record_date", recordDate)
+      .maybeSingle();
+    if (existing && existing.source !== "self") throw new Error("حضورك لهذا اليوم معتمد من المشرف ولا يمكن تعديله");
+
     const { error } = await supabase.from("attendance_records").upsert(
       {
         student_id: user.id,
