@@ -17,6 +17,7 @@ import {
   CalendarDays,
   ListTodo,
   ShieldCheck,
+  History,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/components/nav/nav-config";
@@ -24,6 +25,7 @@ import type { IconName } from "@/components/nav/nav-config";
 // خريطة أسماء الأيقونات إلى مكوّناتها (انظر الملاحظة في nav-config.ts)
 export const iconMap: Record<IconName, LucideIcon> = {
   ShieldCheck,
+  History,
   LayoutDashboard,
   Users,
   DoorOpen,

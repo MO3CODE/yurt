@@ -1,7 +1,3 @@
-// أنواع TypeScript مولّدة تلقائياً من مشروع Supabase الحقيقي (hnxhtjbprgsmndfsvent)
-// عبر: npx supabase gen types typescript --project-id hnxhtjbprgsmndfsvent
-// لا تُعدّلها يدوياً — أعد توليدها بعد أي تغيير في supabase/migrations/*.sql
-
 export type Json =
   | string
   | number
@@ -274,6 +270,44 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          changes: Json | null
+          created_at: string
+          id: number
+          record_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          id?: never
+          record_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          id?: never
+          record_id?: string | null
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -958,8 +992,7 @@ export type Database = {
           manage_facilities: boolean
           manage_religious: boolean
           manage_reports: boolean
-          /** migration 0007 — اختياري حتى تطبيقه */
-          permissions?: string[]
+          permissions: string[]
           phone: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string
@@ -973,7 +1006,6 @@ export type Database = {
           manage_facilities?: boolean
           manage_religious?: boolean
           manage_reports?: boolean
-          /** migration 0007 — اختياري حتى تطبيقه */
           permissions?: string[]
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -988,7 +1020,6 @@ export type Database = {
           manage_facilities?: boolean
           manage_religious?: boolean
           manage_reports?: boolean
-          /** migration 0007 — اختياري حتى تطبيقه */
           permissions?: string[]
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -1305,6 +1336,7 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      has_permission: { Args: { p: string }; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_apartment_supervisor: { Args: { apt_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }

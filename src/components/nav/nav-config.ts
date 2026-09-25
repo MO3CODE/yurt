@@ -7,6 +7,7 @@ import type { PermissionKey } from "@/lib/auth/permissions";
 
 export type IconName =
   | "ShieldCheck"
+  | "History"
   | "LayoutDashboard"
   | "Users"
   | "DoorOpen"
@@ -122,5 +123,8 @@ export const adminMobileNav: NavItem[] = [
 // تظهر للمدير العام فقط
 export const teamNavGroup: NavGroup = {
   label: "الإدارة",
-  items: [{ title: "الفريق والصلاحيات", href: "/admin/team", icon: "ShieldCheck" }],
+  items: [
+    { title: "الفريق والصلاحيات", href: "/admin/team", icon: "ShieldCheck" },
+    { title: "سجل النشاط", href: "/admin/activity", icon: "History" },
+  ],
 };
