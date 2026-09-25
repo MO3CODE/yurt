@@ -6,6 +6,7 @@ import { logPrayer } from "@/app/app/prayers/actions";
 import { prayerLabel } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 import { cn } from "@/lib/utils";
 
 const PRAYERS: PrayerName[] = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
@@ -34,9 +35,9 @@ function PrayerRow({ date, prayer, status }: { date: string; prayer: PrayerName;
     if (!value) return;
     startTransition(async () => {
       try {
-        await logPrayer(date, prayer, value as PrayerStatus);
-      } catch {
-        toast.error("تعذّر تسجيل الصلاة");
+        await unwrap(logPrayer(date, prayer, value as PrayerStatus));
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر تسجيل الصلاة");
       }
     });
   }

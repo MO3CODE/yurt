@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { updateApartmentSupervisor } from "@/app/admin/apartments/actions";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 
 export function SupervisorSelect({
   apartmentId,
@@ -20,10 +21,10 @@ export function SupervisorSelect({
     if (!value) return;
     startTransition(async () => {
       try {
-        await updateApartmentSupervisor(apartmentId, value === "none" ? null : value);
+        await unwrap(updateApartmentSupervisor(apartmentId, value === "none" ? null : value));
         toast.success("تم تحديث المشرف");
-      } catch {
-        toast.error("تعذّر تحديث المشرف");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر تحديث المشرف");
       }
     });
   }

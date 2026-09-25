@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { logWird } from "@/app/app/quran/actions";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 
 export function WirdForm({
   date,
@@ -23,10 +24,10 @@ export function WirdForm({
     formData.set("record_date", date);
     startTransition(async () => {
       try {
-        await logWird(formData);
+        await unwrap(logWird(formData));
         toast.success("تم حفظ الورد");
-      } catch {
-        toast.error("تعذّر الحفظ");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر الحفظ");
       }
     });
   }

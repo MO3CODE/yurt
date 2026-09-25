@@ -1,5 +1,6 @@
 "use server";
 
+import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -13,16 +14,18 @@ const schema = z.object({
 });
 
 export async function awardPoints(formData: FormData) {
-  const user = await requireAdmin();
-  const parsed = schema.parse({
-    student_id: formData.get("student_id"),
-    category: formData.get("category"),
-    points: formData.get("points"),
-    reason: formData.get("reason") || undefined,
-  });
+  return runAction(async () => {
+    const user = await requireAdmin();
+    const parsed = schema.parse({
+      student_id: formData.get("student_id"),
+      category: formData.get("category"),
+      points: formData.get("points"),
+      reason: formData.get("reason") || undefined,
+    });
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("points_entries").insert({ ...parsed, created_by: user.id });
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/points");
+    const supabase = await createClient();
+    const { error } = await supabase.from("points_entries").insert({ ...parsed, created_by: user.id });
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/points");
+  });
 }

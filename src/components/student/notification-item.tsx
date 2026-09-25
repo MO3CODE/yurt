@@ -4,7 +4,9 @@ import { useTransition, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { markNotificationRead } from "@/app/app/notifications/actions";
+import { toastOnError } from "@/lib/unwrap";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/date";
 
 export function NotificationItem({
   id,
@@ -23,7 +25,7 @@ export function NotificationItem({
 
   useEffect(() => {
     if (!isRead) {
-      startTransition(() => markNotificationRead(id));
+      startTransition(async () => { await toastOnError(markNotificationRead(id)); });
     }
   }, [id, isRead]);
 
@@ -35,7 +37,7 @@ export function NotificationItem({
           {!isRead && <Badge>جديد</Badge>}
         </div>
         <p className="text-sm text-muted-foreground">{body}</p>
-        <span className="text-xs text-muted-foreground">{new Date(createdAt).toLocaleString("ar")}</span>
+        <span className="text-xs text-muted-foreground">{formatDateTime(createdAt)}</span>
       </CardContent>
     </Card>
   );

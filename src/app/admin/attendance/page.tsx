@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { AttendanceStatus } from "@/lib/supabase/types";
+import { addDaysISO, todayISO } from "@/lib/date";
 
 const dotClass: Record<AttendanceStatus, string> = {
   present: "bg-success",
@@ -15,14 +16,8 @@ const dotClass: Record<AttendanceStatus, string> = {
 export default async function AdminAttendancePage() {
   const supabase = await createClient();
 
-  const since = new Date();
-  since.setDate(since.getDate() - 6);
-  const sinceISO = since.toISOString().slice(0, 10);
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(since);
-    d.setDate(d.getDate() + i);
-    return d.toISOString().slice(0, 10);
-  }).reverse();
+  const sinceISO = addDaysISO(todayISO(), -6);
+  const days = Array.from({ length: 7 }, (_, i) => addDaysISO(sinceISO, i)).reverse();
 
   const [{ data: students }, { data: records }] = await Promise.all([
     supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),

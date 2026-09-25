@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
+import type { ActionResult } from "@/lib/action-result";
 
 const statusLabels: Record<string, string> = {
   new: "جديدة",
@@ -39,17 +41,17 @@ export function ComplaintCard({
   apartmentName?: string;
   statusOptions: string[];
   responseFieldName: "admin_response" | "supervisor_response";
-  onSave: (complaintId: string, formData: FormData) => Promise<void>;
+  onSave: (complaintId: string, formData: FormData) => Promise<ActionResult>;
 }) {
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       try {
-        await onSave(complaint.id, formData);
+        await unwrap(onSave(complaint.id, formData));
         toast.success("تم الحفظ");
-      } catch {
-        toast.error("تعذّر الحفظ");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر الحفظ");
       }
     });
   }

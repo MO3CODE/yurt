@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PrayerTracker } from "@/components/student/prayer-tracker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { todayISO, prayerLabel } from "@/lib/date";
+import { addDaysISO, todayISO, prayerLabel } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -21,9 +21,7 @@ export default async function PrayersPage() {
   const supabase = await createClient();
   const today = todayISO();
 
-  const since = new Date();
-  since.setDate(since.getDate() - 13);
-  const sinceISO = since.toISOString().slice(0, 10);
+  const sinceISO = addDaysISO(today, -13);
 
   const { data: records } = await supabase
     .from("prayer_records")

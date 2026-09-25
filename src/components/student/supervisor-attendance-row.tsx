@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { setAttendanceAsSupervisor } from "@/app/app/apartment/actions";
 import type { AttendanceStatus } from "@/lib/supabase/types";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 
 export function SupervisorAttendanceRow({
   studentId,
@@ -28,9 +29,9 @@ export function SupervisorAttendanceRow({
     formData.set("status", value);
     startTransition(async () => {
       try {
-        await setAttendanceAsSupervisor(formData);
-      } catch {
-        toast.error("تعذّر التسجيل");
+        await unwrap(setAttendanceAsSupervisor(formData));
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر التسجيل");
       }
     });
   }

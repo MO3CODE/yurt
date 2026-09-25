@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { markRecovered } from "@/app/app/health/actions";
+import { toastOnError } from "@/lib/unwrap";
 
 const severityLabels: Record<string, string> = { mild: "بسيطة", moderate: "متوسطة", severe: "شديدة" };
 
@@ -43,7 +44,7 @@ function HealthRow({ record }: { record: HealthRecordItem }) {
         {record.status === "ongoing" ? (
           <div className="flex items-center gap-2">
             <Badge variant="outline">مستمرة</Badge>
-            <Button size="sm" variant="secondary" disabled={isPending} onClick={() => startTransition(() => markRecovered(record.id))}>
+            <Button size="sm" variant="secondary" disabled={isPending} onClick={() => startTransition(async () => { await toastOnError(markRecovered(record.id)); })}>
               تعافيت
             </Button>
           </div>

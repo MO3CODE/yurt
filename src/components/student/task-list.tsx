@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toggleTask, deleteTask } from "@/app/app/tasks/actions";
+import { toastOnError } from "@/lib/unwrap";
 import { cn } from "@/lib/utils";
 
 type Task = {
@@ -37,7 +38,7 @@ function TaskRow({ task }: { task: Task }) {
       <Checkbox
         checked={task.status === "done"}
         disabled={isPending}
-        onCheckedChange={(checked) => startTransition(() => toggleTask(task.id, checked === true))}
+        onCheckedChange={(checked) => startTransition(async () => { await toastOnError(toggleTask(task.id, checked === true)); })}
       />
       <div className="flex flex-1 flex-col">
         <span className={cn("font-medium", task.status === "done" && "text-muted-foreground line-through")}>
@@ -50,7 +51,7 @@ function TaskRow({ task }: { task: Task }) {
         size="icon"
         aria-label="حذف"
         disabled={isPending}
-        onClick={() => startTransition(() => deleteTask(task.id))}
+        onClick={() => startTransition(async () => { await toastOnError(deleteTask(task.id)); })}
       >
         <Trash2 className="text-destructive" />
       </Button>

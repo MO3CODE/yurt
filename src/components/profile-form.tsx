@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { updateProfile } from "@/app/profile/actions";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 
 export function ProfileForm({ fullName, phone, email }: { fullName: string; phone: string | null; email: string }) {
   const [isPending, startTransition] = useTransition();
@@ -14,10 +15,10 @@ export function ProfileForm({ fullName, phone, email }: { fullName: string; phon
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       try {
-        await updateProfile(formData);
+        await unwrap(updateProfile(formData));
         toast.success("تم حفظ التغييرات");
-      } catch {
-        toast.error("تعذّر الحفظ");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر الحفظ");
       }
     });
   }

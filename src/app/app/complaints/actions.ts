@@ -1,5 +1,6 @@
 "use server";
 
+import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -12,20 +13,22 @@ const complaintSchema = z.object({
 });
 
 export async function submitComplaint(formData: FormData) {
-  const user = await requireUser();
-  const parsed = complaintSchema.parse({
-    category: formData.get("category"),
-    subject: formData.get("subject"),
-    description: formData.get("description"),
-  });
+  return runAction(async () => {
+    const user = await requireUser();
+    const parsed = complaintSchema.parse({
+      category: formData.get("category"),
+      subject: formData.get("subject"),
+      description: formData.get("description"),
+    });
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("complaints").insert({
-    student_id: user.id,
-    apartment_id: user.apartmentId,
-    ...parsed,
-  });
+    const supabase = await createClient();
+    const { error } = await supabase.from("complaints").insert({
+      student_id: user.id,
+      apartment_id: user.apartmentId,
+      ...parsed,
+    });
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/app/complaints");
+    if (error) throw new Error(error.message);
+    revalidatePath("/app/complaints");
+  });
 }

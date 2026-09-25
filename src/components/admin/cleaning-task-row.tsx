@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { toastOnError, unwrap } from "@/lib/unwrap";
+import type { ActionResult } from "@/lib/action-result";
 
 const statusLabels: Record<string, string> = { pending: "بانتظار التنفيذ", done: "تم", missed: "لم تُنفَّذ" };
 const statusVariant: Record<string, "outline" | "secondary" | "destructive"> = {
@@ -28,8 +30,8 @@ export function CleaningTaskRow({
   weekStartDate: string;
   assignment: { id: string; student_id: string | null; status: string } | null;
   students: { id: string; full_name: string }[];
-  onAssign: (taskId: string, weekStartDate: string, studentId: string) => Promise<void>;
-  onStatusChange: (assignmentId: string, status: "pending" | "done" | "missed") => Promise<void>;
+  onAssign: (taskId: string, weekStartDate: string, studentId: string) => Promise<ActionResult>;
+  onStatusChange: (assignmentId: string, status: "pending" | "done" | "missed") => Promise<ActionResult>;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -37,9 +39,9 @@ export function CleaningTaskRow({
     if (!studentId) return;
     startTransition(async () => {
       try {
-        await onAssign(taskId, weekStartDate, studentId);
-      } catch {
-        toast.error("تعذّر التعيين");
+        await unwrap(onAssign(taskId, weekStartDate, studentId));
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر التعيين");
       }
     });
   }
@@ -75,7 +77,7 @@ export function CleaningTaskRow({
                   size="icon"
                   variant="ghost"
                   disabled={isPending}
-                  onClick={() => startTransition(() => onStatusChange(assignment.id, "done"))}
+                  onClick={() => startTransition(async () => { await toastOnError(onStatusChange(assignment.id, "done")); })}
                 >
                   <Check className="text-success" />
                 </Button>
@@ -83,7 +85,7 @@ export function CleaningTaskRow({
                   size="icon"
                   variant="ghost"
                   disabled={isPending}
-                  onClick={() => startTransition(() => onStatusChange(assignment.id, "missed"))}
+                  onClick={() => startTransition(async () => { await toastOnError(onStatusChange(assignment.id, "missed")); })}
                 >
                   <X className="text-destructive" />
                 </Button>

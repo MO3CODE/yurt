@@ -3,12 +3,11 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { addDaysISO, todayISO } from "@/lib/date";
 
 export default async function AdminPrayersPage() {
   const supabase = await createClient();
-  const since = new Date();
-  since.setDate(since.getDate() - 6);
-  const sinceISO = since.toISOString().slice(0, 10);
+  const sinceISO = addDaysISO(todayISO(), -6);
 
   const [{ data: students }, { data: records }] = await Promise.all([
     supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, MessageCircle, Copy, Check } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -17,14 +17,13 @@ import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createStudent, type CreateStudentResult } from "@/app/admin/students/actions";
-import { buildCredentialsMessage, buildWhatsAppLink } from "@/lib/whatsapp";
-import { toast } from "sonner";
+import { CredentialsResult } from "@/components/admin/credentials-result";
+import { unwrap } from "@/lib/unwrap";
 
 export function NewStudentDialog({ apartments }: { apartments: { id: string; name: string }[] }) {
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<CreateStudentResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function handleOpenChange(next: boolean) {
@@ -32,7 +31,6 @@ export function NewStudentDialog({ apartments }: { apartments: { id: string; nam
     if (!next) {
       setResult(null);
       setError(null);
-      setCopied(false);
     }
   }
 
@@ -40,27 +38,11 @@ export function NewStudentDialog({ apartments }: { apartments: { id: string; nam
     setError(null);
     startTransition(async () => {
       try {
-        const created = await createStudent(formData);
+        const created = await unwrap(createStudent(formData));
         setResult(created);
       } catch (e) {
         setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع");
       }
-    });
-  }
-
-  const message = result
-    ? buildCredentialsMessage({
-        fullName: result.fullName,
-        email: result.email,
-        password: result.password,
-        loginUrl: typeof window !== "undefined" ? window.location.origin + "/login" : "",
-      })
-    : "";
-
-  function handleCopy() {
-    navigator.clipboard.writeText(message).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     });
   }
 
@@ -123,35 +105,7 @@ export function NewStudentDialog({ apartments }: { apartments: { id: string; nam
             </form>
           </>
         ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle>تم إنشاء حساب {result.fullName}</DialogTitle>
-              <DialogDescription>أرسل له بيانات الدخول عبر واتساب — هذي الكلمة ما راح تظهر مرة ثانية</DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">اسم المستخدم</span>
-                <span className="font-medium">{result.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">كلمة المرور</span>
-                <span className="font-mono font-medium">{result.password}</span>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={handleCopy}>
-                {copied ? <Check className="text-success" /> : <Copy />}
-                نسخ الرسالة
-              </Button>
-              <Button
-                nativeButton={false}
-                render={<a href={buildWhatsAppLink(result.phone, message)} target="_blank" rel="noopener noreferrer" />}
-                onClick={() => toast.success("فُتح واتساب — راجع الرسالة قبل الإرسال")}
-              >
-                <MessageCircle /> إرسال عبر واتساب
-              </Button>
-            </DialogFooter>
-          </>
+          <CredentialsResult result={result} title={`تم إنشاء حساب ${result.fullName}`} />
         )}
       </DialogContent>
     </Dialog>

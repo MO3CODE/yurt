@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EditStudentForm } from "@/components/admin/edit-student-form";
+import { ResetPasswordDialog } from "@/components/admin/reset-password-dialog";
 import { CalendarX, MessageSquareWarning, Trophy, Stethoscope } from "lucide-react";
 
 export default async function StudentDetailPage({ params }: PageProps<"/admin/students/[id]">) {
@@ -21,7 +22,11 @@ export default async function StudentDetailPage({ params }: PageProps<"/admin/st
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title={profile.full_name} description={profile.phone ?? undefined} />
+      <PageHeader
+        title={profile.full_name}
+        description={profile.phone ?? undefined}
+        action={<ResetPasswordDialog studentId={id} studentName={profile.full_name} />}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="أيام الغياب" value={summary?.total_absences ?? 0} icon={CalendarX} tone="warning" />

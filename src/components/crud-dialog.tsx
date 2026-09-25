@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { unwrap } from "@/lib/unwrap";
+import type { ActionResult } from "@/lib/action-result";
 
 export function CrudDialog({
   trigger,
@@ -25,7 +27,7 @@ export function CrudDialog({
   title: string;
   description?: string;
   children: React.ReactNode;
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<ActionResult<unknown>>;
   submitLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -36,7 +38,7 @@ export function CrudDialog({
     setError(null);
     startTransition(async () => {
       try {
-        await action(formData);
+        await unwrap(action(formData));
         setOpen(false);
       } catch (e) {
         setError(e instanceof Error ? e.message : "حدث خطأ غير متوقع");

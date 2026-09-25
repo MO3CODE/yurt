@@ -1,5 +1,6 @@
 "use server";
 
+import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -12,17 +13,19 @@ const facilitySchema = z.object({
 });
 
 export async function createFacility(formData: FormData) {
-  await requireAdmin();
-  const parsed = facilitySchema.parse({
-    name: formData.get("name"),
-    facility_type: formData.get("facility_type") || undefined,
-    floor_number: formData.get("floor_number") || undefined,
-  });
+  return runAction(async () => {
+    await requireAdmin();
+    const parsed = facilitySchema.parse({
+      name: formData.get("name"),
+      facility_type: formData.get("facility_type") || undefined,
+      floor_number: formData.get("floor_number") || undefined,
+    });
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("facilities").insert(parsed);
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/facilities");
+    const supabase = await createClient();
+    const { error } = await supabase.from("facilities").insert(parsed);
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/facilities");
+  });
 }
 
 const issueSchema = z.object({
@@ -32,26 +35,30 @@ const issueSchema = z.object({
 });
 
 export async function reportFacilityIssue(formData: FormData) {
-  const user = await requireUser();
-  const parsed = issueSchema.parse({
-    facility_id: formData.get("facility_id"),
-    description: formData.get("description"),
-    priority: formData.get("priority"),
-  });
+  return runAction(async () => {
+    const user = await requireUser();
+    const parsed = issueSchema.parse({
+      facility_id: formData.get("facility_id"),
+      description: formData.get("description"),
+      priority: formData.get("priority"),
+    });
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("facility_issues").insert({ ...parsed, reported_by: user.id });
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/facilities");
+    const supabase = await createClient();
+    const { error } = await supabase.from("facility_issues").insert({ ...parsed, reported_by: user.id });
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/facilities");
+  });
 }
 
 export async function resolveFacilityIssue(issueId: string) {
-  await requireAdmin();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("facility_issues")
-    .update({ status: "resolved", resolved_at: new Date().toISOString() })
-    .eq("id", issueId);
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/facilities");
+  return runAction(async () => {
+    await requireAdmin();
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("facility_issues")
+      .update({ status: "resolved", resolved_at: new Date().toISOString() })
+      .eq("id", issueId);
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/facilities");
+  });
 }

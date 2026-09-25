@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { updateStudent } from "@/app/admin/students/actions";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 import type { StudentStatus } from "@/lib/supabase/types";
 
 const statusOptions: { value: StudentStatus; label: string }[] = [
@@ -43,10 +44,10 @@ export function EditStudentForm({
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       try {
-        await updateStudent(studentId, formData);
+        await unwrap(updateStudent(studentId, formData));
         toast.success("تم حفظ التغييرات");
-      } catch {
-        toast.error("تعذّر حفظ التغييرات");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر حفظ التغييرات");
       }
     });
   }

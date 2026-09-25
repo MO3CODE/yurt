@@ -1,5 +1,6 @@
 "use server";
 
+import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -11,18 +12,20 @@ const schema = z.object({
 });
 
 export async function updateProfile(formData: FormData) {
-  const user = await requireUser();
-  const parsed = schema.parse({
-    full_name: formData.get("full_name"),
-    phone: formData.get("phone") || undefined,
+  return runAction(async () => {
+    const user = await requireUser();
+    const parsed = schema.parse({
+      full_name: formData.get("full_name"),
+      phone: formData.get("phone") || undefined,
+    });
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: parsed.full_name, phone: parsed.phone ?? null })
+      .eq("id", user.id);
+
+    if (error) throw new Error(error.message);
+    revalidatePath("/profile");
   });
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("profiles")
-    .update({ full_name: parsed.full_name, phone: parsed.phone ?? null })
-    .eq("id", user.id);
-
-  if (error) throw new Error(error.message);
-  revalidatePath("/profile");
 }

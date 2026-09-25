@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 import { updateAcademicSupportRequest } from "@/app/admin/academic-support/actions";
 
 const statusLabels: Record<string, string> = {
@@ -38,10 +39,10 @@ export function AcademicSupportCard({
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
       try {
-        await updateAcademicSupportRequest(request.id, formData);
+        await unwrap(updateAcademicSupportRequest(request.id, formData));
         toast.success("تم التحديث");
-      } catch {
-        toast.error("تعذّر التحديث");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر التحديث");
       }
     });
   }

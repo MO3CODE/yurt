@@ -1,5 +1,6 @@
 "use server";
 
+import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -12,43 +13,49 @@ const taskSchema = z.object({
 });
 
 export async function createTask(formData: FormData) {
-  const user = await requireUser();
-  const parsed = taskSchema.parse({
-    title: formData.get("title"),
-    description: formData.get("description") || undefined,
-    due_date: formData.get("due_date") || undefined,
-  });
+  return runAction(async () => {
+    const user = await requireUser();
+    const parsed = taskSchema.parse({
+      title: formData.get("title"),
+      description: formData.get("description") || undefined,
+      due_date: formData.get("due_date") || undefined,
+    });
 
-  const supabase = await createClient();
-  const { error } = await supabase.from("tasks").insert({
-    student_id: user.id,
-    title: parsed.title,
-    description: parsed.description ?? null,
-    due_date: parsed.due_date ?? null,
-  });
+    const supabase = await createClient();
+    const { error } = await supabase.from("tasks").insert({
+      student_id: user.id,
+      title: parsed.title,
+      description: parsed.description ?? null,
+      due_date: parsed.due_date ?? null,
+    });
 
-  if (error) throw new Error(error.message);
-  revalidatePath("/app/tasks");
-  revalidatePath("/app");
+    if (error) throw new Error(error.message);
+    revalidatePath("/app/tasks");
+    revalidatePath("/app");
+  });
 }
 
 export async function toggleTask(taskId: string, done: boolean) {
-  await requireUser();
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("tasks")
-    .update({ status: done ? "done" : "pending" })
-    .eq("id", taskId);
-  if (error) throw new Error(error.message);
-  revalidatePath("/app/tasks");
-  revalidatePath("/app");
+  return runAction(async () => {
+    await requireUser();
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("tasks")
+      .update({ status: done ? "done" : "pending" })
+      .eq("id", taskId);
+    if (error) throw new Error(error.message);
+    revalidatePath("/app/tasks");
+    revalidatePath("/app");
+  });
 }
 
 export async function deleteTask(taskId: string) {
-  await requireUser();
-  const supabase = await createClient();
-  const { error } = await supabase.from("tasks").delete().eq("id", taskId);
-  if (error) throw new Error(error.message);
-  revalidatePath("/app/tasks");
-  revalidatePath("/app");
+  return runAction(async () => {
+    await requireUser();
+    const supabase = await createClient();
+    const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+    if (error) throw new Error(error.message);
+    revalidatePath("/app/tasks");
+    revalidatePath("/app");
+  });
 }

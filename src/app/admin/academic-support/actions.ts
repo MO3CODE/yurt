@@ -1,5 +1,6 @@
 "use server";
 
+import { runAction } from "@/lib/action-result";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -12,22 +13,24 @@ const schema = z.object({
 });
 
 export async function updateAcademicSupportRequest(requestId: string, formData: FormData) {
-  await requireAdmin();
-  const parsed = schema.parse({
-    status: formData.get("status"),
-    assigned_to_name: formData.get("assigned_to_name") || undefined,
-    admin_notes: formData.get("admin_notes") || undefined,
+  return runAction(async () => {
+    await requireAdmin();
+    const parsed = schema.parse({
+      status: formData.get("status"),
+      assigned_to_name: formData.get("assigned_to_name") || undefined,
+      admin_notes: formData.get("admin_notes") || undefined,
+    });
+
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("academic_support_requests")
+      .update({
+        ...parsed,
+        resolved_at: parsed.status === "resolved" ? new Date().toISOString() : null,
+      })
+      .eq("id", requestId);
+
+    if (error) throw new Error(error.message);
+    revalidatePath("/admin/academic-support");
   });
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("academic_support_requests")
-    .update({
-      ...parsed,
-      resolved_at: parsed.status === "resolved" ? new Date().toISOString() : null,
-    })
-    .eq("id", requestId);
-
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/academic-support");
 }

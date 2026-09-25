@@ -9,16 +9,16 @@ import { PrayerTracker } from "@/components/student/prayer-tracker";
 import { AttendanceToday } from "@/components/student/attendance-today";
 import { TaskList } from "@/components/student/task-list";
 import { Trophy, ListTodo, CalendarDays, BellRing } from "lucide-react";
-import { todayISO, dayName } from "@/lib/date";
+import { todayISO, dayName, dayOfWeekISO } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
 
 export default async function StudentHomePage() {
   const user = await requireUser();
   const supabase = await createClient();
   const today = todayISO();
-  const todayDayOfWeek = new Date(`${today}T00:00:00`).getDay();
+  const todayDayOfWeek = dayOfWeekISO(today);
 
-  const [{ data: prayerRows }, { data: attendanceRow }, { data: tasks }, { data: classesToday }, { data: pointsRows }, { count: unreadCount }] =
+  const [{ data: prayerRows }, { data: attendanceRow }, { data: tasks }, { data: classesToday }, { data: pointsRows }, { data: notificationRows }, { data: readRows }] =
     await Promise.all([
       supabase.from("prayer_records").select("prayer, status").eq("student_id", user.id).eq("record_date", today),
       supabase.from("attendance_records").select("status").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
@@ -30,13 +30,16 @@ export default async function StudentHomePage() {
         .eq("day_of_week", todayDayOfWeek)
         .order("start_time"),
       supabase.from("points_entries").select("points").eq("student_id", user.id),
-      supabase.from("notifications").select("id", { count: "exact", head: true }),
+      supabase.from("notifications").select("id"),
+      supabase.from("notification_reads").select("notification_id").eq("profile_id", user.id),
     ]);
 
   const prayerValues: Partial<Record<PrayerName, PrayerStatus>> = {};
   for (const p of prayerRows ?? []) prayerValues[p.prayer] = p.status;
 
   const totalPoints = (pointsRows ?? []).reduce((sum, p) => sum + p.points, 0);
+  const readIds = new Set((readRows ?? []).map((r) => r.notification_id));
+  const unreadCount = (notificationRows ?? []).filter((n) => !readIds.has(n.id)).length;
 
   return (
     <div className="flex flex-col gap-6">

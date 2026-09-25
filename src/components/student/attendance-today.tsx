@@ -5,6 +5,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { logAttendance } from "@/app/app/attendance/actions";
 import type { AttendanceStatus } from "@/lib/supabase/types";
 import { toast } from "sonner";
+import { unwrap } from "@/lib/unwrap";
 
 export function AttendanceToday({ date, status }: { date: string; status?: AttendanceStatus }) {
   const [isPending, startTransition] = useTransition();
@@ -14,9 +15,9 @@ export function AttendanceToday({ date, status }: { date: string; status?: Atten
     if (!value) return;
     startTransition(async () => {
       try {
-        await logAttendance(date, value as AttendanceStatus);
-      } catch {
-        toast.error("تعذّر تسجيل الحضور");
+        await unwrap(logAttendance(date, value as AttendanceStatus));
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "تعذّر تسجيل الحضور");
       }
     });
   }

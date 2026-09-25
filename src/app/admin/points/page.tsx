@@ -5,18 +5,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { AwardPointsDialog } from "@/components/admin/award-points-dialog";
 import { Trophy } from "lucide-react";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { monthStartISO } from "@/lib/date";
 
 export default async function AdminPointsPage() {
   const supabase = await createClient();
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  const monthStartISO = monthStart.toISOString().slice(0, 10);
+  const monthStart = monthStartISO();
 
   const [{ data: leaderboard }, { data: students }] = await Promise.all([
     supabase
       .from("points_leaderboard")
       .select("*")
-      .eq("month", monthStartISO)
+      .eq("month", monthStart)
       .order("total_points", { ascending: false }),
     supabase.from("students").select("id, profiles!students_id_fkey(full_name)"),
   ]);
