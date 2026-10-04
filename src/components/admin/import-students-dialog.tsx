@@ -23,11 +23,11 @@ import {
   matchApartment,
   parseDelimited,
   parseStudentMatrix,
-  templateCsv,
+  TEMPLATE_HEADERS,
   type ApartmentRef,
 } from "@/lib/student-import";
 import { buildCredentialsMessage, buildWhatsAppLink } from "@/lib/whatsapp";
-import { readXlsx } from "@/lib/xlsx-lite";
+import { buildXlsx, readXlsx } from "@/lib/xlsx-lite";
 import { unwrap } from "@/lib/unwrap";
 import { cn } from "@/lib/utils";
 
@@ -36,8 +36,11 @@ const MAX_ROWS = 400;
 
 type Step = "input" | "importing" | "done";
 
-function download(name: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: "text/csv;charset=utf-8" }));
+function downloadXlsx(name: string, rows: string[][], widths?: number[]) {
+  const bytes = buildXlsx(rows, { sheetName: "الطلاب", widths });
+  const url = URL.createObjectURL(
+    new Blob([bytes as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  );
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
@@ -174,14 +177,8 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
   const messageFor = (r: ImportedStudent) =>
     buildCredentialsMessage({ fullName: r.name, email: r.credentials!.login, password: r.credentials!.password, loginUrl });
 
-  function credentialsCsv() {
-    const q = (s: string) => `"${s.replace(/"/g, '""')}"`;
-    return (
-      "﻿" +
-      [["الاسم", "اسم الدخول", "كلمة المرور", "الهاتف"], ...created.map((r) => [r.name, displayLogin(r.credentials!.login), r.credentials!.password, r.credentials!.phone])]
-        .map((r) => r.map(q).join(","))
-        .join("\r\n")
-    );
+  function credentialsRows(): string[][] {
+    return [["الاسم", "اسم الدخول", "كلمة المرور", "الهاتف"], ...created.map((r) => [r.name, displayLogin(r.credentials!.login), r.credentials!.password, r.credentials!.phone])];
   }
 
   function copyAll() {
@@ -224,7 +221,7 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
                 <Button type="button" variant="outline" onClick={() => fileInput.current?.click()} disabled={reading}>
                   {reading ? <Spinner /> : <Upload />} اختيار ملف Excel أو CSV
                 </Button>
-                <Button type="button" variant="ghost" size="sm" onClick={() => download("students-template.csv", templateCsv())}>
+                <Button type="button" variant="ghost" size="sm" onClick={() => downloadXlsx("students-template.xlsx", [TEMPLATE_HEADERS], [22, 20, 26, 14, 16, 18, 14, 30])}>
                   <Download /> تنزيل القالب
                 </Button>
                 {fileName && (
@@ -398,7 +395,7 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
                   <Button variant="outline" onClick={copyAll}>
                     <Copy /> نسخ الكل
                   </Button>
-                  <Button variant="outline" onClick={() => download("students-credentials.csv", credentialsCsv())}>
+                  <Button variant="outline" onClick={() => downloadXlsx("students-credentials.xlsx", credentialsRows(), [26, 24, 18, 18])}>
                     <Download /> تنزيل بيانات الدخول
                   </Button>
                 </>

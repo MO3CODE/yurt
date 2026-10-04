@@ -28,7 +28,7 @@ export const FIELD_LABELS: Record<Field, string> = {
 export function fieldFromHeader(header: string): Field | null {
   const t = normalizeArabic(header);
   if (!t) return null;
-  if (/متعثر|ضعيف|تقويه|دعم/.test(t)) return "struggling";
+  if (/تعثر|ضعيف|تقويه|دعم/.test(t)) return "struggling";
   if (/قوي|متفوق/.test(t)) return "strong";
   if (/بريد|ايميل|email|e-mail|mail/.test(t)) return "email";
   if (/شق|سكن|غرف|apartment|flat/.test(t)) return "apartment";
@@ -265,10 +265,3 @@ export function matchApartment(text: string, apartments: ApartmentRef[]): Apartm
 // ---------------------------------------------------------------------
 
 export const TEMPLATE_HEADERS = ["الاسم", "التخصص", "الجامعة", "الشقة", "السنة الدراسية", "رقم الهاتف", "المعدل الحالي", "المواد المتعثرة"];
-export const TEMPLATE_EXAMPLE = ["أحمد محمد علي", "هندسة حاسوب", "جامعة إسطنبول التقنية", "الشقة 1", "الثانية", "905551234567", "3.2", "الرياضيات، الفيزياء"];
-
-/** CSV بترميز UTF-8 مع BOM ليفتحه Excel بالعربية صحيحاً */
-export function templateCsv(): string {
-  const q = (s: string) => `"${s.replace(/"/g, '""')}"`;
-  return "﻿" + [TEMPLATE_HEADERS, TEMPLATE_EXAMPLE].map((r) => r.map(q).join(",")).join("\r\n");
-}
