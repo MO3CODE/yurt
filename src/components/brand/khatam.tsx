@@ -2,7 +2,7 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 // نجمة ثمانية (خاتم) = مربّعان متراكبان بزاوية ٤٥°: ١٦ رأساً بين نصف قطر خارجي وداخلي
-function starPoints(cx: number, cy: number, outer: number) {
+export function starPoints(cx: number, cy: number, outer: number) {
   const inner = outer * (Math.cos(Math.PI / 4) / Math.cos(Math.PI / 8));
   return Array.from({ length: 16 }, (_, i) => {
     const r = i % 2 === 0 ? outer : inner;

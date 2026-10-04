@@ -66,7 +66,7 @@ export default function LoginPage() {
           </ul>
         </div>
 
-        <p className="text-xs text-sidebar-foreground/45">منصة متابعة طلاب السكن — Güzel Eser</p>
+        <p className="text-xs text-sidebar-foreground/45">منصة متابعة طلاب السكن</p>
       </aside>
 
       {/* النموذج */}
