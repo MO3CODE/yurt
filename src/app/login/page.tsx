@@ -87,15 +87,16 @@ export default function LoginPage() {
           <form action={formAction}>
             <FieldGroup>
               <Field>
-                <FieldLabel htmlFor="email">البريد الإلكتروني</FieldLabel>
+                <FieldLabel htmlFor="email">البريد الإلكتروني أو رقم الهاتف</FieldLabel>
                 <Input
                   id="email"
                   name="email"
-                  type="email"
+                  type="text"
+                  inputMode="email"
                   dir="ltr"
-                  placeholder="name@example.com"
+                  placeholder="name@example.com أو 905551234567"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                   className="h-11 text-start"
                 />
               </Field>

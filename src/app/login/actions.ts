@@ -2,15 +2,16 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { resolveLoginIdentifier } from "@/lib/student-import";
 
 export type LoginState = { error?: string };
 
 export async function signIn(_prevState: LoginState, formData: FormData): Promise<LoginState> {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = resolveLoginIdentifier(String(formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "الرجاء إدخال البريد الإلكتروني وكلمة المرور" };
+    return { error: "الرجاء إدخال البريد الإلكتروني (أو رقم الهاتف) وكلمة المرور" };
   }
 
   const supabase = await createClient();

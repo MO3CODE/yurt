@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { NewStudentDialog } from "@/components/admin/new-student-dialog";
+import { ImportStudentsDialog } from "@/components/admin/import-students-dialog";
 import { requirePermission } from "@/lib/auth/current-user";
 
 const statusLabels: Record<string, string> = {
@@ -21,12 +22,13 @@ export default async function StudentsPage() {
   await requirePermission("students");
   const supabase = await createClient();
 
-  const [{ data: students }, { data: apartments }] = await Promise.all([
+  const [{ data: students }, { data: apartments }, { data: phoneRows }] = await Promise.all([
     supabase
       .from("students")
       .select("id, status, university_name, apartment:apartment_id(name), profiles!students_id_fkey(full_name)")
       .order("created_at", { ascending: false }),
-    supabase.from("apartments").select("id, name").order("floor_number"),
+    supabase.from("apartments").select("id, name, floor_number").order("floor_number"),
+    supabase.from("profiles").select("phone").eq("role", "student").not("phone", "is", null),
   ]);
 
   return (
@@ -34,7 +36,12 @@ export default async function StudentsPage() {
       <PageHeader
         title="الطلاب"
         description="كل طلاب السكن وبياناتهم"
-        action={<NewStudentDialog apartments={apartments ?? []} />}
+        action={
+          <>
+            <ImportStudentsDialog apartments={apartments ?? []} existingPhones={(phoneRows ?? []).map((p) => p.phone!).filter(Boolean)} />
+            <NewStudentDialog apartments={apartments ?? []} />
+          </>
+        }
       />
 
       <Card>

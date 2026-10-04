@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { CreateStudentResult } from "@/app/admin/students/actions";
 import { buildCredentialsMessage, buildWhatsAppLink } from "@/lib/whatsapp";
+import { displayLogin } from "@/lib/student-import";
 import { toast } from "sonner";
 
 // شاشة بيانات الدخول بعد إنشاء حساب أو إعادة تعيين كلمة المرور
@@ -38,7 +39,7 @@ export function CredentialsResult({ result, title }: { result: CreateStudentResu
       <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
         <div className="flex justify-between gap-3">
           <span className="text-muted-foreground">اسم المستخدم</span>
-          <span className="truncate font-medium" dir="ltr">{result.email}</span>
+          <span className="truncate font-medium" dir="ltr">{displayLogin(result.email)}</span>
         </div>
         <div className="flex justify-between gap-3">
           <span className="text-muted-foreground">كلمة المرور</span>
