@@ -12,6 +12,12 @@
   --font-heading: var(--font-arabic);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
+  --color-mushaf-paper: var(--mushaf-paper);
+  --color-mushaf-ink: var(--mushaf-ink);
+  --color-mushaf-frame: var(--mushaf-frame);
+  --color-mushaf-title: var(--mushaf-title);
+  --color-mushaf-title-ink: var(--mushaf-title-ink);
+  --color-mushaf-muted: var(--mushaf-muted);
   --shadow-soft: 0 1px 2px hsl(var(--shadow-color) / 0.05), 0 10px 30px -14px hsl(var(--shadow-color) / 0.22);
   --shadow-lift: 0 2px 4px hsl(var(--shadow-color) / 0.06), 0 22px 40px -18px hsl(var(--shadow-color) / 0.35);
   --ease-out-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -99,6 +105,13 @@
   --sidebar-border: oklch(1 0 0 / 9%);
   --sidebar-ring: oklch(0.76 0.12 78);
   --shadow-color: 200 30% 20%;
+  /* قارئ المصحف: ورق كريمي، إطار ذهبي، عنوان السورة زمرّدي */
+  --mushaf-paper: oklch(0.973 0.018 85);
+  --mushaf-ink: oklch(0.25 0.02 180);
+  --mushaf-frame: oklch(0.76 0.12 78);
+  --mushaf-title: oklch(0.32 0.05 185);
+  --mushaf-title-ink: oklch(0.88 0.08 85);
+  --mushaf-muted: oklch(0.5 0.04 80);
 }
 
 .dark {
@@ -140,6 +153,12 @@
   --sidebar-border: oklch(1 0 0 / 7%);
   --sidebar-ring: oklch(0.79 0.12 78);
   --shadow-color: 200 40% 2%;
+  --mushaf-paper: oklch(0.22 0.03 185);
+  --mushaf-ink: oklch(0.92 0.025 85);
+  --mushaf-frame: oklch(0.76 0.12 78 / 55%);
+  --mushaf-title: oklch(0.76 0.12 78 / 12%);
+  --mushaf-title-ink: oklch(0.82 0.11 80);
+  --mushaf-muted: oklch(0.72 0.03 180);
 }
 
 @layer base {

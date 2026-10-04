@@ -31,6 +31,7 @@ export default async function StudentHomePage() {
     { data: notificationRows },
     { data: readRows },
     { data: wirdToday },
+    { count: platformPagesToday },
     { data: myCleaning },
     schedule,
   ] = await Promise.all([
@@ -47,6 +48,11 @@ export default async function StudentHomePage() {
     supabase.from("notifications").select("id"),
     supabase.from("notification_reads").select("notification_id").eq("profile_id", user.id),
     supabase.from("quran_wird_logs").select("pages").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
+    supabase
+      .from("quran_page_reads")
+      .select("page", { count: "exact", head: true })
+      .eq("student_id", user.id)
+      .eq("record_date", today),
     supabase
       .from("cleaning_assignments")
       .select("id, status, task:cleaning_tasks!cleaning_assignments_task_id_fkey(name)")
@@ -91,7 +97,10 @@ export default async function StudentHomePage() {
                 nativeButton={false}
                 render={<Link href="/app/quran" />}
               >
-                <BookOpen /> {wirdToday ? `وردك اليوم: ${wirdToday.pages ?? 0} صفحة` : "سجّل وردك"}
+                <BookOpen />{" "}
+                {wirdToday || platformPagesToday
+                  ? `وردك اليوم: ${Number(wirdToday?.pages ?? 0) + (platformPagesToday ?? 0)} صفحة`
+                  : "اقرأ وردك"}
               </Button>
               {unreadCount > 0 && (
                 <Button

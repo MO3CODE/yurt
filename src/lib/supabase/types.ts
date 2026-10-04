@@ -1370,6 +1370,64 @@ export type Database = {
           },
         ]
       }
+      quran_page_reads: {
+        Row: {
+          page: number
+          read_at: string
+          record_date: string
+          student_id: string
+        }
+        Insert: {
+          page: number
+          read_at?: string
+          record_date: string
+          student_id: string
+        }
+        Update: {
+          page?: number
+          read_at?: string
+          record_date?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quran_page_reads_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quran_progress: {
+        Row: {
+          current_page: number
+          khatmas: number
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          current_page?: number
+          khatmas?: number
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          current_page?: number
+          khatmas?: number
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quran_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quran_wird_logs: {
         Row: {
           created_at: string
@@ -1378,6 +1436,7 @@ export type Database = {
           note: string | null
           pages: number | null
           range_description: string | null
+          reached_page: number | null
           record_date: string
           student_id: string
         }
@@ -1388,6 +1447,7 @@ export type Database = {
           note?: string | null
           pages?: number | null
           range_description?: string | null
+          reached_page?: number | null
           record_date: string
           student_id: string
         }
@@ -1398,6 +1458,7 @@ export type Database = {
           note?: string | null
           pages?: number | null
           range_description?: string | null
+          reached_page?: number | null
           record_date?: string
           student_id?: string
         }
@@ -1768,6 +1829,14 @@ export type Database = {
           },
         ]
       }
+      quran_platform_daily: {
+        Row: {
+          pages: number | null
+          record_date: string | null
+          student_id: string | null
+        }
+        Relationships: []
+      }
       student_profile_summary: {
         Row: {
           apartment_id: string | null
@@ -1821,6 +1890,8 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_apartment_supervisor: { Args: { apt_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      record_quran_page: { Args: { p_page: number }; Returns: Json }
+      set_quran_reached_page: { Args: { p_page: number }; Returns: undefined }
       supervised_apartment_id: { Args: never; Returns: string }
       supervises_student: {
         Args: { target_student_id: string }

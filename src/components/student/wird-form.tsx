@@ -1,7 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +16,7 @@ export function WirdForm({
   defaults,
 }: {
   date: string;
-  defaults: { range_description: string; pages?: number; memorization: boolean; note: string };
+  defaults: { range_description: string; pages?: number; reached_page?: number; memorization: boolean; note: string };
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -42,6 +42,22 @@ export function WirdForm({
         <Field orientation="responsive">
           <FieldLabel htmlFor="pages">عدد الصفحات</FieldLabel>
           <Input id="pages" name="pages" type="number" step="0.5" defaultValue={defaults.pages} />
+        </Field>
+        <Field orientation="responsive">
+          <FieldContent>
+            <FieldLabel htmlFor="reached_page">وصلت إلى صفحة (اختياري)</FieldLabel>
+            <FieldDescription>تنقل علامة ختمتك إلى ما بعد هذه الصفحة</FieldDescription>
+          </FieldContent>
+          <Input
+            id="reached_page"
+            name="reached_page"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={604}
+            placeholder="١ – ٦٠٤"
+            defaultValue={defaults.reached_page}
+          />
         </Field>
         <Field orientation="horizontal">
           <Checkbox id="memorization" name="memorization" defaultChecked={defaults.memorization} />

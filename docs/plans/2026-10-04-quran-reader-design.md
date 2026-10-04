@@ -23,8 +23,11 @@
 - migration `0013`:
   - `quran_page_reads (student_id, record_date, page 1..604, read_at)` مفتاح فريد (student_id, record_date, page).
   - `quran_progress (student_id pk, current_page default 1, khatmas default 0, updated_at)`.
-  - `quran_wird_logs`: + `platform_pages smallint default 0`، + `reached_page smallint null`. خانة `pages` تبقى لصفحات الورق.
-  - RLS: الطالب يقرأ ويكتب صفوفه، ومن له صلاحية `quran` يقرأ الكل.
+  - `quran_wird_logs`: + `reached_page smallint null`. خانة `pages` تبقى لصفحات الورق.
+  - صفحات المنصة اليومية تُحسب من `quran_page_reads` مباشرة (لا عمود `platform_pages`)، لأن على `quran_wird_logs` مُشغّل سجل نشاط كان سيكتب صفاً مع كل صفحة.
+  - عرض `quran_platform_daily` (مجموع الصفحات لكل طالب/يوم) للوحة الإدارة، حتى لا تتجاوز الاستعلامات حد الألف صف.
+  - الكتابة على الجدولين الجديدين فقط عبر دالتي `record_quran_page` و`set_quran_reached_page` (security definer).
+  - RLS: الطالب يقرأ صفوفه، ومن له صلاحية `quran` أو مشرف الشقة يقرأ.
 
 ## القواعد
 - التاريخ يحدده السيرفر بتوقيت إسطنبول.
