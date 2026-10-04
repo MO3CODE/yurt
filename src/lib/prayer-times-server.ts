@@ -42,11 +42,19 @@ export async function getSchedule(supabase: Db) {
 export async function syncOfficialTimes(admin: Db): Promise<{ upserted: number; rejected: number; error?: string }> {
   try {
     const res = await fetch(DIYANET_URL, {
-      headers: { "User-Agent": "Mozilla/5.0" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+        Accept: "application/json, text/plain, */*",
+        "Accept-Language": "tr-TR,tr;q=0.9,en;q=0.6",
+        Referer: "https://ezanvakti.emushaf.net/",
+      },
       signal: AbortSignal.timeout(15_000),
       cache: "no-store",
     });
-    if (!res.ok) return { upserted: 0, rejected: 0, error: `HTTP ${res.status}` };
+    if (!res.ok) {
+      const hint = res.headers.get("cf-mitigated") ?? res.headers.get("server") ?? "";
+      return { upserted: 0, rejected: 0, error: `HTTP ${res.status}${hint ? ` (${hint})` : ""}` };
+    }
 
     const { days, rejected } = parseDiyanetDays(await res.json());
     if (days.length === 0) return { upserted: 0, rejected, error: "لا أيام صالحة في الاستجابة" };

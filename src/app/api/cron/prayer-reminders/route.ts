@@ -40,8 +40,8 @@ function toSettings(row: {
 export async function POST(request: Request) {
   if (!authorized(request)) return new Response("Unauthorized", { status: 401 });
 
-  // dryRun يخطّط ولا يسجّل ولا يرسل (للفحص)؛ ويسمح بتجربة وقت آخر عبر now
-  let body: { dryRun?: boolean; now?: string } = {};
+  // dryRun يخطّط ولا يسجّل ولا يرسل (للفحص)؛ ويسمح بتجربة وقت آخر عبر now؛ و sync يفرض مزامنة الجدول الرسمي الآن
+  let body: { dryRun?: boolean; now?: string; sync?: boolean } = {};
   try {
     body = await request.json();
   } catch {
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   if (!dryRun) {
     const { data: have } = await admin.from("prayer_times").select("day").gte("day", today).lte("day", addDaysISO(today, 6));
     const missing = (have?.length ?? 0) < 7;
-    if (istanbulHM(now) === "00:10" || (missing && now.getUTCMinutes() % 15 === 0)) {
+    if (body.sync === true || istanbulHM(now) === "00:10" || (missing && now.getUTCMinutes() % 15 === 0)) {
       summary.sync = await syncOfficialTimes(admin);
     }
   }
