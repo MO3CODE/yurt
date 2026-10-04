@@ -13,6 +13,8 @@ import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft
 import { cn } from "@/lib/utils";
 import { todayISO, dayOfWeekISO, greeting, hijriDate, longDate, weekStartISO } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
+import { NextPrayerChip } from "@/components/prayer/prayer-times";
+import { getSchedule } from "@/lib/prayer-times-server";
 
 export default async function StudentHomePage() {
   const user = await requireUser();
@@ -30,6 +32,7 @@ export default async function StudentHomePage() {
     { data: readRows },
     { data: wirdToday },
     { data: myCleaning },
+    schedule,
   ] = await Promise.all([
     supabase.from("prayer_records").select("prayer, status").eq("student_id", user.id).eq("record_date", today),
     supabase.from("attendance_records").select("status, source").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
@@ -49,6 +52,7 @@ export default async function StudentHomePage() {
       .select("id, status, task:cleaning_tasks!cleaning_assignments_task_id_fkey(name)")
       .eq("student_id", user.id)
       .eq("week_start_date", weekStartISO(today)),
+    getSchedule(supabase),
   ]);
 
   const prayerValues: Partial<Record<PrayerName, PrayerStatus>> = {};
@@ -79,6 +83,7 @@ export default async function StudentHomePage() {
                   ? `سجّلت ${prayersDone} من ٥ صلوات حتى الآن، واصل!`
                   : "ابدأ يومك بتسجيل صلواتك وحضورك."}
             </p>
+            <NextPrayerChip {...schedule} className="bg-sidebar-accent text-sidebar-accent-foreground" />
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
                 size="sm"
@@ -138,7 +143,7 @@ export default async function StudentHomePage() {
             </CardAction>
           </CardHeader>
           <CardContent>
-            <PrayerTracker date={today} values={prayerValues} />
+            <PrayerTracker date={today} values={prayerValues} times={schedule.today} />
           </CardContent>
         </Card>
 

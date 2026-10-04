@@ -24,6 +24,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { addDaysISO, greeting, hijriDate, longDate, todayISO } from "@/lib/date";
+import { NextPrayerChip } from "@/components/prayer/prayer-times";
+import { getSchedule } from "@/lib/prayer-times-server";
 
 export default async function AdminDashboardPage({ searchParams }: PageProps<"/admin">) {
   const user = await requireAdmin();
@@ -31,6 +33,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps<"/a
   const deniedLabel = typeof denied === "string" && isPermissionKey(denied) ? permissionLabel(denied) : null;
   const supabase = await createClient();
   const today = todayISO();
+  const schedule = await getSchedule(supabase);
 
   const [
     { count: studentsCount },
@@ -91,6 +94,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps<"/a
                 ? `هناك ${unresolvedAlerts} تنبيه بانتظار المتابعة اليوم.`
                 : "لا توجد تنبيهات عاجلة — السكن بحالة جيدة اليوم."}
             </p>
+            <NextPrayerChip {...schedule} className="bg-sidebar-accent text-sidebar-accent-foreground" />
             <div className="flex flex-wrap gap-2 pt-1">
               <Button
                 size="sm"

@@ -22,7 +22,7 @@ import { GPA_SCALES, subjectKey, toAsciiDigits } from "@/lib/academic";
 import type { SubjectStanding } from "@/lib/supabase/types";
 import { unwrap } from "@/lib/unwrap";
 import { toast } from "sonner";
-import { Segmented } from "@/components/academic/segmented";
+import { Segmented } from "@/components/segmented";
 
 type Draft = { name: string; standing: SubjectStanding; grade: string };
 

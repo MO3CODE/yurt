@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Segmented } from "@/components/academic/segmented";
+import { Segmented } from "@/components/segmented";
 import { importPlanItems } from "@/app/admin/academic/actions";
 import { PLAN_STATUS_LABELS, TRACK_LABELS, parsePlanText } from "@/lib/academic";
 import { formatShortDateISO } from "@/lib/date";

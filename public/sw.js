@@ -34,20 +34,42 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
+// إشعارات تذكير الصلاة (Web Push). الحمولة: { title, body, url, tag }
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
-  const payload = event.data.json();
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = { body: event.data ? event.data.text() : "" };
+  }
   event.waitUntil(
-    self.registration.showNotification(payload.title ?? "منصة السكن", {
+    self.registration.showNotification(payload.title || "منصة السكن", {
       body: payload.body,
       icon: "/icon",
+      badge: "/icon",
       dir: "rtl",
       lang: "ar",
+      // نفس الوسم يستبدل الإشعار السابق بدل تراكمها
+      tag: payload.tag,
+      renotify: Boolean(payload.tag),
+      vibrate: [120, 60, 120],
+      data: { url: payload.url || "/" },
     })
   );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  event.waitUntil(self.clients.openWindow(event.notification.data?.url ?? "/"));
+  const url = (event.notification.data && event.notification.data.url) || "/";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if ("focus" in client) {
+          if ("navigate" in client) client.navigate(url).catch(() => {});
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
 });

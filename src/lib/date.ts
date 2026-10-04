@@ -1,8 +1,8 @@
 // المنطقة الزمنية المرجعية للمنصة — عدّلها إذا احتجت
 export const APP_TIMEZONE = "Europe/Istanbul";
 
-export function todayISO(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: APP_TIMEZONE }).format(new Date());
+export function todayISO(now: Date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: APP_TIMEZONE }).format(now);
 }
 
 // كل الحسابات على تواريخ YYYY-MM-DD تتم بتوقيت UTC حتى لا تنزاح يوماً

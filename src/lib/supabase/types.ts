@@ -1138,6 +1138,38 @@ export type Database = {
           },
         ]
       }
+      prayer_push_log: {
+        Row: {
+          day: string
+          kind: string
+          prayer: string
+          profile_id: string
+          sent_at: string
+        }
+        Insert: {
+          day: string
+          kind: string
+          prayer: string
+          profile_id: string
+          sent_at?: string
+        }
+        Update: {
+          day?: string
+          kind?: string
+          prayer?: string
+          profile_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_push_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prayer_records: {
         Row: {
           created_at: string
@@ -1186,6 +1218,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prayer_reminder_settings: {
+        Row: {
+          enabled: boolean
+          lead_minutes: number
+          nudge_minutes: number | null
+          prayers: string[]
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          lead_minutes?: number
+          nudge_minutes?: number | null
+          prayers?: string[]
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          lead_minutes?: number
+          nudge_minutes?: number | null
+          prayers?: string[]
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prayer_reminder_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prayer_times: {
+        Row: {
+          asr: string
+          day: string
+          dhuhr: string
+          fajr: string
+          fetched_at: string
+          isha: string
+          maghrib: string
+          source: string
+          sunrise: string
+        }
+        Insert: {
+          asr: string
+          day: string
+          dhuhr: string
+          fajr: string
+          fetched_at?: string
+          isha: string
+          maghrib: string
+          source?: string
+          sunrise: string
+        }
+        Update: {
+          asr?: string
+          day?: string
+          dhuhr?: string
+          fajr?: string
+          fetched_at?: string
+          isha?: string
+          maghrib?: string
+          source?: string
+          sunrise?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

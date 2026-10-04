@@ -26,9 +26,12 @@ const OPTIONS: { value: PrayerStatus; label: string; icon: LucideIcon; active: s
 export function PrayerTracker({
   date,
   values,
+  times,
 }: {
   date: string;
   values: Partial<Record<PrayerName, PrayerStatus>>;
+  /** أوقات اليوم HH:mm؛ إن وُجدت تظهر بدل الوصف النصي */
+  times?: Partial<Record<PrayerName, string>>;
 }) {
   // حالة متفائلة لكل الصلوات: الاختيار وشريط التقدّم يتحدّثان فوراً ويرجعان لو فشل الحفظ
   const [optimistic, setOptimistic] = useOptimistic(
@@ -66,6 +69,7 @@ export function PrayerTracker({
             key={p.name}
             date={date}
             prayer={p}
+            time={times?.[p.name]}
             status={optimistic[p.name]}
             onOptimistic={(value) => setOptimistic({ name: p.name, value })}
           />
@@ -78,11 +82,13 @@ export function PrayerTracker({
 function PrayerRow({
   date,
   prayer,
+  time,
   status: optimistic,
   onOptimistic,
 }: {
   date: string;
   prayer: (typeof PRAYERS)[number];
+  time?: string;
   status?: PrayerStatus;
   onOptimistic: (value: PrayerStatus) => void;
 }) {
@@ -121,7 +127,13 @@ function PrayerRow({
         </div>
         <div className="flex flex-col leading-tight whitespace-nowrap">
           <span className="font-heading font-semibold">{prayerLabel(prayer.name)}</span>
-          <span className="hidden text-xs text-muted-foreground sm:block">{prayer.hint}</span>
+          {time ? (
+            <span className="text-xs text-muted-foreground tabular-nums" dir="ltr">
+              {time}
+            </span>
+          ) : (
+            <span className="hidden text-xs text-muted-foreground sm:block">{prayer.hint}</span>
+          )}
         </div>
       </div>
 

@@ -37,7 +37,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ProgressRing } from "@/components/progress-ring";
-import { Segmented } from "@/components/academic/segmented";
+import { Segmented } from "@/components/segmented";
 import { PlanImportDialog } from "@/components/academic/plan-import-dialog";
 import { createPlanItem, deletePlanItem, setPlanItemStatus, updatePlanItem } from "@/app/admin/academic/actions";
 import { PLAN_STATUS_LABELS, TRACK_LABELS } from "@/lib/academic";
