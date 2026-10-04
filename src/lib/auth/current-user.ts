@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { AppRole } from "@/lib/supabase/types";
@@ -18,7 +19,8 @@ export type CurrentUser = {
   supervisedApartmentId: string | null;
 };
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+// cache: الـ layout والصفحة يطلبانه في نفس الطلب، فيُجلب مرة واحدة فقط
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = await createClient();
 
   const {
@@ -27,34 +29,17 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   if (!user) return null;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
+  // الاستعلامات الثلاثة مستقلة، فتُرسل معاً بدل انتظار كل واحد (كل رحلة للقاعدة لها كلفة)
+  const [{ data: profile }, { data: student }, { data: supervised }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user.id).single(),
+    supabase.from("students").select("apartment_id, apartments:apartment_id(name)").eq("id", user.id).maybeSingle(),
+    supabase.from("apartments").select("id").eq("supervisor_id", user.id).maybeSingle(),
+  ]);
 
   if (!profile) return null;
 
-  let apartmentId: string | null = null;
-  let apartmentName: string | null = null;
-
-  if (profile.role === "student") {
-    const { data: student } = await supabase
-      .from("students")
-      .select("apartment_id, apartments:apartment_id(name)")
-      .eq("id", user.id)
-      .single();
-
-    apartmentId = student?.apartment_id ?? null;
-    const apt = student?.apartments as { name: string } | null | undefined;
-    apartmentName = apt?.name ?? null;
-  }
-
-  const { data: supervised } = await supabase
-    .from("apartments")
-    .select("id")
-    .eq("supervisor_id", user.id)
-    .maybeSingle();
+  const isStudent = profile.role === "student";
+  const apt = student?.apartments as { name: string } | null | undefined;
 
   return {
     id: profile.id,
@@ -64,11 +49,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     isAdmin: profile.role === "admin" || profile.role === "super_admin",
     isSuperAdmin: profile.role === "super_admin",
     permissions: resolvePermissions(profile.role, (profile as { permissions?: string[] | null }).permissions),
-    apartmentId,
-    apartmentName,
+    apartmentId: isStudent ? (student?.apartment_id ?? null) : null,
+    apartmentName: isStudent ? (apt?.name ?? null) : null,
     supervisedApartmentId: supervised?.id ?? null,
   };
-}
+});
 
 function resolvePermissions(role: AppRole, stored: string[] | null | undefined): PermissionKey[] {
   if (role === "super_admin") return ALL_PERMISSIONS;
