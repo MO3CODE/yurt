@@ -14,7 +14,8 @@ import {
 } from "lucide-react";
 import { isPermissionKey, permissionLabel } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/current-user";
+import { hasPermission, requireAdmin } from "@/lib/auth/current-user";
+import { AcademicSnapshot } from "@/components/academic/academic-snapshot";
 import { StatCard } from "@/components/stat-card";
 import { HeroPanel } from "@/components/hero-panel";
 import { ProgressRing } from "@/components/progress-ring";
@@ -22,7 +23,7 @@ import { ApartmentHealthTable } from "@/components/admin/apartment-health-table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { greeting, hijriDate, longDate, todayISO } from "@/lib/date";
+import { addDaysISO, greeting, hijriDate, longDate, todayISO } from "@/lib/date";
 
 export default async function AdminDashboardPage({ searchParams }: PageProps<"/admin">) {
   const user = await requireAdmin();
@@ -55,6 +56,17 @@ export default async function AdminDashboardPage({ searchParams }: PageProps<"/a
   const prayersDone = (prayersToday ?? []).filter((p) => p.status === "mosque" || p.status === "prayed").length;
   const inMosque = (prayersToday ?? []).filter((p) => p.status === "mosque").length;
   const prayerTarget = active * 5;
+
+  // «خطتي» والجلسات القريبة: لمن يملك صلاحية المتابعة الأكاديمية فقط
+  const showAcademic = hasPermission(user, "academic");
+  const [{ data: planItems }, { data: sessionProfiles }] = showAcademic
+    ? await Promise.all([
+        supabase.from("follow_up_plan_items").select("id, title, track, status, due_date").order("sort_order"),
+        supabase.from("student_academic_profiles").select("next_session_at").not("next_session_at", "is", null).lte("next_session_at", addDaysISO(today, 7)),
+      ])
+    : [{ data: null }, { data: null }];
+  const sessionsDue = sessionProfiles?.length ?? 0;
+  const sessionsOverdue = (sessionProfiles ?? []).filter((p) => (p.next_session_at ?? "") < today).length;
 
   return (
     <div className="stagger flex flex-col gap-6">
@@ -136,6 +148,8 @@ export default async function AdminDashboardPage({ searchParams }: PageProps<"/a
         <StatCard label="شكاوى مفتوحة" value={openComplaints ?? 0} icon={MessageSquareWarning} tone="warning" href="/admin/complaints" />
         <StatCard label="تنبيهات غير محلولة" value={unresolvedAlerts ?? 0} icon={Siren} tone="destructive" href="/admin/alerts" />
       </div>
+
+      {showAcademic && <AcademicSnapshot plan={planItems ?? []} sessionsDue={sessionsDue} sessionsOverdue={sessionsOverdue} today={today} />}
 
       <Card>
         <CardHeader>

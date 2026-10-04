@@ -21,7 +21,7 @@ export const PERMISSION_GROUPS = [
   {
     label: "الدعم والمتابعة",
     items: [
-      { key: "academic", label: "الدعم الأكاديمي", description: "استقبال طلبات التقوية ومتابعتها" },
+      { key: "academic", label: "الدعم والمتابعة الأكاديمية", description: "طلبات التقوية، ودرجات الطلاب وجلسات التقييم والخطة وتذكيرات واتساب" },
       { key: "complaints", label: "الشكاوى والمقترحات", description: "الرد على الشكاوى وتغيير حالتها" },
     ],
   },

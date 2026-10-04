@@ -73,7 +73,7 @@ export function AppShell({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className="overflow-x-clip">
+      <SidebarInset className="min-w-0 overflow-x-clip">
         {/* هالة لونية خفيفة أعلى الصفحة */}
         <div
           aria-hidden

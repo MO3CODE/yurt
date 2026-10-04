@@ -18,6 +18,7 @@ import {
   ListTodo,
   ShieldCheck,
   History,
+  NotebookPen,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/components/nav/nav-config";
@@ -26,6 +27,7 @@ import type { IconName } from "@/components/nav/nav-config";
 export const iconMap: Record<IconName, LucideIcon> = {
   ShieldCheck,
   History,
+  NotebookPen,
   LayoutDashboard,
   Users,
   DoorOpen,

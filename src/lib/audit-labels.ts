@@ -17,6 +17,11 @@ export const AUDIT_TABLE_LABELS: Record<string, string> = {
   facilities: "مرفق",
   facility_issues: "بلاغ عطل",
   alerts: "تنبيه",
+  student_academic_profiles: "ملف أكاديمي",
+  student_subjects: "مادة طالب",
+  assessment_sessions: "جلسة تقييم",
+  subject_actions: "خطوة معالجة",
+  follow_up_plan_items: "بند في الخطة",
 };
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {
@@ -51,6 +56,15 @@ const FIELD_LABELS: Record<string, string> = {
   student_id: "الطالب",
   emergency_contact_name: "جهة الطوارئ",
   emergency_contact_phone: "هاتف الطوارئ",
+  gpa: "المعدل",
+  gpa_scale: "مقياس المعدل",
+  standing: "التصنيف",
+  grade: "الدرجة",
+  next_session_at: "الجلسة القادمة",
+  last_session_at: "آخر جلسة",
+  tutor_name: "الأستاذ",
+  due_date: "الموعد",
+  track: "المسار",
 };
 
 const VALUE_LABELS: Record<string, string> = {
@@ -77,6 +91,14 @@ const VALUE_LABELS: Record<string, string> = {
   admin: "إداري",
   super_admin: "مدير عام",
   student: "طالب",
+  strong: "قوي",
+  struggling: "متعثر",
+  planned: "مخطَّط",
+  todo: "لم يبدأ",
+  blocked: "متعثّر",
+  academic: "أكاديمي",
+  skills: "مهاراتي",
+  development: "تطويري",
   true: "نعم",
   false: "لا",
 };

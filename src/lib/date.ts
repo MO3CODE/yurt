@@ -32,6 +32,30 @@ export function formatWeekRange(weekStart: string): string {
     : `${dayMonth.format(start)} – ${dayMonth.format(end)}`;
 }
 
+/** عدد الأيام من تاريخ إلى آخر (YYYY-MM-DD)؛ سالب إن كان الثاني أسبق */
+export function daysBetweenISO(from: string, to: string): number {
+  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+}
+
+/** «الأحد ٥ أكتوبر» من تاريخ YYYY-MM-DD */
+export function formatLongDateISO(iso: string): string {
+  return new Intl.DateTimeFormat("ar-u-nu-arab", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(
+    new Date(`${iso}T00:00:00Z`)
+  );
+}
+
+/** «٥ أكتوبر ٢٠٢٦» من تاريخ YYYY-MM-DD */
+export function formatShortDateISO(iso: string): string {
+  return new Intl.DateTimeFormat("ar-u-nu-arab", { timeZone: "UTC", day: "numeric", month: "long", year: "numeric" }).format(
+    new Date(`${iso}T00:00:00Z`)
+  );
+}
+
+/** يوم (بتوقيت المنصة) لطابع زمني كامل */
+export function dateISOInAppTz(timestamp: string): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: APP_TIMEZONE }).format(new Date(timestamp));
+}
+
 export function monthStartISO(date = todayISO()): string {
   return `${date.slice(0, 7)}-01`;
 }

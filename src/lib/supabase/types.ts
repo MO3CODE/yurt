@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          message: string
+          sent_by: string | null
+          student_id: string
+          subject_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          message: string
+          sent_by?: string | null
+          student_id: string
+          subject_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          message?: string
+          sent_by?: string | null
+          student_id?: string
+          subject_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_reminders_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_reminders_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "points_leaderboard"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "academic_reminders_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_profile_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "academic_reminders_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_reminders_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "academic_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_subjects: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       academic_support_requests: {
         Row: {
           admin_notes: string | null
@@ -198,6 +282,74 @@ export type Database = {
             columns: ["supervisor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assessment_sessions: {
+        Row: {
+          action_items: string | null
+          conducted_by: string | null
+          created_at: string
+          gpa: number | null
+          gpa_scale: number
+          id: string
+          next_session_date: string | null
+          session_date: string
+          student_id: string
+          summary: string | null
+        }
+        Insert: {
+          action_items?: string | null
+          conducted_by?: string | null
+          created_at?: string
+          gpa?: number | null
+          gpa_scale?: number
+          id?: string
+          next_session_date?: string | null
+          session_date: string
+          student_id: string
+          summary?: string | null
+        }
+        Update: {
+          action_items?: string | null
+          conducted_by?: string | null
+          created_at?: string
+          gpa?: number | null
+          gpa_scale?: number
+          id?: string
+          next_session_date?: string | null
+          session_date?: string
+          student_id?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_sessions_conducted_by_fkey"
+            columns: ["conducted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assessment_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "points_leaderboard"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "assessment_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_profile_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "assessment_sessions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -644,6 +796,59 @@ export type Database = {
           {
             foreignKeyName: "facility_issues_reported_by_fkey"
             columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_up_plan_items: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          phase: string | null
+          sort_order: number
+          status: Database["public"]["Enums"]["plan_status"]
+          title: string
+          track: Database["public"]["Enums"]["plan_track"]
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          phase?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["plan_status"]
+          title: string
+          track?: Database["public"]["Enums"]["plan_track"]
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          phase?: string | null
+          sort_order?: number
+          status?: Database["public"]["Enums"]["plan_status"]
+          title?: string
+          track?: Database["public"]["Enums"]["plan_track"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_plan_items_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1117,6 +1322,120 @@ export type Database = {
           },
         ]
       }
+      student_academic_profiles: {
+        Row: {
+          created_at: string
+          gpa: number | null
+          gpa_scale: number
+          last_session_at: string | null
+          next_session_at: string | null
+          notes: string | null
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gpa?: number | null
+          gpa_scale?: number
+          last_session_at?: string | null
+          next_session_at?: string | null
+          notes?: string | null
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gpa?: number | null
+          gpa_scale?: number
+          last_session_at?: string | null
+          next_session_at?: string | null
+          notes?: string | null
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_academic_profiles_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "points_leaderboard"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_academic_profiles_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "student_profile_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_academic_profiles_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_subjects: {
+        Row: {
+          grade: number | null
+          id: string
+          note: string | null
+          standing: Database["public"]["Enums"]["subject_standing"]
+          student_id: string
+          subject_id: string
+          updated_at: string
+        }
+        Insert: {
+          grade?: number | null
+          id?: string
+          note?: string | null
+          standing: Database["public"]["Enums"]["subject_standing"]
+          student_id: string
+          subject_id: string
+          updated_at?: string
+        }
+        Update: {
+          grade?: number | null
+          id?: string
+          note?: string | null
+          standing?: Database["public"]["Enums"]["subject_standing"]
+          student_id?: string
+          subject_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "points_leaderboard"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "student_profile_summary"
+            referencedColumns: ["student_id"]
+          },
+          {
+            foreignKeyName: "student_subjects_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_subjects_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "academic_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           academic_year: string | null
@@ -1180,6 +1499,60 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subject_actions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["remediation_status"]
+          subject_id: string
+          title: string
+          tutor_name: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["remediation_status"]
+          subject_id: string
+          title: string
+          tutor_name?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["remediation_status"]
+          subject_id?: string
+          title?: string
+          tutor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subject_actions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subject_actions_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "academic_subjects"
             referencedColumns: ["id"]
           },
         ]
@@ -1369,6 +1742,8 @@ export type Database = {
       health_severity: "mild" | "moderate" | "severe"
       health_status: "ongoing" | "recovered"
       notification_target: "all" | "apartment" | "student" | "role"
+      plan_status: "todo" | "in_progress" | "done" | "blocked"
+      plan_track: "academic" | "skills" | "development" | "other"
       points_category:
         | "prayer"
         | "quran"
@@ -1380,7 +1755,9 @@ export type Database = {
       prayer_status: "mosque" | "prayed" | "missed"
       priority_level: "low" | "medium" | "high" | "urgent"
       record_source: "self" | "supervisor" | "admin"
+      remediation_status: "planned" | "in_progress" | "done"
       student_status: "active" | "on_leave" | "graduated" | "withdrawn"
+      subject_standing: "strong" | "struggling"
       support_status:
         | "open"
         | "assigned"
@@ -1533,6 +1910,8 @@ export const Constants = {
       health_severity: ["mild", "moderate", "severe"],
       health_status: ["ongoing", "recovered"],
       notification_target: ["all", "apartment", "student", "role"],
+      plan_status: ["todo", "in_progress", "done", "blocked"],
+      plan_track: ["academic", "skills", "development", "other"],
       points_category: [
         "prayer",
         "quran",
@@ -1545,7 +1924,9 @@ export const Constants = {
       prayer_status: ["mosque", "prayed", "missed"],
       priority_level: ["low", "medium", "high", "urgent"],
       record_source: ["self", "supervisor", "admin"],
+      remediation_status: ["planned", "in_progress", "done"],
       student_status: ["active", "on_leave", "graduated", "withdrawn"],
+      subject_standing: ["strong", "struggling"],
       support_status: ["open", "assigned", "in_progress", "resolved", "closed"],
       task_status: ["pending", "done"],
     },
@@ -1574,3 +1955,8 @@ export type NotificationTarget = Database["public"]["Enums"]["notification_targe
 export type TaskStatus = Database["public"]["Enums"]["task_status"]
 export type PointsCategory = Database["public"]["Enums"]["points_category"]
 export type AlertSeverity = Database["public"]["Enums"]["alert_severity"]
+
+export type SubjectStanding = Database["public"]["Enums"]["subject_standing"]
+export type RemediationStatus = Database["public"]["Enums"]["remediation_status"]
+export type PlanTrack = Database["public"]["Enums"]["plan_track"]
+export type PlanStatus = Database["public"]["Enums"]["plan_status"]

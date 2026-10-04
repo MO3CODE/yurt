@@ -7,6 +7,7 @@ import type { PermissionKey } from "@/lib/auth/permissions";
 
 export type IconName =
   | "ShieldCheck"
+  | "NotebookPen"
   | "History"
   | "LayoutDashboard"
   | "Users"
@@ -63,6 +64,7 @@ export const adminNav: NavGroup[] = [
   {
     label: "الدعم والمتابعة",
     items: [
+      { title: "المتابعة الأكاديمية", href: "/admin/academic", permission: "academic", icon: "NotebookPen" },
       { title: "الدعم الأكاديمي", href: "/admin/academic-support", permission: "academic", icon: "GraduationCap" },
       { title: "الشكاوى والمقترحات", href: "/admin/complaints", permission: "complaints", icon: "MessageSquareWarning" },
     ],
