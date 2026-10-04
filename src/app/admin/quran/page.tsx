@@ -18,7 +18,7 @@ export default async function AdminQuranPage() {
     supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),
     supabase.from("quran_wird_logs").select("student_id, record_date, pages").gte("record_date", sinceISO),
     supabase.from("quran_platform_daily").select("student_id, record_date, pages").gte("record_date", sinceISO),
-    supabase.from("quran_progress").select("student_id, current_page, khatmas"),
+    supabase.from("quran_progress").select("student_id, current_page, khatmas, daily_goal"),
   ]);
 
   type Stat = { days: Set<string>; mushafPages: number; platformPages: number; mushafDays: number };
@@ -55,6 +55,7 @@ export default async function AdminQuranPage() {
                 <TableHead>مجموع الصفحات</TableHead>
                 <TableHead>المصدر</TableHead>
                 <TableHead>الختمة</TableHead>
+                <TableHead>الورد اليومي</TableHead>
                 <TableHead>اليوم</TableHead>
               </TableRow>
             </TableHeader>
@@ -83,6 +84,7 @@ export default async function AdminQuranPage() {
                         "—"
                       )}
                     </TableCell>
+                    <TableCell>{prog?.daily_goal ? `${arNum(prog.daily_goal)} ص` : "—"}</TableCell>
                     <TableCell>
                       {loggedToday ? <Badge variant="secondary">سجّل</Badge> : <Badge variant="outline">لم يسجّل</Badge>}
                     </TableCell>

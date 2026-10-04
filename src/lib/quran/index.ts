@@ -29,6 +29,14 @@ export function pageUrl(page: number): string {
 const arabicNumber = new Intl.NumberFormat("ar-u-nu-arab", { useGrouping: false });
 export const arNum = (n: number) => arabicNumber.format(n);
 
+/** «يوم واحد»، «يومين»، «٥ أيام»، «٣٠ يوماً» */
+export function daysLabel(n: number): string {
+  if (n === 1) return "يوم واحد";
+  if (n === 2) return "يومين";
+  if (n <= 10) return `${arNum(n)} أيام`;
+  return `${arNum(n)} يوماً`;
+}
+
 /** وصف نطاق صفحات مقروءة من المنصة: «الكهف (ص ٢٩٣–٢٩٧)» أو «ص ٤، ٢٩٣–٢٩٤» */
 export function describePages(pages: number[]): string {
   if (pages.length === 0) return "";
@@ -44,6 +52,24 @@ export function describePages(pages: number[]): string {
   const last = pageInfo(sorted.at(-1)!).surah.name;
   const surahs = first === last ? first : `${first} – ${last}`;
   return `${surahs} (ص ${span})`;
+}
+
+/** «صفحة واحدة»، «صفحتان»، «٥ صفحات»، «٢٠ صفحة» */
+export function pagesLabel(n: number): string {
+  if (n === 1) return "صفحة واحدة";
+  if (n === 2) return "صفحتان";
+  if (n <= 10) return `${arNum(n)} صفحات`;
+  return `${arNum(n)} صفحة`;
+}
+
+/** النطاق المتبقي من العلامة: «من ص ٢٩٥ إلى ٢٩٧ (الإسراء – الكهف)» */
+export function pageSpan(from: number, count: number): string {
+  const start = clampPage(from);
+  const end = Math.min(QURAN_PAGES, start + count - 1);
+  const a = pageInfo(start).surah.name;
+  const b = pageInfo(end).surah.name;
+  const surahs = a === b ? a : `${a} – ${b}`;
+  return start === end ? `ص ${arNum(start)} (${surahs})` : `من ص ${arNum(start)} إلى ${arNum(end)} (${surahs})`;
 }
 
 /** مصدر ورد اليوم من عدد صفحات المنصة وصفحات المصحف الورقي */

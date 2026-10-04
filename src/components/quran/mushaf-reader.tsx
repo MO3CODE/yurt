@@ -91,11 +91,16 @@ export function MushafReader({
   initialBookmark,
   initialKhatmas,
   readToday,
+  mushafPagesToday,
+  dailyGoal,
 }: {
   initialPage: number;
   initialBookmark: number;
   initialKhatmas: number;
   readToday: number[];
+  /** صفحات المصحف الورقي المسجّلة اليوم (تُجمع مع صفحات المنصة في الهدف) */
+  mushafPagesToday: number;
+  dailyGoal: number | null;
 }) {
   const [page, setPage] = useState(initialPage);
   const [data, setData] = useState<QuranPage | null>(null);
@@ -141,7 +146,9 @@ export function MushafReader({
     setBookmark(r.data.current_page);
     setKhatmas(r.data.khatmas);
     if (r.data.khatma_completed) toast.success("بارك الله فيك، أتممت ختمة كاملة");
-  }, []);
+    else if (r.data.counted && dailyGoal && r.data.today_pages + mushafPagesToday === dailyGoal)
+      toast.success("أتممت وردك اليوم، بارك الله فيك");
+  }, [dailyGoal, mushafPagesToday]);
 
   // عدّاد القراءة: يعدّ فقط والصفحة ظاهرة، ويتوقف إذا خرج الطالب من التطبيق
   useEffect(() => {
@@ -313,7 +320,10 @@ export function MushafReader({
           <ChevronRight /> السابقة
         </Button>
         <span className="text-xs text-muted-foreground">
-          {arNum(read.size)} صفحة اليوم · {arNum(khatmas)} ختمة
+          {dailyGoal
+            ? `${arNum(read.size + mushafPagesToday)} / ${arNum(dailyGoal)} اليوم`
+            : `${arNum(read.size + mushafPagesToday)} اليوم`}{" "}
+          · {arNum(khatmas)} ختمة
         </span>
         <Button variant="outline" onClick={() => go(page + 1)} disabled={page === QURAN_PAGES}>
           التالية <ChevronLeft />

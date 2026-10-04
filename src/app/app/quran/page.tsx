@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WirdSourceBadge } from "@/components/quran/wird-source-badge";
-import { BookOpen, Bookmark } from "lucide-react";
+import { BookOpen, Bookmark, Target } from "lucide-react";
+import { QuranPlanDialog } from "@/components/quran/quran-plan-dialog";
 import { addDaysISO, todayISO } from "@/lib/date";
-import { QURAN_PAGES, arNum, describePages, pageInfo, wirdSource } from "@/lib/quran";
+import { QURAN_PAGES, arNum, describePages, pageInfo, pageSpan, pagesLabel, wirdSource } from "@/lib/quran";
 
 const HISTORY_DAYS = 14;
 
@@ -30,7 +31,7 @@ export default async function QuranPage() {
       .gte("record_date", since)
       .order("record_date", { ascending: false }),
     supabase.from("quran_page_reads").select("record_date, page").eq("student_id", user.id).gte("record_date", since),
-    supabase.from("quran_progress").select("current_page, khatmas").eq("student_id", user.id).maybeSingle(),
+    supabase.from("quran_progress").select("current_page, khatmas, daily_goal").eq("student_id", user.id).maybeSingle(),
   ]);
 
   const readsByDate = new Map<string, number[]>();
@@ -46,6 +47,9 @@ export default async function QuranPage() {
 
   const bookmark = progress?.current_page ?? 1;
   const khatmas = progress?.khatmas ?? 0;
+  const dailyGoal = progress?.daily_goal ?? null;
+  const todayTotal = todayPlatform.length + todayMushaf;
+  const remaining = dailyGoal ? Math.max(0, dailyGoal - todayTotal) : 0;
   // الصفحات المنجزة في الختمة الحالية = ما قبل العلامة
   const done = bookmark - 1;
 
@@ -72,15 +76,39 @@ export default async function QuranPage() {
       <PageHeader title="الورد القرآني" description="اقرأ من المنصة أو سجّل وردك من مصحفك" />
 
       <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-sm text-muted-foreground">ورد اليوم</p>
-            <p className="text-2xl font-semibold">{arNum(todayPlatform.length + todayMushaf)} صفحة</p>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm text-muted-foreground">ورد اليوم</p>
+              <p className="text-2xl font-semibold">
+                {arNum(todayTotal)}
+                {dailyGoal ? ` / ${arNum(dailyGoal)}` : ""} صفحة
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {todayPlatform.length > 0 && <Badge variant="secondary">المنصة {arNum(todayPlatform.length)}</Badge>}
+              {todayMushaf > 0 && <Badge variant="outline">المصحف {arNum(todayMushaf)}</Badge>}
+              <QuranPlanDialog
+                bookmark={bookmark}
+                dailyGoal={dailyGoal}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <Target /> {dailyGoal ? "خطة وردي" : "حدد وردك اليومي"}
+                  </Button>
+                }
+              />
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {todayPlatform.length > 0 && <Badge variant="secondary">المنصة {arNum(todayPlatform.length)}</Badge>}
-            {todayMushaf > 0 && <Badge variant="outline">المصحف {arNum(todayMushaf)}</Badge>}
-          </div>
+          {dailyGoal && (
+            <>
+              <Progress value={Math.min(100, (todayTotal / dailyGoal) * 100)} aria-label="تقدّم ورد اليوم" />
+              <p className="text-sm text-muted-foreground">
+                {remaining === 0
+                  ? "أتممت وردك اليوم، بارك الله فيك"
+                  : `تبقّى لك ${pagesLabel(remaining)}: ${pageSpan(bookmark, remaining)}`}
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
 

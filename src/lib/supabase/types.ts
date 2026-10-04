@@ -1402,18 +1402,21 @@ export type Database = {
       quran_progress: {
         Row: {
           current_page: number
+          daily_goal: number | null
           khatmas: number
           student_id: string
           updated_at: string
         }
         Insert: {
           current_page?: number
+          daily_goal?: number | null
           khatmas?: number
           student_id: string
           updated_at?: string
         }
         Update: {
           current_page?: number
+          daily_goal?: number | null
           khatmas?: number
           student_id?: string
           updated_at?: string
@@ -1891,6 +1894,10 @@ export type Database = {
       is_apartment_supervisor: { Args: { apt_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       record_quran_page: { Args: { p_page: number }; Returns: Json }
+      set_quran_plan: {
+        Args: { p_daily_goal: number | null; p_start: number | null }
+        Returns: undefined
+      }
       set_quran_reached_page: { Args: { p_page: number }; Returns: undefined }
       supervised_apartment_id: { Args: never; Returns: string }
       supervises_student: {

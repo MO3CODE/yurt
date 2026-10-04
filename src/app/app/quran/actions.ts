@@ -66,6 +66,28 @@ export async function logWird(formData: FormData) {
   });
 }
 
+const planSchema = z.object({
+  start: z.number().int().min(1, "صفحة البدء بين ١ و٦٠٤").max(QURAN_PAGES, "صفحة البدء بين ١ و٦٠٤").nullable(),
+  dailyGoal: z
+    .number()
+    .int("الورد اليومي عدد صحيح من الصفحات")
+    .min(1, "الورد اليومي صفحة على الأقل")
+    .max(QURAN_PAGES, "الورد اليومي أكبر من المصحف")
+    .nullable(),
+});
+
+/** خطة الورد: من أين تبدأ الختمة (null = العلامة كما هي) وكم صفحة يومياً */
+export async function setQuranPlan(input: { start: number | null; dailyGoal: number | null }) {
+  return runAction(async () => {
+    const parsed = planSchema.parse(input);
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("set_quran_plan", { p_start: parsed.start, p_daily_goal: parsed.dailyGoal });
+    if (error) throw new Error(error.message);
+    revalidatePath("/app");
+    revalidatePath("/app/quran");
+  });
+}
+
 export type PageReadResult = {
   counted: boolean;
   khatma_completed: boolean;
