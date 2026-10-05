@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "sync:prayer-times": "node --env-file=.env.local scripts/sync-prayer-times.mts",
-    "build:quran": "node scripts/build-quran-pages.mts"
+    "build:quran": "node scripts/build-quran-pages.mts",
+    "build:adhkar": "node scripts/build-adhkar.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

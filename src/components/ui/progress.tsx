@@ -7,11 +7,14 @@ function Progress({
   className,
   children,
   value,
+  // لغة ثابتة: بدونها ينسّق السيرفر النسبة «0%» والمتصفح العربي «%0» فيختلف الـ HTML عند الـ hydration
+  locale = "ar",
   ...props
 }: ProgressPrimitive.Root.Props) {
   return (
     <ProgressPrimitive.Root
       value={value}
+      locale={locale}
       data-slot="progress"
       className={cn("flex flex-wrap gap-3", className)}
       {...props}

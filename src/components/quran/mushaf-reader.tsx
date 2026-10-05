@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { hafsFont } from "@/components/quran/hafs-font";
 import { recordQuranPage } from "@/app/app/quran/actions";
 import {
+  BASMALA,
   JUZ_START_PAGES,
   QURAN_PAGES,
   SURAHS,
@@ -26,7 +27,6 @@ import {
 /** الصفحة تُحسب مقروءة بعد هذا العدد من الثواني وهي ظاهرة على الشاشة */
 const READ_SECONDS = 30;
 const FONT_SIZES = [18, 21, 24, 28];
-const BASMALA = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ";
 
 // الصفحات تُحمَّل مرة واحدة في الجلسة، والمجاورتان مسبقاً
 const pageCache = new Map<number, Promise<QuranPage>>();

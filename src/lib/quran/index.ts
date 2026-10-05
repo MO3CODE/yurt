@@ -2,6 +2,8 @@ import data from "./index.json";
 
 // فهرس مصحف المدينة (٦٠٤ صفحة) مولَّد من بيانات مجمّع الملك فهد عبر npm run build:quran
 export const QURAN_PAGES = 604;
+/** البسملة بترميز خط حفص (كما في بيانات المجمّع) */
+export const BASMALA = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ";
 
 export type Surah = { n: number; name: string; title: string; page: number; ayas: number };
 export type QuranAya = { s: number; a: number; t: string };

@@ -25,7 +25,8 @@ export type IconName =
   | "Siren"
   | "FileBarChart"
   | "CalendarDays"
-  | "ListTodo";
+  | "ListTodo"
+  | "SunMoon";
 
 export type NavItem = {
   title: string;
@@ -57,7 +58,7 @@ export const adminNav: NavGroup[] = [
     items: [
       { title: "الحضور الجامعي", href: "/admin/attendance", permission: "attendance", icon: "ClipboardCheck" },
       { title: "الصلوات", href: "/admin/prayers", permission: "prayers", icon: "HandHeart" },
-      { title: "الورد القرآني", href: "/admin/quran", permission: "quran", icon: "BookOpen" },
+      { title: "الورد والأذكار", href: "/admin/quran", permission: "quran", icon: "BookOpen" },
       { title: "السجل الصحي", href: "/admin/health", permission: "health", icon: "Stethoscope" },
     ],
   },
@@ -91,6 +92,7 @@ export const studentNav: NavItem[] = [
   { title: "الرئيسية", href: "/app", icon: "LayoutDashboard" },
   { title: "الصلوات", href: "/app/prayers", icon: "HandHeart" },
   { title: "الورد القرآني", href: "/app/quran", icon: "BookOpen" },
+  { title: "الأذكار", href: "/app/adhkar", icon: "SunMoon" },
   { title: "جدولي الجامعي", href: "/app/schedule", icon: "CalendarDays" },
   { title: "الحضور", href: "/app/attendance", icon: "ClipboardCheck" },
   { title: "مهامي", href: "/app/tasks", icon: "ListTodo" },

@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   History,
   NotebookPen,
+  SunMoon,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/components/nav/nav-config";
@@ -45,4 +46,5 @@ export const iconMap: Record<IconName, LucideIcon> = {
   FileBarChart,
   CalendarDays,
   ListTodo,
+  SunMoon,
 };

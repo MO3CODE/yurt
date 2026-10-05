@@ -5,6 +5,7 @@ import { Bell, BellOff, BellRing, Send, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import {
   removePushSubscription,
+  saveDevotionReminderSettings,
   savePrayerReminderSettings,
   savePushSubscription,
   sendTestPush,
@@ -12,6 +13,7 @@ import {
 import { Segmented } from "@/components/segmented";
 import { Button } from "@/components/ui/button";
 import { LEAD_OPTIONS, NUDGE_OPTIONS } from "@/lib/prayer-reminders";
+import { ADHKAR_OFFSETS, WIRD_OFFSETS, type DevotionSettings } from "@/lib/devotion-reminders";
 import { FIVE_PRAYERS, type FivePrayer } from "@/lib/prayer-times";
 import { prayerLabel } from "@/lib/date";
 import { unwrap } from "@/lib/unwrap";
@@ -47,12 +49,25 @@ async function currentSubscription(): Promise<PushSubscription | null> {
 
 const leadLabel = (m: number) => (m === 0 ? "عند الأذان" : `قبل ${m} د`);
 const nudgeLabel = (m: number | null) => (m === null ? "بدون" : `بعد ${m} د`);
+const OFF = -1;
+const adhkarOptions = [{ value: OFF, label: "إيقاف" }, ...ADHKAR_OFFSETS.map((m) => ({ value: m as number, label: `${m} د` }))];
+const wirdMinuteOptions = WIRD_OFFSETS.map((m) => ({ value: m as number, label: m === 0 ? "مباشرة" : `${m} د` }));
 
-export function PrayerReminders({ initial, serverReady }: { initial: Settings; serverReady: boolean }) {
+export function PrayerReminders({
+  initial,
+  serverReady,
+  devotion: initialDevotion,
+}: {
+  initial: Settings;
+  serverReady: boolean;
+  /** تذكيرات الأذكار والورد (للطلاب فقط) */
+  devotion?: DevotionSettings;
+}) {
   const env = useSyncExternalStore(subscribeNone, readEnv, () => "checking" as Env);
   const [subscribed, setSubscribed] = useState<"loading" | "on" | "off">("loading");
   const [denied, setDenied] = useState(false);
   const [settings, setSettings] = useState<Settings>(initial);
+  const [devotion, setDevotion] = useState<DevotionSettings | undefined>(initialDevotion);
   const [busy, startBusy] = useTransition();
   const [, startSave] = useTransition();
 
@@ -128,6 +143,21 @@ export function PrayerReminders({ initial, serverReady }: { initial: Settings; s
     });
   }
 
+  function updateDevotion(patch: Partial<DevotionSettings>) {
+    if (!devotion) return;
+    const prev = devotion;
+    const next = { ...devotion, ...patch };
+    setDevotion(next);
+    startSave(async () => {
+      try {
+        await unwrap(saveDevotionReminderSettings(next));
+      } catch (e) {
+        setDevotion(prev);
+        toast.error(e instanceof Error ? e.message : "تعذّر حفظ الإعدادات");
+      }
+    });
+  }
+
   function test() {
     startBusy(async () => {
       try {
@@ -153,8 +183,10 @@ export function PrayerReminders({ initial, serverReady }: { initial: Settings; s
             {on ? <BellRing className="size-5" /> : <Bell className="size-5" />}
           </span>
           <div className="flex flex-col leading-tight">
-            <span className="font-heading font-semibold">تذكيرات الصلاة</span>
-            <span className="text-xs text-muted-foreground">{on ? "مفعَّلة على هذا الجهاز" : "إشعار على جهازك عند دخول كل وقت"}</span>
+            <span className="font-heading font-semibold">{devotion ? "التذكيرات" : "تذكيرات الصلاة"}</span>
+            <span className="text-xs text-muted-foreground">
+              {on ? "مفعَّلة على هذا الجهاز" : devotion ? "الصلاة والأذكار والورد: إشعار على جهازك" : "إشعار على جهازك عند دخول كل وقت"}
+            </span>
           </div>
         </div>
 
@@ -227,6 +259,46 @@ export function PrayerReminders({ initial, serverReady }: { initial: Settings; s
               })}
             </div>
           </Row>
+        </div>
+      )}
+
+      {on && devotion && (
+        <div className="flex flex-col gap-3 border-t pt-4">
+          <span className="text-sm font-medium">الأذكار والورد</span>
+          <Row label="أذكار الصباح (بعد الفجر)">
+            <Segmented
+              label="تذكير أذكار الصباح"
+              value={devotion.morningMinutes ?? OFF}
+              onChange={(v) => updateDevotion({ morningMinutes: v === OFF ? null : v })}
+              options={adhkarOptions}
+            />
+          </Row>
+          <Row label="أذكار المساء (بعد العصر)">
+            <Segmented
+              label="تذكير أذكار المساء"
+              value={devotion.eveningMinutes ?? OFF}
+              onChange={(v) => updateDevotion({ eveningMinutes: v === OFF ? null : v })}
+              options={adhkarOptions}
+            />
+          </Row>
+          <Row label="الورد اليومي (إن لم يكتمل)">
+            <Segmented
+              label="الصلاة التي بعدها تذكير الورد"
+              value={devotion.wirdPrayer ?? "off"}
+              onChange={(v) => updateDevotion({ wirdPrayer: v === "off" ? null : (v as FivePrayer) })}
+              options={[{ value: "off", label: "إيقاف" }, ...FIVE_PRAYERS.map((p) => ({ value: p as string, label: `بعد ${prayerLabel(p)}` }))]}
+            />
+          </Row>
+          {devotion.wirdPrayer && (
+            <Row label="بعد الصلاة بـ">
+              <Segmented
+                label="دقائق بعد الصلاة"
+                value={devotion.wirdMinutes}
+                onChange={(v) => updateDevotion({ wirdMinutes: v })}
+                options={wirdMinuteOptions}
+              />
+            </Row>
+          )}
         </div>
       )}
     </section>

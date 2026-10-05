@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { pushConfigured, sendPush } from "@/lib/push";
 import { LEAD_OPTIONS, NUDGE_OPTIONS } from "@/lib/prayer-reminders";
+import { ADHKAR_OFFSETS, WIRD_OFFSETS } from "@/lib/devotion-reminders";
 import { FIVE_PRAYERS } from "@/lib/prayer-times";
 
 const base64url = z.string().min(8).max(512).regex(/^[A-Za-z0-9_\-+/=]+$/, "مفتاح اشتراك غير صالح");
@@ -81,5 +82,38 @@ export async function sendTestPush(): Promise<ActionResult<{ sent: number }>> {
     if (res.goneIds.length > 0) await createAdminClient().from("push_subscriptions").delete().in("id", res.goneIds);
     if (res.sent === 0) throw new Error("تعذّر الإرسال لأي جهاز — أعد تفعيل التذكيرات ثم جرّب");
     return { sent: res.sent };
+  });
+}
+
+const devotionSchema = z.object({
+  morningMinutes: z
+    .number()
+    .refine((n) => (ADHKAR_OFFSETS as readonly number[]).includes(n), "قيمة غير مسموحة")
+    .nullable(),
+  eveningMinutes: z
+    .number()
+    .refine((n) => (ADHKAR_OFFSETS as readonly number[]).includes(n), "قيمة غير مسموحة")
+    .nullable(),
+  wirdPrayer: z.enum(FIVE_PRAYERS as [string, ...string[]]).nullable(),
+  wirdMinutes: z.number().refine((n) => (WIRD_OFFSETS as readonly number[]).includes(n), "قيمة غير مسموحة"),
+});
+
+/** إعدادات تذكيرات الأذكار والورد (في نفس صف إعدادات الصلاة) */
+export async function saveDevotionReminderSettings(input: z.input<typeof devotionSchema>): Promise<ActionResult> {
+  return runAction(async () => {
+    const user = await requireUser();
+    const v = devotionSchema.parse(input);
+    const supabase = await createClient();
+    const { error } = await supabase.from("prayer_reminder_settings").upsert(
+      {
+        profile_id: user.id,
+        adhkar_morning_minutes: v.morningMinutes,
+        adhkar_evening_minutes: v.eveningMinutes,
+        wird_prayer: v.wirdPrayer,
+        wird_minutes: v.wirdMinutes,
+      },
+      { onConflict: "profile_id" }
+    );
+    if (error) throw new Error(error.message);
   });
 }

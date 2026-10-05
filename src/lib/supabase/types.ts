@@ -166,6 +166,38 @@ export type Database = {
           },
         ]
       }
+      adhkar_logs: {
+        Row: {
+          completed_at: string
+          method: string
+          period: string
+          record_date: string
+          student_id: string
+        }
+        Insert: {
+          completed_at?: string
+          method?: string
+          period: string
+          record_date: string
+          student_id: string
+        }
+        Update: {
+          completed_at?: string
+          method?: string
+          period?: string
+          record_date?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adhkar_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           apartment_id: string | null
@@ -724,6 +756,35 @@ export type Database = {
           },
         ]
       }
+      devotion_push_log: {
+        Row: {
+          day: string
+          kind: string
+          profile_id: string
+          sent_at: string
+        }
+        Insert: {
+          day: string
+          kind: string
+          profile_id: string
+          sent_at?: string
+        }
+        Update: {
+          day?: string
+          kind?: string
+          profile_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devotion_push_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facilities: {
         Row: {
           created_at: string
@@ -1221,28 +1282,40 @@ export type Database = {
       }
       prayer_reminder_settings: {
         Row: {
+          adhkar_evening_minutes: number | null
+          adhkar_morning_minutes: number | null
           enabled: boolean
           lead_minutes: number
           nudge_minutes: number | null
           prayers: string[]
           profile_id: string
           updated_at: string
+          wird_minutes: number
+          wird_prayer: string | null
         }
         Insert: {
+          adhkar_evening_minutes?: number | null
+          adhkar_morning_minutes?: number | null
           enabled?: boolean
           lead_minutes?: number
           nudge_minutes?: number | null
           prayers?: string[]
           profile_id: string
           updated_at?: string
+          wird_minutes?: number
+          wird_prayer?: string | null
         }
         Update: {
+          adhkar_evening_minutes?: number | null
+          adhkar_morning_minutes?: number | null
           enabled?: boolean
           lead_minutes?: number
           nudge_minutes?: number | null
           prayers?: string[]
           profile_id?: string
           updated_at?: string
+          wird_minutes?: number
+          wird_prayer?: string | null
         }
         Relationships: [
           {

@@ -14,12 +14,22 @@ export default async function AdminQuranPage() {
   const today = todayISO();
   const sinceISO = addDaysISO(today, -6);
 
-  const [{ data: students }, { data: logs }, { data: reads }, { data: progress }] = await Promise.all([
+  const [{ data: students }, { data: logs }, { data: reads }, { data: progress }, { data: adhkar }] = await Promise.all([
     supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),
     supabase.from("quran_wird_logs").select("student_id, record_date, pages").gte("record_date", sinceISO),
     supabase.from("quran_platform_daily").select("student_id, record_date, pages").gte("record_date", sinceISO),
     supabase.from("quran_progress").select("student_id, current_page, khatmas, daily_goal"),
+    supabase.from("adhkar_logs").select("student_id, period").gte("record_date", sinceISO),
   ]);
+
+  // عدد أيام إتمام أذكار الصباح والمساء خلال الأسبوع
+  const adhkarBy = new Map<string, { morning: number; evening: number }>();
+  for (const a of adhkar ?? []) {
+    const row = adhkarBy.get(a.student_id) ?? { morning: 0, evening: 0 };
+    if (a.period === "morning") row.morning++;
+    else row.evening++;
+    adhkarBy.set(a.student_id, row);
+  }
 
   type Stat = { days: Set<string>; mushafPages: number; platformPages: number; mushafDays: number };
   const stats = new Map<string, Stat>();
@@ -43,7 +53,7 @@ export default async function AdminQuranPage() {
 
   return (
     <div className="stagger flex flex-col gap-6">
-      <PageHeader title="الورد القرآني" description="نشاط آخر ٧ أيام" />
+      <PageHeader title="الورد والأذكار" description="نشاط آخر ٧ أيام" />
       <Card>
         <CardContent>
           <Table>
@@ -56,6 +66,8 @@ export default async function AdminQuranPage() {
                 <TableHead>المصدر</TableHead>
                 <TableHead>الختمة</TableHead>
                 <TableHead>الورد اليومي</TableHead>
+                <TableHead>أذكار الصباح</TableHead>
+                <TableHead>أذكار المساء</TableHead>
                 <TableHead>اليوم</TableHead>
               </TableRow>
             </TableHeader>
@@ -85,6 +97,8 @@ export default async function AdminQuranPage() {
                       )}
                     </TableCell>
                     <TableCell>{prog?.daily_goal ? `${arNum(prog.daily_goal)} ص` : "—"}</TableCell>
+                    <TableCell className="tabular-nums">{arNum(adhkarBy.get(s.id)?.morning ?? 0)} / ٧</TableCell>
+                    <TableCell className="tabular-nums">{arNum(adhkarBy.get(s.id)?.evening ?? 0)} / ٧</TableCell>
                     <TableCell>
                       {loggedToday ? <Badge variant="secondary">سجّل</Badge> : <Badge variant="outline">لم يسجّل</Badge>}
                     </TableCell>

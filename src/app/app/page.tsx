@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { PrayerTracker } from "@/components/student/prayer-tracker";
 import { AttendanceToday } from "@/components/student/attendance-today";
 import { TaskList } from "@/components/student/task-list";
-import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft, Coffee, SprayCan, Check, X } from "lucide-react";
+import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft, Coffee, SprayCan, Check, X, Sun, Moon } from "lucide-react";
+import { adhkarDay } from "@/lib/adhkar";
 import { cn } from "@/lib/utils";
-import { todayISO, dayOfWeekISO, greeting, hijriDate, longDate, weekStartISO } from "@/lib/date";
+import { addDaysISO, todayISO, dayOfWeekISO, greeting, hijriDate, longDate, weekStartISO } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
 import { NextPrayerChip } from "@/components/prayer/prayer-times";
 import { getSchedule } from "@/lib/prayer-times-server";
@@ -34,6 +35,7 @@ export default async function StudentHomePage() {
     { count: platformPagesToday },
     { data: myCleaning },
     schedule,
+    { data: adhkarRows },
   ] = await Promise.all([
     supabase.from("prayer_records").select("prayer, status").eq("student_id", user.id).eq("record_date", today),
     supabase.from("attendance_records").select("status, source").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
@@ -59,7 +61,12 @@ export default async function StudentHomePage() {
       .eq("student_id", user.id)
       .eq("week_start_date", weekStartISO(today)),
     getSchedule(supabase),
+    // اليوم وأمس: بعد منتصف الليل وقبل الفجر يتبع المساء اليوم السابق
+    supabase.from("adhkar_logs").select("record_date, period").eq("student_id", user.id).in("record_date", [today, addDaysISO(today, -1)]),
   ]);
+
+  const adhkarToday = adhkarDay(new Date(schedule.nowIso), schedule.today, addDaysISO(today, -1));
+  const adhkarDone = new Set((adhkarRows ?? []).filter((r) => r.record_date === adhkarToday).map((r) => r.period));
 
   const prayerValues: Partial<Record<PrayerName, PrayerStatus>> = {};
   for (const p of prayerRows ?? []) prayerValues[p.prayer] = p.status;
@@ -102,6 +109,19 @@ export default async function StudentHomePage() {
                   ? `وردك اليوم: ${Number(wirdToday?.pages ?? 0) + (platformPagesToday ?? 0)} صفحة`
                   : "اقرأ وردك"}
               </Button>
+              {(["morning", "evening"] as const).map((p) => (
+                <Button
+                  key={p}
+                  size="sm"
+                  variant="ghost"
+                  className="bg-sidebar-accent/60 text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  nativeButton={false}
+                  render={<Link href="/app/adhkar" />}
+                >
+                  {p === "morning" ? <Sun /> : <Moon />} {p === "morning" ? "الصباح" : "المساء"}
+                  {adhkarDone.has(p) && <Check className="text-sidebar-primary" />}
+                </Button>
+              ))}
               {unreadCount > 0 && (
                 <Button
                   size="sm"

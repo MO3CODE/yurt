@@ -8,6 +8,7 @@ import { PrayerReminders } from "@/components/prayer/prayer-reminders";
 import { getSchedule } from "@/lib/prayer-times-server";
 import { pushConfigured } from "@/lib/push";
 import { DEFAULT_REMINDER_SETTINGS } from "@/lib/prayer-reminders";
+import { DEFAULT_DEVOTION_SETTINGS, type DevotionSettings } from "@/lib/devotion-reminders";
 import { FIVE_PRAYERS, type FivePrayer } from "@/lib/prayer-times";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { addDaysISO, todayISO, prayerLabel } from "@/lib/date";
@@ -29,7 +30,7 @@ export default async function PrayersPage() {
 
   const sinceISO = addDaysISO(today, -13);
 
-  const [{ data: records }, { data: settingsRow }, schedule] = await Promise.all([
+  const [{ data: records }, { data: settingsRow }, schedule, { data: devotionRow }] = await Promise.all([
     supabase
       .from("prayer_records")
       .select("record_date, prayer, status")
@@ -38,7 +39,25 @@ export default async function PrayersPage() {
       .order("record_date", { ascending: false }),
     supabase.from("prayer_reminder_settings").select("lead_minutes, nudge_minutes, prayers").eq("profile_id", user.id).maybeSingle(),
     getSchedule(supabase),
+    supabase
+      .from("prayer_reminder_settings")
+      .select("adhkar_morning_minutes, adhkar_evening_minutes, wird_prayer, wird_minutes")
+      .eq("profile_id", user.id)
+      .maybeSingle(),
   ]);
+
+  // تذكيرات الأذكار والورد للطلاب فقط
+  const devotionSettings: DevotionSettings | undefined =
+    user.role !== "student"
+      ? undefined
+      : devotionRow
+        ? {
+            morningMinutes: devotionRow.adhkar_morning_minutes,
+            eveningMinutes: devotionRow.adhkar_evening_minutes,
+            wirdPrayer: (FIVE_PRAYERS as string[]).includes(devotionRow.wird_prayer ?? "") ? (devotionRow.wird_prayer as FivePrayer) : null,
+            wirdMinutes: devotionRow.wird_minutes,
+          }
+        : DEFAULT_DEVOTION_SETTINGS;
 
   const reminderSettings = settingsRow
     ? {
@@ -62,7 +81,7 @@ export default async function PrayersPage() {
 
       <PrayerTimesCard {...schedule} logged={byDate.get(today) ?? {}} />
 
-      <PrayerReminders initial={reminderSettings} serverReady={pushConfigured()} />
+      <PrayerReminders initial={reminderSettings} serverReady={pushConfigured()} devotion={devotionSettings} />
 
       <Card>
         <CardHeader>
