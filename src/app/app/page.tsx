@@ -11,6 +11,8 @@ import { AttendanceToday } from "@/components/student/attendance-today";
 import { TaskList } from "@/components/student/task-list";
 import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft, Coffee, SprayCan, Check, X, Sun, Moon } from "lucide-react";
 import { adhkarDay } from "@/lib/adhkar";
+import { getMyCourses } from "@/lib/learning/server";
+import { LearningToday } from "@/components/learning/learning-today";
 import { cn } from "@/lib/utils";
 import { addDaysISO, todayISO, dayOfWeekISO, greeting, hijriDate, longDate, weekStartISO } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
@@ -36,6 +38,7 @@ export default async function StudentHomePage() {
     { data: myCleaning },
     schedule,
     { data: adhkarRows },
+    myCourses,
   ] = await Promise.all([
     supabase.from("prayer_records").select("prayer, status").eq("student_id", user.id).eq("record_date", today),
     supabase.from("attendance_records").select("status, source").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
@@ -63,7 +66,9 @@ export default async function StudentHomePage() {
     getSchedule(supabase),
     // اليوم وأمس: بعد منتصف الليل وقبل الفجر يتبع المساء اليوم السابق
     supabase.from("adhkar_logs").select("record_date, period").eq("student_id", user.id).in("record_date", [today, addDaysISO(today, -1)]),
+    getMyCourses(supabase, user.id, today),
   ]);
+  const lessonsToday = myCourses.reduce((s, c) => s + c.todayUnits.length, 0);
 
   const adhkarToday = adhkarDay(new Date(schedule.nowIso), schedule.today, addDaysISO(today, -1));
   const adhkarDone = new Set((adhkarRows ?? []).filter((r) => r.record_date === adhkarToday).map((r) => r.period));
@@ -156,7 +161,7 @@ export default async function StudentHomePage() {
 
       <div className="stagger grid grid-cols-3 gap-3 sm:gap-4">
         <StatCard label="مجموع نقاطك" value={totalPoints} icon={Trophy} tone="gold" href="/app/points" />
-        <StatCard label="مهام قيد الإنجاز" value={tasks?.length ?? 0} icon={ListTodo} href="/app/tasks" />
+        <StatCard label="مهام قيد الإنجاز" value={(tasks?.length ?? 0) + lessonsToday} icon={ListTodo} href="/app/tasks" />
         <StatCard label="محاضرات اليوم" value={classesToday?.length ?? 0} icon={CalendarDays} tone="success" href="/app/schedule" />
       </div>
 
@@ -265,6 +270,8 @@ export default async function StudentHomePage() {
           </Card>
         </div>
       </div>
+
+      <LearningToday courses={myCourses} compact />
 
       <Card>
         <CardHeader>

@@ -20,6 +20,7 @@ import {
   History,
   NotebookPen,
   SunMoon,
+  MonitorPlay,
   type LucideIcon,
 } from "lucide-react";
 import type { IconName } from "@/components/nav/nav-config";
@@ -47,4 +48,5 @@ export const iconMap: Record<IconName, LucideIcon> = {
   CalendarDays,
   ListTodo,
   SunMoon,
+  MonitorPlay,
 };

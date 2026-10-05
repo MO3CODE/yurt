@@ -756,6 +756,175 @@ export type Database = {
           },
         ]
       }
+      course_enrollments: {
+        Row: {
+          completed_at: string | null
+          course_id: string
+          created_at: string
+          started_on: string
+          student_id: string
+          target_date: string
+        }
+        Insert: {
+          completed_at?: string | null
+          course_id: string
+          created_at?: string
+          started_on: string
+          student_id: string
+          target_date: string
+        }
+        Update: {
+          completed_at?: string | null
+          course_id?: string
+          created_at?: string
+          started_on?: string
+          student_id?: string
+          target_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_unit_progress: {
+        Row: {
+          completed_at: string
+          course_id: string
+          student_id: string
+          unit_id: string
+        }
+        Insert: {
+          completed_at?: string
+          course_id: string
+          student_id: string
+          unit_id: string
+        }
+        Update: {
+          completed_at?: string
+          course_id?: string
+          student_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_unit_progress_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_unit_progress_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "course_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      course_units: {
+        Row: {
+          body: string | null
+          content: Json | null
+          course_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          kind: string
+          position: number
+          title: string
+          youtube_video_id: string | null
+        }
+        Insert: {
+          body?: string | null
+          content?: Json | null
+          course_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          kind: string
+          position: number
+          title: string
+          youtube_video_id?: string | null
+        }
+        Update: {
+          body?: string | null
+          content?: Json | null
+          course_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          kind?: string
+          position?: number
+          title?: string
+          youtube_video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_units_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          category: string
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          level: string | null
+          published: boolean
+          title: string
+          updated_at: string
+          youtube_playlist_id: string | null
+        }
+        Insert: {
+          category: string
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          level?: string | null
+          published?: boolean
+          title: string
+          updated_at?: string
+          youtube_playlist_id?: string | null
+        }
+        Update: {
+          category?: string
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          level?: string | null
+          published?: boolean
+          title?: string
+          updated_at?: string
+          youtube_playlist_id?: string | null
+        }
+        Relationships: [
+
+        ]
+      }
       devotion_push_log: {
         Row: {
           day: string
@@ -1026,6 +1195,29 @@ export type Database = {
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      learning_points_settings: {
+        Row: {
+          course_complete: number
+          id: number
+          updated_at: string
+          writing_approved: number
+        }
+        Insert: {
+          course_complete?: number
+          id?: number
+          updated_at?: string
+          writing_approved?: number
+        }
+        Update: {
+          course_complete?: number
+          id?: number
+          updated_at?: string
+          writing_approved?: number
+        }
+        Relationships: [
+
         ]
       }
       notification_reads: {
@@ -1908,6 +2100,66 @@ export type Database = {
           },
         ]
       }
+      writing_submissions: {
+        Row: {
+          course_id: string
+          created_at: string
+          feedback: string | null
+          id: string
+          image_paths: string[]
+          note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string
+          topic: string
+          unit_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          image_paths: string[]
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id: string
+          topic: string
+          unit_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          image_paths?: string[]
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string
+          topic?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "writing_submissions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "writing_submissions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "course_units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           created_at: string
@@ -2016,6 +2268,33 @@ export type Database = {
           },
         ]
       }
+      course_catalog: {
+        Row: {
+          category: string | null
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          enrolled: number | null
+          id: string | null
+          level: string | null
+          published: boolean | null
+          title: string | null
+          total_seconds: number | null
+          units: number | null
+        }
+        Relationships: []
+      }
+      course_enrollment_progress: {
+        Row: {
+          completed_at: string | null
+          course_id: string | null
+          done: number | null
+          started_on: string | null
+          student_id: string | null
+          target_date: string | null
+        }
+        Relationships: []
+      }
       quran_hifz_summary: {
         Row: {
           learning: number | null
@@ -2083,10 +2362,15 @@ export type Database = {
       }
       has_permission: { Args: { p: string }; Returns: boolean }
       award_quran_points: { Args: never; Returns: number }
+      complete_course_unit: { Args: { p_unit: string }; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_apartment_supervisor: { Args: { apt_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       quran_review_done: { Args: { p_total: number }; Returns: number }
+      review_writing_submission: {
+        Args: { p_feedback: string; p_id: string; p_status: string }
+        Returns: undefined
+      }
       record_quran_page: { Args: { p_page: number }; Returns: Json }
       set_quran_plan: {
         Args: { p_daily_goal: number | null; p_start: number | null }
