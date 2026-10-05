@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { RegisterServiceWorker } from "@/components/register-service-worker";
+import { SplashScreen } from "@/components/brand/splash-screen";
 import "./globals.css";
 
 // خط موحّد لكل المنصة (عناوين ونصوص): IBM Plex Sans Arabic
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${ibmPlexArabic.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <SplashScreen />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

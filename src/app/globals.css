@@ -282,3 +282,103 @@
   }
   .stagger > *, .page-enter { animation: none !important; }
 }
+
+/* ============ شاشة الافتتاح (اختصار الشاشة الرئيسية فقط) ============ */
+.splash {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  /* ألوان ثابتة في الوضعين: زمرّدي الشعار وذهبيه */
+  --splash-emerald: oklch(0.29 0.045 186);
+  --splash-emerald-light: oklch(0.37 0.05 184);
+  --splash-emerald-deep: oklch(0.21 0.035 190);
+  --splash-gold: oklch(0.76 0.12 78);
+  --splash-ink: oklch(0.93 0.02 85);
+  color: var(--splash-gold);
+  background: radial-gradient(120% 80% at 50% 42%, var(--splash-emerald-light) 0%, var(--splash-emerald) 55%, var(--splash-emerald-deep) 100%);
+  transition: opacity 0.6s var(--ease-out-soft), transform 0.6s var(--ease-out-soft);
+}
+@media (display-mode: standalone) {
+  .splash { display: flex; }
+}
+.splash-out .splash { opacity: 0; transform: scale(1.04); pointer-events: none; }
+.splash-off .splash { display: none !important; }
+
+.splash-pattern {
+  position: absolute;
+  inset: -64px;
+  opacity: 0;
+  animation: fade-in 1.2s ease-out 0.2s forwards, splash-drift 18s linear infinite;
+}
+.splash-pattern svg { opacity: 0.07; }
+.splash-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(60% 45% at 50% 42%, transparent 0%, var(--splash-emerald) 100%);
+  opacity: 0.85;
+}
+
+.splash-orbit { transform-box: view-box; transform-origin: 50% 50%; opacity: 0; }
+.splash-orbit-a { animation: fade-in 0.8s ease-out 0.5s forwards, splash-spin 28s linear infinite; }
+.splash-orbit-b { animation: fade-in 0.8s ease-out 0.7s forwards, splash-spin 40s linear infinite reverse; }
+.splash-orbit-a polygon { opacity: 0.35; }
+.splash-orbit-b polygon { opacity: 0.2; }
+
+.splash-star {
+  fill: currentColor;
+  fill-opacity: 0;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: splash-draw 1.1s cubic-bezier(0.6, 0, 0.2, 1) 0.1s forwards, splash-fill 0.5s ease-out 1s forwards;
+}
+.splash-cut {
+  fill: var(--splash-emerald);
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  animation: splash-pop 0.5s var(--ease-out-soft) 1.15s forwards;
+}
+.splash-core {
+  fill: currentColor;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0);
+  animation: splash-pop 0.5s var(--ease-out-soft) 1.3s forwards, splash-breathe 2.4s ease-in-out 1.8s infinite;
+}
+
+.splash-title { opacity: 0; animation: rise 0.7s var(--ease-out-soft) 0.9s forwards; }
+
+.splash-bar {
+  position: relative;
+  width: 72px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--splash-gold) 18%, transparent);
+  opacity: 0;
+  animation: fade-in 0.5s ease-out 1.3s forwards;
+}
+.splash-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--splash-gold);
+  animation: splash-sweep 1.3s ease-in-out infinite;
+}
+
+@keyframes splash-draw { to { stroke-dashoffset: 0; } }
+@keyframes splash-fill { to { fill-opacity: 1; } }
+@keyframes splash-pop { to { transform: scale(1); } }
+@keyframes splash-spin { to { rotate: 360deg; } }
+@keyframes splash-breathe { 50% { transform: scale(0.8); } }
+@keyframes splash-drift { to { transform: translate3d(64px, 64px, 0); } }
+@keyframes splash-sweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(260%); }
+}
