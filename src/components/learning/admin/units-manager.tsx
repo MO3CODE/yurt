@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Check, ListVideo, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, ListVideo, PenLine, Pencil, Plus, Trash2, X } from "lucide-react";
+import { WritingUnitDialog } from "@/components/learning/admin/writing-unit-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
@@ -12,7 +13,7 @@ import { arNum } from "@/lib/quran";
 import { UNIT_KIND_LABELS, formatDuration, unitsLabel, type UnitKind } from "@/lib/learning";
 import { unwrap } from "@/lib/unwrap";
 
-export type AdminUnit = { id: string; title: string; kind: UnitKind; durationSeconds: number | null };
+export type AdminUnit = { id: string; title: string; kind: UnitKind; durationSeconds: number | null; body: string | null; topics: string[] };
 
 /** استيراد البلاي ليست، إضافة فيديو برابط، وإدارة ترتيب الدروس وعناوينها */
 export function UnitsManager({ courseId, units }: { courseId: string; units: AdminUnit[] }) {
@@ -105,6 +106,17 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
         </form>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        <WritingUnitDialog
+          courseId={courseId}
+          trigger={
+            <Button variant="outline" size="sm">
+              <PenLine /> إضافة تدريب كتابة
+            </Button>
+          }
+        />
+      </div>
+
       {units.length > 0 && (
         <ol className="flex flex-col divide-y rounded-2xl border bg-card">
           {units.map((u, i) => (
@@ -136,6 +148,7 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
                     <span className="text-[11px] text-muted-foreground">
                       {UNIT_KIND_LABELS[u.kind]}
                       {u.durationSeconds ? ` · ${formatDuration(u.durationSeconds)}` : ""}
+                      {u.kind === "writing" ? ` · ${arNum(u.topics.length)} موضوع` : ""}
                     </span>
                   </span>
                   <div className="flex shrink-0 items-center">
@@ -157,9 +170,21 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
                     >
                       <ArrowDown />
                     </Button>
-                    <Button size="icon-sm" variant="ghost" aria-label="تعديل العنوان" onClick={() => setEditing({ id: u.id, title: u.title })}>
-                      <Pencil />
-                    </Button>
+                    {u.kind === "writing" ? (
+                      <WritingUnitDialog
+                        courseId={courseId}
+                        unit={{ id: u.id, title: u.title, body: u.body, topics: u.topics }}
+                        trigger={
+                          <Button size="icon-sm" variant="ghost" aria-label="تعديل التدريب">
+                            <Pencil />
+                          </Button>
+                        }
+                      />
+                    ) : (
+                      <Button size="icon-sm" variant="ghost" aria-label="تعديل العنوان" onClick={() => setEditing({ id: u.id, title: u.title })}>
+                        <Pencil />
+                      </Button>
+                    )}
                     <Button
                       size="icon-sm"
                       variant="ghost"

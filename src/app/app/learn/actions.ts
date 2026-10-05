@@ -6,6 +6,7 @@ import { runAction } from "@/lib/action-result";
 import { requireUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import { addDaysISO, todayISO } from "@/lib/date";
+import { writingTopics } from "@/lib/learning/writing";
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاريخ غير صحيح");
 
@@ -83,5 +84,45 @@ export async function uncompleteUnit(unitId: string, courseId: string) {
     const { error } = await supabase.from("course_unit_progress").delete().eq("student_id", user.id).eq("unit_id", unitId);
     if (error) throw new Error(error.message);
     refresh(courseId);
+  });
+}
+
+const submissionSchema = z.object({
+  unitId: z.string().uuid(),
+  topic: z.string().trim().min(1, "اختر الموضوع").max(300),
+  paths: z.array(z.string().max(300)).min(1, "ارفع صورة الورقة").max(6, "حتى ست صور"),
+  note: z.string().trim().max(1000).nullable(),
+});
+
+/**
+ * يسجّل تسليم تدريب الكتابة بعد رفع الصور إلى المخزن الخاص من المتصفح،
+ * ويُتم الوحدة في جدول الطالب (التقييم والنقاط عند مراجعة الإدارة).
+ */
+export async function submitWriting(input: z.input<typeof submissionSchema>) {
+  return runAction(async () => {
+    const user = await requireUser();
+    const v = submissionSchema.parse(input);
+    // الصور يجب أن تكون في مجلد الطالب نفسه (سياسة المخزن تفرض ذلك أيضاً)
+    if (!v.paths.every((p) => p.startsWith(`${user.id}/${v.unitId}/`))) throw new Error("مسار صورة غير صالح");
+
+    const supabase = await createClient();
+    const { data: unit } = await supabase.from("course_units").select("course_id, kind, content").eq("id", v.unitId).single();
+    if (!unit || unit.kind !== "writing") throw new Error("التدريب غير موجود");
+    const topics = writingTopics(unit.content);
+    if (!topics.includes(v.topic)) throw new Error("اختر موضوعاً من القائمة");
+
+    const { error } = await supabase.from("writing_submissions").insert({
+      student_id: user.id,
+      unit_id: v.unitId,
+      course_id: unit.course_id,
+      topic: v.topic,
+      image_paths: v.paths,
+      note: v.note,
+    });
+    if (error) throw new Error(error.message);
+
+    const { data: progress } = await supabase.rpc("complete_course_unit", { p_unit: v.unitId });
+    refresh(unit.course_id);
+    return progress as CompleteUnitResult | null;
   });
 }

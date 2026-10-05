@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CheckCircle2, GraduationCap, PlayCircle } from "lucide-react";
+import { CheckCircle2, GraduationCap } from "lucide-react";
+import { KIND_ICONS } from "@/components/learning/unit-list";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScheduleBadge } from "@/components/learning/schedule-badge";
@@ -37,17 +38,20 @@ export function LearningToday({ courses, compact = false }: { courses: MyCourse[
             </div>
             {c.todayUnits.length > 0 ? (
               <ul className="flex flex-col gap-1">
-                {c.todayUnits.slice(0, compact ? 2 : 6).map((u) => (
-                  <li key={u.id}>
-                    <Link
-                      href={`/app/learn/${c.id}/${u.id}`}
-                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-muted/60"
-                    >
-                      <PlayCircle className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 truncate">{u.title}</span>
-                    </Link>
-                  </li>
-                ))}
+                {c.todayUnits.slice(0, compact ? 2 : 6).map((u) => {
+                  const Icon = KIND_ICONS[u.kind];
+                  return (
+                    <li key={u.id}>
+                      <Link
+                        href={`/app/learn/${c.id}/${u.id}`}
+                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-muted/60"
+                      >
+                        <Icon className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0 truncate">{u.title}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
                 {compact && c.todayUnits.length > 2 && (
                   <li className="px-2 text-xs text-muted-foreground">
                     {c.todayUnits.length === 3 ? "ودرس آخر" : `و${unitsLabel(c.todayUnits.length - 2)} أخرى`}

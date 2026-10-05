@@ -7,6 +7,9 @@ import { assertPermission } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import { COURSE_CATEGORIES, COURSE_LEVELS, youtubeThumb } from "@/lib/learning";
 import { fetchPlaylist, fetchVideoTitle, parsePlaylistId, parseVideoId } from "@/lib/learning/youtube";
+import { parseTopics } from "@/lib/learning/writing";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { pushConfigured, sendPush } from "@/lib/push";
 
 const courseSchema = z.object({
   title: z.string().trim().min(2, "اكتب عنوان الكورس").max(120),
@@ -212,6 +215,95 @@ export async function saveLearningPointsSettings(formData: FormData) {
     const supabase = await createClient();
     const { error } = await supabase.from("learning_points_settings").update({ ...v, updated_at: new Date().toISOString() }).eq("id", 1);
     if (error) throw new Error(error.message);
+    revalidatePath("/admin/learning");
+  });
+}
+
+const writingSchema = z.object({
+  title: z.string().trim().min(2, "اكتب عنوان التدريب").max(200),
+  body: z.string().trim().max(20000).nullable(),
+  topics: z.array(z.string().max(300)).min(1, "اكتب موضوعاً واحداً على الأقل (موضوع في كل سطر)").max(30),
+});
+
+function parseWriting(formData: FormData) {
+  return writingSchema.parse({
+    title: formData.get("title"),
+    body: formData.get("body") || null,
+    topics: parseTopics(String(formData.get("topics") ?? "")),
+  });
+}
+
+/** تدريب كتابة: تعليمات + مواضيع يختار الطالب منها */
+export async function addWritingUnit(courseId: string, formData: FormData) {
+  return runAction(async () => {
+    await assertPermission("learning");
+    const v = parseWriting(formData);
+    const supabase = await createClient();
+    const position = await nextPosition(supabase, courseId);
+    const { error } = await supabase
+      .from("course_units")
+      .insert({ course_id: courseId, position, kind: "writing", title: v.title, body: v.body, content: { topics: v.topics } });
+    if (error) throw new Error(error.message);
+    refresh(courseId);
+  });
+}
+
+export async function updateWritingUnit(unitId: string, courseId: string, formData: FormData) {
+  return runAction(async () => {
+    await assertPermission("learning");
+    const v = parseWriting(formData);
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("course_units")
+      .update({ title: v.title, body: v.body, content: { topics: v.topics } })
+      .eq("id", unitId);
+    if (error) throw new Error(error.message);
+    refresh(courseId);
+  });
+}
+
+const reviewSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["approved", "revise"]),
+  feedback: z.string().trim().max(4000),
+});
+
+/** مراجعة تسليم كتابة: الدالة في القاعدة تحفظ وتمنح النقاط وتنشئ إشعاراً، وهنا نرسل إشعار الجوال */
+export async function reviewSubmission(input: z.input<typeof reviewSchema>) {
+  return runAction(async () => {
+    await assertPermission("learning");
+    const v = reviewSchema.parse(input);
+    if (v.status === "revise" && !v.feedback) throw new Error("اكتب للطالب ما يحتاج إعادته");
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("review_writing_submission", { p_id: v.id, p_status: v.status, p_feedback: v.feedback });
+    if (error) throw new Error(error.message);
+
+    // إشعار الجوال (إن كان الطالب مفعّلاً للإشعارات)؛ فشله لا يُفشل المراجعة
+    try {
+      if (pushConfigured()) {
+        const admin = createAdminClient();
+        const { data: sub } = await admin.from("writing_submissions").select("student_id, unit_id, course_id, topic").eq("id", v.id).single();
+        if (sub) {
+          const { data: targets } = await admin.from("push_subscriptions").select("id, endpoint, p256dh, auth_key").eq("profile_id", sub.student_id);
+          if (targets?.length) {
+            await sendPush(
+              targets,
+              {
+                title: v.status === "approved" ? "تمت مراجعة كتابتك ✓" : "كتابتك تحتاج إعادة",
+                body: v.feedback ? v.feedback.slice(0, 140) : `الموضوع: ${sub.topic}`,
+                url: `/app/learn/${sub.course_id}/${sub.unit_id}`,
+                tag: `writing-${v.id}`,
+              },
+              86400
+            );
+          }
+        }
+      }
+    } catch (e) {
+      console.error("writing review push", e);
+    }
+
+    revalidatePath("/admin/learning/submissions");
     revalidatePath("/admin/learning");
   });
 }

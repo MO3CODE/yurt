@@ -16,6 +16,7 @@ import { ScheduleBadge } from "@/components/learning/schedule-badge";
 import { formatShortDateISO, todayISO } from "@/lib/date";
 import { arNum } from "@/lib/quran";
 import { CATEGORY_LABELS, courseSchedule, formatDuration, unitsLabel, type CourseCategory, type UnitKind } from "@/lib/learning";
+import { writingTopics } from "@/lib/learning/writing";
 
 export default async function AdminCoursePage({ params }: PageProps<"/admin/learning/[id]">) {
   await requirePermission("learning");
@@ -25,7 +26,7 @@ export default async function AdminCoursePage({ params }: PageProps<"/admin/lear
 
   const [{ data: course }, { data: units }, { data: enrollments }] = await Promise.all([
     supabase.from("courses").select("*").eq("id", id).maybeSingle(),
-    supabase.from("course_units").select("id, title, kind, duration_seconds").eq("course_id", id).order("position"),
+    supabase.from("course_units").select("id, title, kind, duration_seconds, body, content").eq("course_id", id).order("position"),
     supabase.from("course_enrollment_progress").select("*").eq("course_id", id),
   ]);
   if (!course) notFound();
@@ -81,7 +82,14 @@ export default async function AdminCoursePage({ params }: PageProps<"/admin/lear
         <CardContent>
           <UnitsManager
             courseId={course.id}
-            units={(units ?? []).map((u) => ({ id: u.id, title: u.title, kind: u.kind as UnitKind, durationSeconds: u.duration_seconds }))}
+            units={(units ?? []).map((u) => ({
+              id: u.id,
+              title: u.title,
+              kind: u.kind as UnitKind,
+              durationSeconds: u.duration_seconds,
+              body: u.body,
+              topics: writingTopics(u.content),
+            }))}
           />
         </CardContent>
       </Card>

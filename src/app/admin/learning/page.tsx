@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MonitorPlay, Plus } from "lucide-react";
+import { MonitorPlay, PenLine, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PageHeader } from "@/components/page-header";
@@ -16,9 +16,10 @@ import { CATEGORY_LABELS, formatDuration, type CourseCategory } from "@/lib/lear
 export default async function AdminLearningPage() {
   await requirePermission("learning");
   const supabase = await createClient();
-  const [{ data: courses }, { data: points }] = await Promise.all([
+  const [{ data: courses }, { data: points }, { count: pending }] = await Promise.all([
     supabase.from("course_catalog").select("*").order("created_at", { ascending: false }),
     supabase.from("learning_points_settings").select("course_complete, writing_approved").eq("id", 1).maybeSingle(),
+    supabase.from("writing_submissions").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
 
   return (
@@ -27,13 +28,19 @@ export default async function AdminLearningPage() {
         title="المنصة التعليمية"
         description="الكورسات ودروسها ومتابعة المنضمين"
         action={
-          <CourseFormDialog
-            trigger={
-              <Button>
-                <Plus /> كورس جديد
-              </Button>
-            }
-          />
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" nativeButton={false} render={<Link href="/admin/learning/submissions" />}>
+              <PenLine /> تدريبات الكتابة
+              {pending ? <Badge className="bg-warning/25 text-warning-foreground dark:text-warning">{arNum(pending)}</Badge> : null}
+            </Button>
+            <CourseFormDialog
+              trigger={
+                <Button>
+                  <Plus /> كورس جديد
+                </Button>
+              }
+            />
+          </div>
         }
       />
 

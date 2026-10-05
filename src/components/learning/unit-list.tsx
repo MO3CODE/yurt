@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { arNum } from "@/lib/quran";
 import { formatDuration, type UnitKind } from "@/lib/learning";
 
-const KIND_ICONS: Record<UnitKind, typeof PlayCircle> = {
+export const KIND_ICONS: Record<UnitKind, typeof PlayCircle> = {
   video: PlayCircle,
   reading: BookOpenText,
   vocab: Layers,
