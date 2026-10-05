@@ -9,6 +9,7 @@ import { COURSE_CATEGORIES, COURSE_LEVELS, youtubeThumb } from "@/lib/learning";
 import { fetchPlaylist, fetchVideoTitle, parsePlaylistId, parseVideoId } from "@/lib/learning/youtube";
 import { parseTopics } from "@/lib/learning/writing";
 import { parseCardLines } from "@/lib/learning/content";
+import { findPack, findSets } from "@/lib/learning/vocab-packs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pushConfigured, sendPush } from "@/lib/push";
 
@@ -341,5 +342,47 @@ export async function saveVocabUnit(courseId: string, unitId: string | null, for
     if (error) throw new Error(error.message);
     refresh(courseId);
     return { count: cards.length };
+  });
+}
+
+/** ينشئ كورساً (مسودة) من مستوى في مكتبة الكلمات: درس كلمات لكل موضوع */
+export async function createCourseFromPack(level: string) {
+  return runAction(async () => {
+    const user = await assertPermission("learning");
+    const pack = findPack(level);
+    if (!pack) throw new Error("المستوى غير موجود");
+    const supabase = await createClient();
+    const { data: course, error } = await supabase
+      .from("courses")
+      .insert({ title: pack.title, description: pack.description, category: "languages", level: pack.level, created_by: user.id })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    const { error: unitsError } = await supabase.from("course_units").insert(
+      pack.sets.map((s, i) => ({ course_id: course.id, position: i + 1, kind: "vocab", title: s.title, content: { cards: s.words } }))
+    );
+    if (unitsError) {
+      await supabase.from("courses").delete().eq("id", course.id);
+      throw new Error(unitsError.message);
+    }
+    refresh(course.id);
+    return { id: course.id };
+  });
+}
+
+/** يضيف مواضيع من المكتبة إلى كورس موجود (بعد دروسه الحالية) */
+export async function addPackSets(courseId: string, setIds: string[]) {
+  return runAction(async () => {
+    await assertPermission("learning");
+    const sets = findSets(z.array(z.string()).min(1, "اختر موضوعاً واحداً على الأقل").parse(setIds));
+    if (sets.length === 0) throw new Error("المواضيع غير موجودة");
+    const supabase = await createClient();
+    let position = await nextPosition(supabase, z.string().uuid("اختر الكورس").parse(courseId));
+    const { error } = await supabase
+      .from("course_units")
+      .insert(sets.map((s) => ({ course_id: courseId, position: position++, kind: "vocab", title: s.title, content: { cards: s.words } })));
+    if (error) throw new Error(error.message);
+    refresh(courseId);
+    return { added: sets.length };
   });
 }

@@ -1,0 +1,111 @@
+{
+  "level": "advanced",
+  "title": "مفردات الإنجليزية — مستوى متقدم",
+  "description": "٨٠ كلمة للكتابة الأكاديمية والاقتصاد والقضايا العامة والتعبير المتقدم، مع معناها بالعربي وجملة تستعملها ونطقها.",
+  "sets": [
+    {
+      "id": "a-academic",
+      "title": "الكتابة الأكاديمية — Academic Writing",
+      "words": [
+        { "word": "argue", "meaning": "يحتجّ / يرى (بحجّة)", "example": "The author argues that education reduces poverty." },
+        { "word": "evidence", "meaning": "دليل / أدلّة", "example": "There is strong evidence for this theory." },
+        { "word": "significant", "meaning": "مهمّ / ملحوظ", "example": "The study found a significant difference between the groups." },
+        { "word": "analyze", "meaning": "يحلّل", "example": "We analyzed the data using statistical software." },
+        { "word": "approach", "meaning": "منهج / طريقة", "example": "This approach is common in qualitative research." },
+        { "word": "assume", "meaning": "يفترض", "example": "Many people assume that the problem is simple." },
+        { "word": "conclude", "meaning": "يستنتج / يختتم", "example": "The researchers concluded that sleep affects memory." },
+        { "word": "consequently", "meaning": "نتيجةً لذلك", "example": "Prices rose; consequently, demand fell." },
+        { "word": "furthermore", "meaning": "علاوةً على ذلك", "example": "The method is cheap. Furthermore, it is easy to apply." },
+        { "word": "however", "meaning": "ومع ذلك / لكن", "example": "The plan is good; however, it needs more time." },
+        { "word": "whereas", "meaning": "في حين أن", "example": "Some students prefer online classes, whereas others prefer the campus." },
+        { "word": "hypothesis", "meaning": "فرضية", "example": "The results support our hypothesis." },
+        { "word": "framework", "meaning": "إطار (نظري)", "example": "The thesis uses a clear theoretical framework." },
+        { "word": "interpret", "meaning": "يفسّر", "example": "It is difficult to interpret these results." },
+        { "word": "relevant", "meaning": "ذو صلة / مناسب", "example": "Only include relevant information in your essay." },
+        { "word": "emphasize", "meaning": "يؤكّد / يشدّد على", "example": "The report emphasizes the role of families." },
+        { "word": "acknowledge", "meaning": "يعترف بـ / يُقرّ", "example": "The author acknowledges the limits of the study." },
+        { "word": "outline", "meaning": "مخطّط / يوجز", "example": "Prepare an outline before you start writing." },
+        { "word": "cite", "meaning": "يستشهد بـ / يوثّق", "example": "Always cite the sources you use." },
+        { "word": "plagiarism", "meaning": "انتحال (سرقة علمية)", "example": "Plagiarism can lead to failing the course." }
+      ]
+    },
+    {
+      "id": "a-economy",
+      "title": "الاقتصاد والإدارة — Economy & Management",
+      "words": [
+        { "word": "budget", "meaning": "ميزانية", "example": "Students should plan a monthly budget." },
+        { "word": "investment", "meaning": "استثمار", "example": "Education is the best investment in the future." },
+        { "word": "inflation", "meaning": "تضخّم", "example": "High inflation makes daily life more expensive." },
+        { "word": "revenue", "meaning": "إيرادات", "example": "The company's revenue grew by twenty percent." },
+        { "word": "profit", "meaning": "ربح", "example": "Small shops often make a modest profit." },
+        { "word": "loss", "meaning": "خسارة", "example": "The project ended with a financial loss." },
+        { "word": "demand", "meaning": "طلب (اقتصادي) / يطالب", "example": "Demand for engineers is increasing." },
+        { "word": "supply", "meaning": "عرض / إمداد", "example": "Supply and demand determine the price." },
+        { "word": "efficient", "meaning": "كفء / فعّال", "example": "We need a more efficient system." },
+        { "word": "strategy", "meaning": "استراتيجية", "example": "The new strategy focuses on young customers." },
+        { "word": "negotiate", "meaning": "يتفاوض", "example": "They negotiated a better contract." },
+        { "word": "contract", "meaning": "عقد", "example": "Read the contract carefully before you sign it." },
+        { "word": "sustainable", "meaning": "مستدام", "example": "Sustainable growth protects future generations." },
+        { "word": "entrepreneur", "meaning": "رائد أعمال", "example": "She became an entrepreneur after graduation." },
+        { "word": "stakeholder", "meaning": "صاحب مصلحة / طرف معنيّ", "example": "All stakeholders were invited to the meeting." },
+        { "word": "priority", "meaning": "أولوية", "example": "Safety is our first priority." },
+        { "word": "delegate", "meaning": "يفوّض / مندوب", "example": "A good manager knows how to delegate tasks." },
+        { "word": "evaluate", "meaning": "يقيّم", "example": "We evaluate the results at the end of each month." },
+        { "word": "resources", "meaning": "موارد", "example": "The team lacks the resources to finish on time." },
+        { "word": "outcome", "meaning": "نتيجة / حصيلة", "example": "The outcome of the project exceeded our expectations." }
+      ]
+    },
+    {
+      "id": "a-society",
+      "title": "المجتمع والقضايا العامة — Society & Public Issues",
+      "words": [
+        { "word": "community", "meaning": "مجتمع (محلي)", "example": "Volunteers help the local community." },
+        { "word": "poverty", "meaning": "فقر", "example": "Education is a powerful tool against poverty." },
+        { "word": "volunteer", "meaning": "متطوّع / يتطوّع", "example": "He volunteers at a charity every weekend." },
+        { "word": "charity", "meaning": "جمعية خيرية / صدقة", "example": "The charity supports orphans and students." },
+        { "word": "equality", "meaning": "مساواة", "example": "The law guarantees equality for all citizens." },
+        { "word": "responsibility", "meaning": "مسؤولية", "example": "Protecting the environment is a shared responsibility." },
+        { "word": "environment", "meaning": "البيئة", "example": "Plastic waste harms the environment." },
+        { "word": "pollution", "meaning": "تلوّث", "example": "Air pollution is a problem in big cities." },
+        { "word": "migration", "meaning": "هجرة", "example": "Migration has changed many societies." },
+        { "word": "refugee", "meaning": "لاجئ", "example": "The organization provides shelter for refugees." },
+        { "word": "access", "meaning": "إمكانية الوصول / يصل إلى", "example": "Every child should have access to education." },
+        { "word": "awareness", "meaning": "وعي", "example": "The campaign raised awareness about health." },
+        { "word": "impact", "meaning": "أثر / يؤثّر", "example": "Social media has a huge impact on young people." },
+        { "word": "solution", "meaning": "حلّ", "example": "We need practical solutions, not just ideas." },
+        { "word": "challenge", "meaning": "تحدٍّ", "example": "Learning a new language is a real challenge." },
+        { "word": "contribute", "meaning": "يساهم", "example": "Everyone can contribute to a better society." },
+        { "word": "tradition", "meaning": "تقليد / عادة متوارثة", "example": "Visiting relatives during Eid is a beautiful tradition." },
+        { "word": "diverse", "meaning": "متنوّع", "example": "Istanbul is a diverse and lively city." },
+        { "word": "unemployment", "meaning": "بطالة", "example": "Youth unemployment is rising in some countries." },
+        { "word": "policy", "meaning": "سياسة (إجراءات وقواعد)", "example": "The university has a new attendance policy." }
+      ]
+    },
+    {
+      "id": "a-expressions",
+      "title": "أفعال وتعابير متقدمة — Advanced Verbs & Expressions",
+      "words": [
+        { "word": "achieve", "meaning": "يحقّق", "example": "Hard work helps you achieve your goals." },
+        { "word": "overcome", "meaning": "يتغلّب على", "example": "She overcame many difficulties to graduate." },
+        { "word": "maintain", "meaning": "يحافظ على", "example": "Try to maintain a balance between study and rest." },
+        { "word": "pursue", "meaning": "يسعى إلى / يواصل", "example": "He plans to pursue a master's degree." },
+        { "word": "enhance", "meaning": "يعزّز / يحسّن", "example": "Reading enhances your vocabulary." },
+        { "word": "postpone", "meaning": "يؤجّل", "example": "The exam was postponed until next week." },
+        { "word": "reluctant", "meaning": "متردّد / غير راغب", "example": "He was reluctant to speak in public." },
+        { "word": "essential", "meaning": "ضروري / أساسي", "example": "Sleep is essential for good memory." },
+        { "word": "obvious", "meaning": "واضح / بديهي", "example": "The answer seems obvious now." },
+        { "word": "gradually", "meaning": "تدريجياً", "example": "My speaking skills improved gradually." },
+        { "word": "take into account", "meaning": "يأخذ بعين الاعتبار", "example": "Take the cost into account before you decide." },
+        { "word": "come up with", "meaning": "يبتكر / يطرح (فكرة)", "example": "We came up with a new idea for the project." },
+        { "word": "look forward to", "meaning": "يتطلّع إلى", "example": "I look forward to hearing from you." },
+        { "word": "get used to", "meaning": "يعتاد على", "example": "It took me months to get used to the weather." },
+        { "word": "keep up with", "meaning": "يواكب", "example": "It is hard to keep up with all the readings." },
+        { "word": "figure out", "meaning": "يكتشف / يفهم الحلّ", "example": "I finally figured out how to solve the problem." },
+        { "word": "point of view", "meaning": "وجهة نظر", "example": "From my point of view, the plan is realistic." },
+        { "word": "in the long run", "meaning": "على المدى البعيد", "example": "Saving money pays off in the long run." },
+        { "word": "on the other hand", "meaning": "من ناحية أخرى", "example": "The job pays well; on the other hand, the hours are long." },
+        { "word": "as a result", "meaning": "نتيجةً لذلك", "example": "He practiced daily and, as a result, passed the test." }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import { arNum } from "@/lib/quran";
 import { UnitNavBar, useUnitCompletion } from "@/components/learning/unit-completion";
 import { useCanSpeak } from "@/components/learning/reading-unit";
 import { speak, type VocabCard } from "@/lib/learning/content";
+import { ListenPractice, WritePractice } from "@/components/learning/vocab-practice";
 
 // الكلمات المحفوظة محفوظة في الجهاز لكل درس (الإتمام نفسه يُسجَّل في القاعدة)
 const EMPTY: string[] = [];
@@ -62,7 +63,7 @@ export function VocabUnit({
   const known = useSyncExternalStore(subscribe, () => readKnown(key), () => EMPTY);
   const completion = useUnitCompletion({ unitId, courseId, initialDone: done, nextHref });
   const canSpeak = useCanSpeak();
-  const [mode, setMode] = useState<"cards" | "list">("cards");
+  const [mode, setMode] = useState<"cards" | "listen" | "write" | "list">("cards");
   const [order, setOrder] = useState(() => cards.map((_, i) => i));
   const [cursor, setCursor] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -102,6 +103,8 @@ export function VocabUnit({
           onChange={setMode}
           options={[
             { value: "cards", label: "بطاقات" },
+            { value: "listen", label: "استماع" },
+            { value: "write", label: "كتابة" },
             { value: "list", label: "القائمة" },
           ]}
         />
@@ -111,7 +114,11 @@ export function VocabUnit({
       </div>
       <Progress value={(knownCount / Math.max(1, cards.length)) * 100} aria-label="الكلمات المحفوظة" />
 
-      {mode === "cards" ? (
+      {mode === "listen" ? (
+        <ListenPractice cards={cards} canSpeak={canSpeak} />
+      ) : mode === "write" ? (
+        <WritePractice cards={cards} canSpeak={canSpeak} />
+      ) : mode === "cards" ? (
         allKnown ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border bg-card p-8 text-center">
             <span className="flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
@@ -150,6 +157,25 @@ export function VocabUnit({
                     {current.example && (
                       <span className="text-sm leading-relaxed text-muted-foreground" dir="auto">
                         {current.example}
+                      </span>
+                    )}
+                    {current.example && canSpeak && (
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          speak(current.example!);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.stopPropagation();
+                            speak(current.example!);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 rounded-full bg-background/70 px-2.5 py-1 text-xs text-muted-foreground"
+                      >
+                        <Volume2 className="size-3.5" /> اسمع الجملة
                       </span>
                     )}
                   </div>
@@ -199,6 +225,11 @@ export function VocabUnit({
                 {c.example && (
                   <p className="text-sm text-muted-foreground" dir="auto">
                     {c.example}
+                    {canSpeak && (
+                      <button type="button" onClick={() => speak(c.example!)} className="ms-1 align-middle" aria-label="اسمع الجملة">
+                        <Volume2 className="inline size-3.5" />
+                      </button>
+                    )}
                   </p>
                 )}
               </div>

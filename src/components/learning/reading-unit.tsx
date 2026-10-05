@@ -138,7 +138,7 @@ export function ReadingUnit({
       {glossary.length > 0 && (
         <section className="flex flex-col gap-2">
           <span className="text-sm font-medium">كلمات النص</span>
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-[repeat(2,minmax(0,1fr))]">
             {glossary.map((g) => (
               <li key={g.word} className="flex items-center justify-between gap-2 rounded-xl border bg-card px-3 py-2">
                 <span className="min-w-0">

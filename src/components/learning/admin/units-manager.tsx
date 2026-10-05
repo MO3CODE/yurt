@@ -51,7 +51,7 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[repeat(2,minmax(0,1fr))]">
         <form
           className="flex flex-col gap-2 rounded-xl border bg-card p-3"
           onSubmit={(e) => {

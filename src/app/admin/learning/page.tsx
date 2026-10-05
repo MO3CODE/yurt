@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MonitorPlay, PenLine, Plus } from "lucide-react";
+import { Library, MonitorPlay, PenLine, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/current-user";
 import { PageHeader } from "@/components/page-header";
@@ -29,6 +29,9 @@ export default async function AdminLearningPage() {
         description="الكورسات ودروسها ومتابعة المنضمين"
         action={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" nativeButton={false} render={<Link href="/admin/learning/library" />}>
+              <Library /> مكتبة الكلمات
+            </Button>
             <Button variant="outline" nativeButton={false} render={<Link href="/admin/learning/submissions" />}>
               <PenLine /> تدريبات الكتابة
               {pending ? <Badge className="bg-warning/25 text-warning-foreground dark:text-warning">{arNum(pending)}</Badge> : null}
