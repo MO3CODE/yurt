@@ -3,11 +3,16 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArrowRight, Bookmark, Check, ChevronLeft, ChevronRight, ListTree, Minus, Plus, RotateCw } from "lucide-react";
+import { ArrowRight, Bookmark, Check, ChevronLeft, ChevronRight, ListTree, Minus, Pause, Play, Plus, RotateCw, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { AyahSheet } from "@/components/quran/ayah-sheet";
+import { useRecitation } from "@/components/quran/use-recitation";
+import { RECITERS, tracksFor, type ReciterId } from "@/lib/quran/recitation";
 import { cn } from "@/lib/utils";
 import { hafsFont } from "@/components/quran/hafs-font";
 import { recordQuranPage } from "@/app/app/quran/actions";
@@ -111,8 +116,25 @@ export function MushafReader({
   const [khatmas, setKhatmas] = useState(initialKhatmas);
   const [elapsed, setElapsed] = useState({ page: initialPage, seconds: 0 });
   const [indexOpen, setIndexOpen] = useState(false);
+  const [selectedAya, setSelectedAya] = useState<QuranAya | null>(null);
   const fontIndex = useSyncExternalStore(subscribeFont, readFontIndex, () => 1);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
+  // بعد انتهاء تلاوة الصفحة ننتقل للتالية ونكمل التلاوة فور تحميلها
+  const continueRecitation = useRef(false);
+
+  const recitation = useRecitation({
+    onPageEnd: () => {
+      if (page < QURAN_PAGES) {
+        continueRecitation.current = true;
+        setPage(page + 1);
+      } else recitation.stop();
+    },
+    onError: () => toast.error("تعذّر تشغيل التلاوة، تحقّق من اتصالك بالإنترنت"),
+  });
+  const recitationRef = useRef(recitation);
+  useEffect(() => {
+    recitationRef.current = recitation;
+  });
 
   const loaded = data?.page === page;
   const isRead = read.has(page);
@@ -125,7 +147,15 @@ export function MushafReader({
   useEffect(() => {
     let alive = true;
     loadPage(page)
-      .then((d) => alive && setData(d))
+      .then((d) => {
+        if (!alive) return;
+        setData(d);
+        if (continueRecitation.current) {
+          continueRecitation.current = false;
+          const r = recitationRef.current;
+          r.play(tracksFor(d.ayas, r.reciter));
+        }
+      })
       .catch(() => alive && setFailedPage(page));
     if (page > 1) loadPage(page - 1).catch(() => {});
     if (page < QURAN_PAGES) loadPage(page + 1).catch(() => {});
@@ -166,6 +196,20 @@ export function MushafReader({
     return () => window.clearInterval(id);
   }, [page, loaded, isRead, submit]);
 
+  // الآية التي تُتلى تبقى ظاهرة على الشاشة
+  useEffect(() => {
+    if (!recitation.state.key) return;
+    const el = document.querySelector(`[data-aya="${recitation.state.key}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    if (r.top < 80 || r.bottom > window.innerHeight - 140) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [recitation.state.key]);
+
+  function togglePlay() {
+    if (recitation.toggle() || !loaded) return;
+    recitation.play(tracksFor(data.ayas, recitation.reciter));
+  }
+
   // الأسهم: اليسار للأمام كاتجاه تقليب المصحف
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -185,6 +229,7 @@ export function MushafReader({
     const dy = e.changedTouches[0].clientY - start.y;
     if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
     // السحب نحو اليمين يقلب للصفحة التالية كما في المصحف
+    recitation.stop();
     go(dx > 0 ? page + 1 : page - 1);
   }
 
@@ -254,9 +299,27 @@ export function MushafReader({
                   </div>
                 ) : (
                   <p key={`t${i}`}>
-                    {seg.ayas.map((aya) => (
-                      <span key={`${aya.s}:${aya.a}`}>{aya.t} </span>
-                    ))}
+                    {seg.ayas.map((aya) => {
+                      const k = `${aya.s}:${aya.a}`;
+                      const active = recitation.state.key === k || (selectedAya && `${selectedAya.s}:${selectedAya.a}` === k);
+                      return (
+                        <span key={k}>
+                          <span
+                            data-aya={k}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setSelectedAya(aya)}
+                            onKeyDown={(e) => e.key === "Enter" && setSelectedAya(aya)}
+                            className={cn(
+                              "cursor-pointer rounded-md transition-colors duration-300 [box-decoration-break:clone]",
+                              active ? "bg-mushaf-frame/25" : "hover:bg-mushaf-frame/10"
+                            )}
+                          >
+                            {aya.t}
+                          </span>{" "}
+                        </span>
+                      );
+                    })}
                   </p>
                 )
               )}
@@ -316,7 +379,7 @@ export function MushafReader({
 
       {/* التنقل */}
       <div className="flex items-center justify-between gap-2">
-        <Button variant="outline" onClick={() => go(page - 1)} disabled={page === 1}>
+        <Button variant="outline" onClick={() => (recitation.stop(), go(page - 1))} disabled={page === 1}>
           <ChevronRight /> السابقة
         </Button>
         <span className="text-xs text-muted-foreground">
@@ -325,9 +388,47 @@ export function MushafReader({
             : `${arNum(read.size + mushafPagesToday)} اليوم`}{" "}
           · {arNum(khatmas)} ختمة
         </span>
-        <Button variant="outline" onClick={() => go(page + 1)} disabled={page === QURAN_PAGES}>
+        <Button variant="outline" onClick={() => (recitation.stop(), go(page + 1))} disabled={page === QURAN_PAGES}>
           التالية <ChevronLeft />
         </Button>
+      </div>
+
+      {/* التلاوة */}
+      <div className="flex items-center gap-2 rounded-xl border bg-card p-2 shadow-soft">
+        <Button
+          size="icon"
+          onClick={togglePlay}
+          disabled={!loaded}
+          aria-label={recitation.state.status === "playing" ? "إيقاف مؤقت" : "تشغيل التلاوة"}
+        >
+          {recitation.state.status === "loading" ? <Spinner /> : recitation.state.status === "playing" ? <Pause /> : <Play />}
+        </Button>
+        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+          {recitation.state.key
+            ? `${SURAHS[Number(recitation.state.key.split(":")[0]) - 1].name} — الآية ${arNum(Number(recitation.state.key.split(":")[1]))}`
+            : "استمع للصفحة، أو اضغط آية لتفسيرها"}
+        </span>
+        <Select
+          value={recitation.reciter}
+          onValueChange={(v) => v && recitation.changeReciter(v as ReciterId, (id) => (data ? tracksFor(data.ayas, id) : []))}
+          items={RECITERS.map((r) => ({ value: r.id, label: r.name }))}
+        >
+          <SelectTrigger size="sm" className="w-36 shrink-0 sm:w-44" aria-label="القارئ">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {RECITERS.map((r) => (
+              <SelectItem key={r.id} value={r.id}>
+                {r.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {recitation.state.status !== "idle" && (
+          <Button variant="ghost" size="icon-sm" onClick={recitation.stop} aria-label="إيقاف التلاوة">
+            <Square />
+          </Button>
+        )}
       </div>
 
       {page !== bookmark && (
@@ -340,12 +441,23 @@ export function MushafReader({
         نص المصحف وخطّه: مجمّع الملك فهد لطباعة المصحف الشريف — رواية حفص عن عاصم
       </p>
 
+      <AyahSheet
+        aya={selectedAya}
+        page={page}
+        onOpenChange={(open) => !open && setSelectedAya(null)}
+        onListen={(key) => {
+          if (data) recitation.play(tracksFor(data.ayas, recitation.reciter), key);
+          setSelectedAya(null);
+        }}
+      />
+
       <MushafIndex
         open={indexOpen}
         onOpenChange={setIndexOpen}
         currentSurah={surah.n}
         currentJuz={juz}
         onSelect={(p) => {
+          recitation.stop();
           go(p);
           setIndexOpen(false);
         }}
