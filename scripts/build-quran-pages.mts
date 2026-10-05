@@ -8,7 +8,15 @@ const BASE = "https://raw.githubusercontent.com/thetruetruth/quran-data-kfgqpc/m
 const DATA_URL = `${BASE}/data/hafsData_v18.json`;
 const FONT_URL = `${BASE}/font/hafs.18.woff2`;
 
-type Row = { jozz: number; sora: number; sora_name_ar: string; page: number; aya_no: number; aya_text: string };
+type Row = {
+  jozz: number;
+  sora: number;
+  sora_name_ar: string;
+  page: number;
+  aya_no: number;
+  aya_text: string;
+  aya_text_emlaey: string;
+};
 
 const root = process.cwd();
 const pagesDir = path.join(root, "public/quran/pages");
@@ -68,6 +76,10 @@ async function main() {
     pages: pageMeta,
   };
   await writeFile(indexFile, JSON.stringify(index));
+
+  // فهرس البحث: [سورة، آية، صفحة، النص الإملائي بلا تشكيل] — يُحمَّل عند فتح صفحة البحث فقط
+  const search = rows.map((r) => [r.sora, r.aya_no, r.page, r.aya_text_emlaey.trim()]);
+  await writeFile(path.join(root, "public/quran/search.json"), JSON.stringify(search));
   console.log(`تم: 604 صفحة، 114 سورة، 30 جزءاً، ${rows.length} آية.`);
 }
 

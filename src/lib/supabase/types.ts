@@ -1142,6 +1142,7 @@ export type Database = {
       }
       points_entries: {
         Row: {
+          auto_key: string | null
           category: Database["public"]["Enums"]["points_category"]
           created_at: string
           created_by: string | null
@@ -1151,6 +1152,7 @@ export type Database = {
           student_id: string
         }
         Insert: {
+          auto_key?: string | null
           category: Database["public"]["Enums"]["points_category"]
           created_at?: string
           created_by?: string | null
@@ -1160,6 +1162,7 @@ export type Database = {
           student_id: string
         }
         Update: {
+          auto_key?: string | null
           category?: Database["public"]["Enums"]["points_category"]
           created_at?: string
           created_by?: string | null
@@ -1443,6 +1446,73 @@ export type Database = {
           },
         ]
       }
+      quran_bookmarks: {
+        Row: {
+          aya: number
+          created_at: string
+          id: string
+          note: string | null
+          page: number
+          student_id: string
+          surah: number
+        }
+        Insert: {
+          aya: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          page: number
+          student_id: string
+          surah: number
+        }
+        Update: {
+          aya?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          page?: number
+          student_id?: string
+          surah?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quran_bookmarks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quran_hifz: {
+        Row: {
+          status: string
+          student_id: string
+          surah: number
+          updated_at: string
+        }
+        Insert: {
+          status: string
+          student_id: string
+          surah: number
+          updated_at?: string
+        }
+        Update: {
+          status?: string
+          student_id?: string
+          surah?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quran_hifz_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quran_page_reads: {
         Row: {
           page: number
@@ -1477,6 +1547,9 @@ export type Database = {
           current_page: number
           daily_goal: number | null
           khatmas: number
+          last_review_date: string | null
+          review_cursor: number
+          review_pages: number | null
           student_id: string
           updated_at: string
         }
@@ -1484,6 +1557,9 @@ export type Database = {
           current_page?: number
           daily_goal?: number | null
           khatmas?: number
+          last_review_date?: string | null
+          review_cursor?: number
+          review_pages?: number | null
           student_id: string
           updated_at?: string
         }
@@ -1491,6 +1567,9 @@ export type Database = {
           current_page?: number
           daily_goal?: number | null
           khatmas?: number
+          last_review_date?: string | null
+          review_cursor?: number
+          review_pages?: number | null
           student_id?: string
           updated_at?: string
         }
@@ -1502,6 +1581,38 @@ export type Database = {
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      quran_points_settings: {
+        Row: {
+          adhkar: number
+          id: number
+          khatma: number
+          streak30: number
+          streak7: number
+          updated_at: string
+          wird_goal: number
+        }
+        Insert: {
+          adhkar?: number
+          id?: number
+          khatma?: number
+          streak30?: number
+          streak7?: number
+          updated_at?: string
+          wird_goal?: number
+        }
+        Update: {
+          adhkar?: number
+          id?: number
+          khatma?: number
+          streak30?: number
+          streak7?: number
+          updated_at?: string
+          wird_goal?: number
+        }
+        Relationships: [
+
         ]
       }
       quran_wird_logs: {
@@ -1905,6 +2016,14 @@ export type Database = {
           },
         ]
       }
+      quran_hifz_summary: {
+        Row: {
+          learning: number | null
+          memorized: number | null
+          student_id: string | null
+        }
+        Relationships: []
+      }
       quran_platform_daily: {
         Row: {
           pages: number | null
@@ -1963,15 +2082,18 @@ export type Database = {
         Returns: number
       }
       has_permission: { Args: { p: string }; Returns: boolean }
+      award_quran_points: { Args: never; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_apartment_supervisor: { Args: { apt_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
+      quran_review_done: { Args: { p_total: number }; Returns: number }
       record_quran_page: { Args: { p_page: number }; Returns: Json }
       set_quran_plan: {
         Args: { p_daily_goal: number | null; p_start: number | null }
         Returns: undefined
       }
       set_quran_reached_page: { Args: { p_page: number }; Returns: undefined }
+      set_quran_review: { Args: { p_pages: number | null }; Returns: undefined }
       supervised_apartment_id: { Args: never; Returns: string }
       supervises_student: {
         Args: { target_student_id: string }

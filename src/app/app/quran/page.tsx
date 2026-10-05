@@ -10,8 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WirdSourceBadge } from "@/components/quran/wird-source-badge";
-import { BookOpen, Bookmark, Target } from "lucide-react";
+import { BookOpen, Bookmark, Search, Target } from "lucide-react";
+import { HifzPanel } from "@/components/quran/hifz-panel";
+import type { HifzStatus } from "@/lib/quran/hifz";
 import { QuranPlanDialog } from "@/components/quran/quran-plan-dialog";
+import { WirdStats } from "@/components/quran/wird-stats";
+import { buildTotals } from "@/lib/quran/stats";
 import { addDaysISO, todayISO } from "@/lib/date";
 import { QURAN_PAGES, arNum, describePages, pageInfo, pageSpan, pagesLabel, wirdSource } from "@/lib/quran";
 
@@ -23,7 +27,8 @@ export default async function QuranPage() {
   const today = todayISO();
   const since = addDaysISO(today, -(HISTORY_DAYS - 1));
 
-  const [{ data: logs }, { data: reads }, { data: progress }] = await Promise.all([
+  const yearStart = addDaysISO(today, -364);
+  const [{ data: logs }, { data: reads }, { data: progress }, { data: yearPlatform }, { data: yearLogs }, { data: hifz }] = await Promise.all([
     supabase
       .from("quran_wird_logs")
       .select("*")
@@ -31,8 +36,17 @@ export default async function QuranPage() {
       .gte("record_date", since)
       .order("record_date", { ascending: false }),
     supabase.from("quran_page_reads").select("record_date, page").eq("student_id", user.id).gte("record_date", since),
-    supabase.from("quran_progress").select("current_page, khatmas, daily_goal").eq("student_id", user.id).maybeSingle(),
+    supabase
+      .from("quran_progress")
+      .select("current_page, khatmas, daily_goal, review_pages, review_cursor, last_review_date")
+      .eq("student_id", user.id)
+      .maybeSingle(),
+    // سنة للإحصائيات والسلسلة (صف لكل يوم)
+    supabase.from("quran_platform_daily").select("record_date, pages").eq("student_id", user.id).gte("record_date", yearStart),
+    supabase.from("quran_wird_logs").select("record_date, pages").eq("student_id", user.id).gte("record_date", yearStart),
+    supabase.from("quran_hifz").select("surah, status").eq("student_id", user.id),
   ]);
+  const totals = buildTotals(yearPlatform ?? [], yearLogs ?? []);
 
   const readsByDate = new Map<string, number[]>();
   for (const r of reads ?? []) {
@@ -73,7 +87,15 @@ export default async function QuranPage() {
 
   return (
     <div className="stagger flex flex-col gap-6">
-      <PageHeader title="الورد القرآني" description="اقرأ من المنصة أو سجّل وردك من مصحفك" />
+      <PageHeader
+        title="الورد القرآني"
+        description="اقرأ من المنصة أو سجّل وردك من مصحفك"
+        action={
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/app/quran/search" />}>
+            <Search /> البحث والعلامات
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent className="flex flex-col gap-3">
@@ -116,6 +138,7 @@ export default async function QuranPage() {
         <TabsList className="w-full sm:w-fit">
           <TabsTrigger value="platform">أقرأ من المنصة</TabsTrigger>
           <TabsTrigger value="mushaf">قرأت من مصحفي</TabsTrigger>
+          <TabsTrigger value="hifz">حفظي</TabsTrigger>
         </TabsList>
 
         <TabsContent value="platform">
@@ -174,7 +197,17 @@ export default async function QuranPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="hifz">
+          <HifzPanel
+            initial={(hifz ?? []).map((h) => ({ surah: h.surah, status: h.status as HifzStatus }))}
+            reviewPages={progress?.review_pages ?? null}
+            cursor={progress?.review_cursor ?? 0}
+            reviewedToday={progress?.last_review_date === today}
+          />
+        </TabsContent>
       </Tabs>
+
+      <WirdStats totals={totals} today={today} goal={progress?.daily_goal ?? null} khatmas={progress?.khatmas ?? 0} />
 
       <Card>
         <CardHeader>

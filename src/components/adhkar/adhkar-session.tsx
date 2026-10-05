@@ -117,7 +117,7 @@ function PeriodList({
         return;
       }
       onDone();
-      toast.success(`تقبّل الله، أتممت ${PERIOD_LABELS[period]}`);
+      toast.success(`تقبّل الله، أتممت ${PERIOD_LABELS[period]}${r.data.points > 0 ? `، +${arNum(r.data.points)} نقطة` : ""}`);
     });
   }
 

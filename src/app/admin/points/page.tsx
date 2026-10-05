@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { QuranPointsSettings } from "@/components/admin/quran-points-settings";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AwardPointsDialog } from "@/components/admin/award-points-dialog";
 import { Trophy } from "lucide-react";
@@ -13,13 +14,14 @@ export default async function AdminPointsPage() {
   const supabase = await createClient();
   const monthStart = monthStartISO();
 
-  const [{ data: leaderboard }, { data: students }] = await Promise.all([
+  const [{ data: leaderboard }, { data: students }, { data: autoPoints }] = await Promise.all([
     supabase
       .from("points_leaderboard")
       .select("*")
       .eq("month", monthStart)
       .order("total_points", { ascending: false }),
     supabase.from("students").select("id, profiles!students_id_fkey(full_name)"),
+    supabase.from("quran_points_settings").select("wird_goal, streak7, streak30, khatma, adhkar").eq("id", 1).maybeSingle(),
   ]);
 
   const studentOptions = (students ?? []).map((s) => ({
@@ -63,6 +65,17 @@ export default async function AdminPointsPage() {
           )}
         </CardContent>
       </Card>
+      {autoPoints && (
+        <Card>
+          <CardHeader>
+            <CardTitle>النقاط التلقائية للورد والأذكار</CardTitle>
+            <CardDescription>تُمنح للطالب تلقائياً مرة واحدة لكل إنجاز</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <QuranPointsSettings values={autoPoints} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -56,6 +56,14 @@ export function describePages(pages: number[]): string {
   return `${surahs} (ص ${span})`;
 }
 
+/** «سورة واحدة»، «سورتان»، «٥ سور»، «١٢ سورة» */
+export function surahsLabel(n: number): string {
+  if (n === 1) return "سورة واحدة";
+  if (n === 2) return "سورتين";
+  if (n <= 10) return `${arNum(n)} سور`;
+  return `${arNum(n)} سورة`;
+}
+
 /** «صفحة واحدة»، «صفحتان»، «٥ صفحات»، «٢٠ صفحة» */
 export function pagesLabel(n: number): string {
   if (n === 1) return "صفحة واحدة";

@@ -24,8 +24,8 @@ export function WirdForm({
     formData.set("record_date", date);
     startTransition(async () => {
       try {
-        await unwrap(logWird(formData));
-        toast.success("تم حفظ الورد");
+        const { points } = await unwrap(logWird(formData));
+        toast.success(points > 0 ? `تم حفظ الورد، +${points} نقطة` : "تم حفظ الورد");
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "تعذّر الحفظ");
       }

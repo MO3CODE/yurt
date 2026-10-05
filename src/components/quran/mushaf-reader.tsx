@@ -3,7 +3,23 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { ArrowRight, Bookmark, Check, ChevronLeft, ChevronRight, ListTree, Minus, Pause, Play, Plus, RotateCw, Square } from "lucide-react";
+import {
+  ArrowRight,
+  Bookmark,
+  BookmarkCheck,
+  BookmarkPlus,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  ListTree,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+  RotateCw,
+  Search,
+  Square,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -16,6 +32,7 @@ import { RECITERS, tracksFor, type ReciterId } from "@/lib/quran/recitation";
 import { cn } from "@/lib/utils";
 import { hafsFont } from "@/components/quran/hafs-font";
 import { recordQuranPage } from "@/app/app/quran/actions";
+import { toggleBookmark } from "@/app/app/quran/bookmark-actions";
 import {
   BASMALA,
   JUZ_START_PAGES,
@@ -98,6 +115,8 @@ export function MushafReader({
   readToday,
   mushafPagesToday,
   dailyGoal,
+  initialAya = null,
+  bookmarkedKeys = [],
 }: {
   initialPage: number;
   initialBookmark: number;
@@ -106,6 +125,9 @@ export function MushafReader({
   /** صفحات المصحف الورقي المسجّلة اليوم (تُجمع مع صفحات المنصة في الهدف) */
   mushafPagesToday: number;
   dailyGoal: number | null;
+  /** آية تُظلَّل عند الفتح (من البحث أو العلامات)، بصيغة «سورة:آية» */
+  initialAya?: string | null;
+  bookmarkedKeys?: string[];
 }) {
   const [page, setPage] = useState(initialPage);
   const [data, setData] = useState<QuranPage | null>(null);
@@ -117,6 +139,9 @@ export function MushafReader({
   const [elapsed, setElapsed] = useState({ page: initialPage, seconds: 0 });
   const [indexOpen, setIndexOpen] = useState(false);
   const [selectedAya, setSelectedAya] = useState<QuranAya | null>(null);
+  const [focusKey, setFocusKey] = useState<string | null>(initialAya);
+  const [bookmarks, setBookmarks] = useState(() => new Set(bookmarkedKeys));
+  const [savingBookmark, setSavingBookmark] = useState(false);
   const fontIndex = useSyncExternalStore(subscribeFont, readFontIndex, () => 1);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   // بعد انتهاء تلاوة الصفحة ننتقل للتالية ونكمل التلاوة فور تحميلها
@@ -178,6 +203,7 @@ export function MushafReader({
     if (r.data.khatma_completed) toast.success("بارك الله فيك، أتممت ختمة كاملة");
     else if (r.data.counted && dailyGoal && r.data.today_pages + mushafPagesToday === dailyGoal)
       toast.success("أتممت وردك اليوم، بارك الله فيك");
+    if (r.data.points > 0) toast(`+${arNum(r.data.points)} نقطة`, { icon: "⭐" });
   }, [dailyGoal, mushafPagesToday]);
 
   // عدّاد القراءة: يعدّ فقط والصفحة ظاهرة، ويتوقف إذا خرج الطالب من التطبيق
@@ -204,6 +230,31 @@ export function MushafReader({
     const r = el.getBoundingClientRect();
     if (r.top < 80 || r.bottom > window.innerHeight - 140) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [recitation.state.key]);
+
+  // الآية القادمة من البحث تُعرض في وسط الشاشة
+  useEffect(() => {
+    if (!focusKey || !loaded) return;
+    document.querySelector(`[data-aya="${focusKey}"]`)?.scrollIntoView({ block: "center" });
+  }, [focusKey, loaded]);
+
+  async function toggleSelectedBookmark() {
+    if (!selectedAya) return;
+    const key = `${selectedAya.s}:${selectedAya.a}`;
+    setSavingBookmark(true);
+    const r = await toggleBookmark({ surah: selectedAya.s, aya: selectedAya.a, page });
+    setSavingBookmark(false);
+    if (!r.ok) {
+      toast.error(r.error);
+      return;
+    }
+    setBookmarks((prev) => {
+      const next = new Set(prev);
+      if (r.data.saved) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+    toast.success(r.data.saved ? "حُفظت الآية في علاماتك" : "أُزيلت الآية من علاماتك");
+  }
 
   function togglePlay() {
     if (recitation.toggle() || !loaded) return;
@@ -266,6 +317,9 @@ export function MushafReader({
           >
             <Plus />
           </Button>
+          <Button variant="ghost" size="icon-sm" aria-label="البحث والعلامات" nativeButton={false} render={<Link href="/app/quran/search" />}>
+            <Search />
+          </Button>
           <Button variant="ghost" size="icon-sm" aria-label="الفهرس" onClick={() => setIndexOpen(true)}>
             <ListTree />
           </Button>
@@ -301,14 +355,18 @@ export function MushafReader({
                   <p key={`t${i}`}>
                     {seg.ayas.map((aya) => {
                       const k = `${aya.s}:${aya.a}`;
-                      const active = recitation.state.key === k || (selectedAya && `${selectedAya.s}:${selectedAya.a}` === k);
+                      const active =
+                        recitation.state.key === k || focusKey === k || (selectedAya && `${selectedAya.s}:${selectedAya.a}` === k);
                       return (
                         <span key={k}>
                           <span
                             data-aya={k}
                             role="button"
                             tabIndex={0}
-                            onClick={() => setSelectedAya(aya)}
+                            onClick={() => {
+                              setFocusKey(null);
+                              setSelectedAya(aya);
+                            }}
                             onKeyDown={(e) => e.key === "Enter" && setSelectedAya(aya)}
                             className={cn(
                               "cursor-pointer rounded-md transition-colors duration-300 [box-decoration-break:clone]",
@@ -316,6 +374,7 @@ export function MushafReader({
                             )}
                           >
                             {aya.t}
+                            {bookmarks.has(k) && <BookmarkCheck className="ms-0.5 inline size-[0.6em] align-super text-gold" aria-label="في علاماتك" />}
                           </span>{" "}
                         </span>
                       );
@@ -449,7 +508,21 @@ export function MushafReader({
           if (data) recitation.play(tracksFor(data.ayas, recitation.reciter), key);
           setSelectedAya(null);
         }}
-      />
+      >
+        {selectedAya && (
+          <Button size="sm" variant="outline" onClick={toggleSelectedBookmark} disabled={savingBookmark}>
+            {bookmarks.has(`${selectedAya.s}:${selectedAya.a}`) ? (
+              <>
+                <BookmarkCheck className="text-gold" /> في علاماتي
+              </>
+            ) : (
+              <>
+                <BookmarkPlus /> احفظ في علاماتي
+              </>
+            )}
+          </Button>
+        )}
+      </AyahSheet>
 
       <MushafIndex
         open={indexOpen}

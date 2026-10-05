@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getDayTimesMap } from "@/lib/prayer-times-server";
 import { addDaysISO, todayISO } from "@/lib/date";
 import { adhkarDay } from "@/lib/adhkar";
+import { awardQuranPoints } from "@/lib/quran/points";
 
 const schema = z.object({
   period: z.enum(["morning", "evening"]),
@@ -32,7 +33,9 @@ export async function completeAdhkar(input: z.input<typeof schema>) {
       .upsert({ student_id: user.id, record_date: day, period, method }, { onConflict: "student_id,record_date,period", ignoreDuplicates: true });
     if (error) throw new Error(error.message);
 
+    const points = await awardQuranPoints(supabase);
     revalidatePath("/app");
     revalidatePath("/app/adhkar");
+    return { points };
   });
 }

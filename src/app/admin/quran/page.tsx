@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { WirdSourceBadge } from "@/components/quran/wird-source-badge";
 import { addDaysISO, todayISO } from "@/lib/date";
 import { requirePermission } from "@/lib/auth/current-user";
-import { QURAN_PAGES, arNum, wirdSource } from "@/lib/quran";
+import { QURAN_PAGES, arNum, surahsLabel, wirdSource } from "@/lib/quran";
 
 export default async function AdminQuranPage() {
   await requirePermission("quran");
@@ -14,13 +14,15 @@ export default async function AdminQuranPage() {
   const today = todayISO();
   const sinceISO = addDaysISO(today, -6);
 
-  const [{ data: students }, { data: logs }, { data: reads }, { data: progress }, { data: adhkar }] = await Promise.all([
+  const [{ data: students }, { data: logs }, { data: reads }, { data: progress }, { data: adhkar }, { data: hifz }] = await Promise.all([
     supabase.from("students").select("id, profiles!students_id_fkey(full_name), apartment:apartment_id(name)").eq("status", "active"),
     supabase.from("quran_wird_logs").select("student_id, record_date, pages").gte("record_date", sinceISO),
     supabase.from("quran_platform_daily").select("student_id, record_date, pages").gte("record_date", sinceISO),
     supabase.from("quran_progress").select("student_id, current_page, khatmas, daily_goal"),
     supabase.from("adhkar_logs").select("student_id, period").gte("record_date", sinceISO),
+    supabase.from("quran_hifz_summary").select("student_id, memorized, learning"),
   ]);
+  const hifzBy = new Map((hifz ?? []).map((h) => [h.student_id, h]));
 
   // عدد أيام إتمام أذكار الصباح والمساء خلال الأسبوع
   const adhkarBy = new Map<string, { morning: number; evening: number }>();
@@ -68,6 +70,7 @@ export default async function AdminQuranPage() {
                 <TableHead>الورد اليومي</TableHead>
                 <TableHead>أذكار الصباح</TableHead>
                 <TableHead>أذكار المساء</TableHead>
+                <TableHead>الحفظ</TableHead>
                 <TableHead>اليوم</TableHead>
               </TableRow>
             </TableHeader>
@@ -99,6 +102,10 @@ export default async function AdminQuranPage() {
                     <TableCell>{prog?.daily_goal ? `${arNum(prog.daily_goal)} ص` : "—"}</TableCell>
                     <TableCell className="tabular-nums">{arNum(adhkarBy.get(s.id)?.morning ?? 0)} / ٧</TableCell>
                     <TableCell className="tabular-nums">{arNum(adhkarBy.get(s.id)?.evening ?? 0)} / ٧</TableCell>
+                    <TableCell>
+                      {hifzBy.get(s.id)?.memorized ? surahsLabel(hifzBy.get(s.id)!.memorized!) : "—"}
+                      {hifzBy.get(s.id)?.learning ? ` · يحفظ ${arNum(hifzBy.get(s.id)!.learning!)}` : ""}
+                    </TableCell>
                     <TableCell>
                       {loggedToday ? <Badge variant="secondary">سجّل</Badge> : <Badge variant="outline">لم يسجّل</Badge>}
                     </TableCell>

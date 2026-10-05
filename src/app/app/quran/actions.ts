@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/current-user";
 import { QURAN_PAGES } from "@/lib/quran";
+import { awardQuranPoints } from "@/lib/quran/points";
 
 const wirdSchema = z.object({
   record_date: z.string(),
@@ -61,8 +62,10 @@ export async function logWird(formData: FormData) {
       if (progressError) throw new Error(progressError.message);
     }
 
+    const points = await awardQuranPoints(supabase);
     revalidatePath("/app");
     revalidatePath("/app/quran");
+    return { points };
   });
 }
 
@@ -83,6 +86,8 @@ export async function setQuranPlan(input: { start: number | null; dailyGoal: num
     const supabase = await createClient();
     const { error } = await supabase.rpc("set_quran_plan", { p_start: parsed.start, p_daily_goal: parsed.dailyGoal });
     if (error) throw new Error(error.message);
+    // هدف أقل قد يجعل اليوم مكتملاً
+    await awardQuranPoints(supabase);
     revalidatePath("/app");
     revalidatePath("/app/quran");
   });
@@ -94,6 +99,8 @@ export type PageReadResult = {
   current_page: number;
   khatmas: number;
   today_pages: number;
+  /** نقاط مُنحت الآن (إتمام الهدف، سلسلة، ختمة) */
+  points: number;
 };
 
 /** يسجّل صفحة بقيت ظاهرة ٣٠ ثانية في القارئ؛ التحقق وحد الوقت والختمة كلها داخل الدالة في القاعدة */
@@ -102,6 +109,8 @@ export async function recordQuranPage(page: number) {
     const supabase = await createClient();
     const { data, error } = await supabase.rpc("record_quran_page", { p_page: page });
     if (error) throw new Error(error.message);
-    return data as PageReadResult;
+    const result = data as Omit<PageReadResult, "points">;
+    const points = result.counted || result.khatma_completed ? await awardQuranPoints(supabase) : 0;
+    return { ...result, points };
   });
 }
