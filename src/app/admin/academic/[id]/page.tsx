@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SessionDialog } from "@/components/academic/session-dialog";
 import { GpaTrend } from "@/components/academic/gpa-trend";
+import { StudentGradeHistory } from "@/components/grades/student-grade-history";
+import { getStudentGrades } from "@/lib/grades-server";
 import { GPA_TONE_CLASSES, REMINDER_KINDS, formatGpa, gpaRatio, gpaTone } from "@/lib/academic";
 import { daysBetweenISO, formatLongDateISO, formatShortDateISO, todayISO } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,9 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
     ]);
 
   if (!student) notFound();
+
+  // كشوف الدرجات التي رفعها الطالب (بالملفات بروابط موقّعة)
+  const grades = await getStudentGrades(supabase, id);
 
   const person = student.profiles as unknown as { full_name: string; phone: string | null } | null;
   const name = person?.full_name ?? "—";
@@ -205,6 +210,8 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
               )}
             </CardContent>
           </Card>
+
+          <StudentGradeHistory terms={grades.terms} reports={grades.reports} urlBy={grades.urlBy} />
         </div>
 
         <Card className="@3xl:col-span-2">

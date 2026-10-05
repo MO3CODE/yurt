@@ -80,6 +80,41 @@ export type Database = {
           },
         ]
       }
+      academic_terms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          final_from: string
+          final_to: string
+          id: string
+          midterm_from: string
+          midterm_to: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          final_from: string
+          final_to: string
+          id?: string
+          midterm_from: string
+          midterm_to: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          final_from?: string
+          final_to?: string
+          id?: string
+          midterm_from?: string
+          midterm_to?: string
+          name?: string
+        }
+        Relationships: [
+
+        ]
+      }
       academic_subjects: {
         Row: {
           created_at: string
@@ -1122,6 +1157,78 @@ export type Database = {
             columns: ["generated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade_reports: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          cumulative_gpa: number | null
+          file_paths: string[]
+          id: string
+          kind: string
+          note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          student_id: string
+          term_gpa: number | null
+          term_id: string
+          updated_at: string
+          verified_cumulative_gpa: number | null
+          verified_term_gpa: number | null
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          cumulative_gpa?: number | null
+          file_paths: string[]
+          id?: string
+          kind: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id: string
+          term_gpa?: number | null
+          term_id: string
+          updated_at?: string
+          verified_cumulative_gpa?: number | null
+          verified_term_gpa?: number | null
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          cumulative_gpa?: number | null
+          file_paths?: string[]
+          id?: string
+          kind?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          student_id?: string
+          term_gpa?: number | null
+          term_id?: string
+          updated_at?: string
+          verified_cumulative_gpa?: number | null
+          verified_term_gpa?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade_reports_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grade_reports_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -2367,6 +2474,10 @@ export type Database = {
       is_apartment_supervisor: { Args: { apt_id: string }; Returns: boolean }
       is_super_admin: { Args: never; Returns: boolean }
       quran_review_done: { Args: { p_total: number }; Returns: number }
+      review_grade_report: {
+        Args: { p_cumulative_gpa: number | null; p_id: string; p_note: string; p_term_gpa: number | null }
+        Returns: undefined
+      }
       review_writing_submission: {
         Args: { p_feedback: string; p_id: string; p_status: string }
         Returns: undefined

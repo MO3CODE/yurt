@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenCheck, ListChecks, MessageCircle, Users } from "lucide-react";
+import { BookOpenCheck, FileSpreadsheet, ListChecks, MessageCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/admin/academic", label: "الطلاب", short: "الطلاب", icon: Users, exact: true },
+  { href: "/admin/academic/grades", label: "كشوف الدرجات", short: "الدرجات", icon: FileSpreadsheet },
   { href: "/admin/academic/subjects", label: "المواد المشتركة", short: "المواد", icon: BookOpenCheck },
   { href: "/admin/academic/reminders", label: "تذكيرات واتساب", short: "واتساب", icon: MessageCircle },
   { href: "/admin/academic/plan", label: "الخطة", short: "الخطة", icon: ListChecks },

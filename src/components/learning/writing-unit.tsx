@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { submitWriting } from "@/app/app/learn/actions";
 import { arNum } from "@/lib/quran";
+import { compressImage, uploadErrorMessage } from "@/lib/image-compress";
 import { MAX_IMAGES, WRITING_BUCKET, WRITING_STATUS_LABELS, type WritingStatus } from "@/lib/learning/writing";
 
 export type SubmissionView = {
@@ -29,20 +30,6 @@ const STATUS_TONE: Record<WritingStatus, string> = {
   approved: "bg-success/15 text-success",
   revise: "bg-warning/20 text-warning-foreground dark:text-warning",
 };
-
-/** تصغير الصورة قبل الرفع (أطول ضلع ١٦٠٠ بكسل، JPEG) */
-async function compress(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("تعذّر تجهيز الصورة"))), "image/jpeg", 0.82)
-  );
-}
 
 export function WritingUnit({
   unitId,
@@ -93,15 +80,10 @@ export function WritingUnit({
         const paths: string[] = [];
         for (const [i, { file }] of files.entries()) {
           setStage(`رفع الصورة ${arNum(i + 1)} من ${arNum(files.length)}…`);
-          const blob = await compress(file);
+          const blob = await compressImage(file);
           const path = `${userId}/${unitId}/${stamp}-${i + 1}.jpg`;
           const { error } = await supabase.storage.from(WRITING_BUCKET).upload(path, blob, { contentType: "image/jpeg" });
-          if (error)
-            throw new Error(
-              error.message.includes("row-level security")
-                ? "انتهت جلستك أو لا تملك صلاحية الرفع، أعد تسجيل الدخول ثم حاول"
-                : `تعذّر رفع الصورة: ${error.message}`
-            );
+          if (error) throw new Error(uploadErrorMessage(error.message));
           paths.push(path);
         }
         setStage("إرسال للمراجعة…");

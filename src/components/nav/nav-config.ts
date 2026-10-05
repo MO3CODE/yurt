@@ -27,7 +27,8 @@ export type IconName =
   | "CalendarDays"
   | "ListTodo"
   | "SunMoon"
-  | "MonitorPlay";
+  | "MonitorPlay"
+  | "FileSpreadsheet";
 
 export type NavItem = {
   title: string;
@@ -97,6 +98,7 @@ export const studentNav: NavItem[] = [
   { title: "الأذكار", href: "/app/adhkar", icon: "SunMoon" },
   { title: "المنصة التعليمية", href: "/app/learn", icon: "MonitorPlay" },
   { title: "جدولي الجامعي", href: "/app/schedule", icon: "CalendarDays" },
+  { title: "درجاتي", href: "/app/grades", icon: "FileSpreadsheet" },
   { title: "الحضور", href: "/app/attendance", icon: "ClipboardCheck" },
   { title: "مهامي", href: "/app/tasks", icon: "ListTodo" },
   { title: "الشكاوى والمقترحات", href: "/app/complaints", icon: "MessageSquareWarning" },

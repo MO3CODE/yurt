@@ -13,6 +13,8 @@ import { Trophy, ListTodo, CalendarDays, BellRing, BookOpen, MapPin, ArrowUpLeft
 import { adhkarDay } from "@/lib/adhkar";
 import { getMyCourses } from "@/lib/learning/server";
 import { LearningToday } from "@/components/learning/learning-today";
+import { GradesDue } from "@/components/grades/grades-due";
+import { getGradeTasks } from "@/lib/grades-server";
 import { cn } from "@/lib/utils";
 import { addDaysISO, todayISO, dayOfWeekISO, greeting, hijriDate, longDate, weekStartISO } from "@/lib/date";
 import type { PrayerName, PrayerStatus } from "@/lib/supabase/types";
@@ -39,6 +41,7 @@ export default async function StudentHomePage() {
     schedule,
     { data: adhkarRows },
     myCourses,
+    gradeTasks,
   ] = await Promise.all([
     supabase.from("prayer_records").select("prayer, status").eq("student_id", user.id).eq("record_date", today),
     supabase.from("attendance_records").select("status, source").eq("student_id", user.id).eq("record_date", today).maybeSingle(),
@@ -67,6 +70,7 @@ export default async function StudentHomePage() {
     // اليوم وأمس: بعد منتصف الليل وقبل الفجر يتبع المساء اليوم السابق
     supabase.from("adhkar_logs").select("record_date, period").eq("student_id", user.id).in("record_date", [today, addDaysISO(today, -1)]),
     getMyCourses(supabase, user.id, today),
+    getGradeTasks(supabase, user.id, today),
   ]);
   const lessonsToday = myCourses.reduce((s, c) => s + c.todayUnits.length, 0);
 
@@ -161,7 +165,7 @@ export default async function StudentHomePage() {
 
       <div className="stagger grid grid-cols-3 gap-3 sm:gap-4">
         <StatCard label="مجموع نقاطك" value={totalPoints} icon={Trophy} tone="gold" href="/app/points" />
-        <StatCard label="مهام قيد الإنجاز" value={(tasks?.length ?? 0) + lessonsToday} icon={ListTodo} href="/app/tasks" />
+        <StatCard label="مهام قيد الإنجاز" value={(tasks?.length ?? 0) + lessonsToday + gradeTasks.length} icon={ListTodo} href="/app/tasks" />
         <StatCard label="محاضرات اليوم" value={classesToday?.length ?? 0} icon={CalendarDays} tone="success" href="/app/schedule" />
       </div>
 
@@ -271,6 +275,7 @@ export default async function StudentHomePage() {
         </div>
       </div>
 
+      <GradesDue tasks={gradeTasks} />
       <LearningToday courses={myCourses} compact />
 
       <Card>
