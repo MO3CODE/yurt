@@ -61,7 +61,7 @@ export default async function CoursePage({ params }: PageProps<"/app/learn/[cour
         <ArrowRight /> المنصة التعليمية
       </Button>
 
-      <div className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-2xl border bg-muted shadow-soft">
           {course.cover_url ? (
             // eslint-disable-next-line @next/next/no-img-element
