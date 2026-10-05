@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { COURSE_CATEGORIES, COURSE_LEVELS, youtubeThumb } from "@/lib/learning";
 import { fetchPlaylist, fetchVideoTitle, parsePlaylistId, parseVideoId } from "@/lib/learning/youtube";
 import { parseTopics } from "@/lib/learning/writing";
+import { parseCardLines } from "@/lib/learning/content";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pushConfigured, sendPush } from "@/lib/push";
 
@@ -305,5 +306,40 @@ export async function reviewSubmission(input: z.input<typeof reviewSchema>) {
 
     revalidatePath("/admin/learning/submissions");
     revalidatePath("/admin/learning");
+  });
+}
+
+/** قراءة/قصة: نص + كلمات مميّزة (اختيارية) تظهر معانيها عند الضغط عليها */
+export async function saveReadingUnit(courseId: string, unitId: string | null, formData: FormData) {
+  return runAction(async () => {
+    await assertPermission("learning");
+    const title = z.string().trim().min(2, "اكتب العنوان").max(200).parse(formData.get("title"));
+    const body = z.string().trim().min(20, "النص قصير جداً").max(20000, "النص أطول من ٢٠ ألف حرف").parse(formData.get("body"));
+    const glossary = parseCardLines(String(formData.get("glossary") ?? "")).map(({ word, meaning }) => ({ word, meaning }));
+    const supabase = await createClient();
+    const values = { title, body, content: { glossary } };
+    const { error } = unitId
+      ? await supabase.from("course_units").update(values).eq("id", unitId)
+      : await supabase.from("course_units").insert({ ...values, course_id: courseId, kind: "reading", position: await nextPosition(supabase, courseId) });
+    if (error) throw new Error(error.message);
+    refresh(courseId);
+  });
+}
+
+/** كلمات للحفظ: بطاقات «الكلمة | المعنى | مثال» */
+export async function saveVocabUnit(courseId: string, unitId: string | null, formData: FormData) {
+  return runAction(async () => {
+    await assertPermission("learning");
+    const title = z.string().trim().min(2, "اكتب العنوان").max(200).parse(formData.get("title"));
+    const cards = parseCardLines(String(formData.get("cards") ?? ""));
+    if (cards.length === 0) throw new Error("اكتب كلمة واحدة على الأقل بالصيغة: الكلمة | المعنى");
+    const supabase = await createClient();
+    const values = { title, content: { cards } };
+    const { error } = unitId
+      ? await supabase.from("course_units").update(values).eq("id", unitId)
+      : await supabase.from("course_units").insert({ ...values, course_id: courseId, kind: "vocab", position: await nextPosition(supabase, courseId) });
+    if (error) throw new Error(error.message);
+    refresh(courseId);
+    return { count: cards.length };
   });
 }

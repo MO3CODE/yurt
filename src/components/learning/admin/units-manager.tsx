@@ -3,7 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowDown, ArrowUp, Check, ListVideo, PenLine, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, BookOpenText, Check, Layers, ListVideo, PenLine, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ReadingUnitDialog, VocabUnitDialog } from "@/components/learning/admin/content-unit-dialogs";
+import type { GlossaryEntry, VocabCard } from "@/lib/learning/content";
 import { WritingUnitDialog } from "@/components/learning/admin/writing-unit-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +15,16 @@ import { arNum } from "@/lib/quran";
 import { UNIT_KIND_LABELS, formatDuration, unitsLabel, type UnitKind } from "@/lib/learning";
 import { unwrap } from "@/lib/unwrap";
 
-export type AdminUnit = { id: string; title: string; kind: UnitKind; durationSeconds: number | null; body: string | null; topics: string[] };
+export type AdminUnit = {
+  id: string;
+  title: string;
+  kind: UnitKind;
+  durationSeconds: number | null;
+  body: string | null;
+  topics: string[];
+  glossary: GlossaryEntry[];
+  cards: VocabCard[];
+};
 
 /** استيراد البلاي ليست، إضافة فيديو برابط، وإدارة ترتيب الدروس وعناوينها */
 export function UnitsManager({ courseId, units }: { courseId: string; units: AdminUnit[] }) {
@@ -107,6 +118,22 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <ReadingUnitDialog
+          courseId={courseId}
+          trigger={
+            <Button variant="outline" size="sm">
+              <BookOpenText /> إضافة قراءة أو قصة
+            </Button>
+          }
+        />
+        <VocabUnitDialog
+          courseId={courseId}
+          trigger={
+            <Button variant="outline" size="sm">
+              <Layers /> إضافة كلمات للحفظ
+            </Button>
+          }
+        />
         <WritingUnitDialog
           courseId={courseId}
           trigger={
@@ -149,6 +176,8 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
                       {UNIT_KIND_LABELS[u.kind]}
                       {u.durationSeconds ? ` · ${formatDuration(u.durationSeconds)}` : ""}
                       {u.kind === "writing" ? ` · ${arNum(u.topics.length)} موضوع` : ""}
+                      {u.kind === "vocab" ? ` · ${arNum(u.cards.length)} كلمة` : ""}
+                      {u.kind === "reading" && u.glossary.length ? ` · ${arNum(u.glossary.length)} كلمة مميّزة` : ""}
                     </span>
                   </span>
                   <div className="flex shrink-0 items-center">
@@ -170,7 +199,27 @@ export function UnitsManager({ courseId, units }: { courseId: string; units: Adm
                     >
                       <ArrowDown />
                     </Button>
-                    {u.kind === "writing" ? (
+                    {u.kind === "reading" ? (
+                      <ReadingUnitDialog
+                        courseId={courseId}
+                        unit={{ id: u.id, title: u.title, body: u.body, glossary: u.glossary }}
+                        trigger={
+                          <Button size="icon-sm" variant="ghost" aria-label="تعديل القراءة">
+                            <Pencil />
+                          </Button>
+                        }
+                      />
+                    ) : u.kind === "vocab" ? (
+                      <VocabUnitDialog
+                        courseId={courseId}
+                        unit={{ id: u.id, title: u.title, cards: u.cards }}
+                        trigger={
+                          <Button size="icon-sm" variant="ghost" aria-label="تعديل الكلمات">
+                            <Pencil />
+                          </Button>
+                        }
+                      />
+                    ) : u.kind === "writing" ? (
                       <WritingUnitDialog
                         courseId={courseId}
                         unit={{ id: u.id, title: u.title, body: u.body, topics: u.topics }}

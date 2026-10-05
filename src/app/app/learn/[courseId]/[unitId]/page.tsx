@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { UnitList } from "@/components/learning/unit-list";
 import { UnitPlayer } from "@/components/learning/unit-player";
 import { WritingUnit, type SubmissionView } from "@/components/learning/writing-unit";
+import { ReadingUnit } from "@/components/learning/reading-unit";
+import { VocabUnit } from "@/components/learning/vocab-unit";
+import { readingGlossary, vocabCards } from "@/lib/learning/content";
 import { WRITING_BUCKET, writingTopics, type WritingStatus } from "@/lib/learning/writing";
 import { arNum } from "@/lib/quran";
 import { UNIT_KIND_LABELS, formatDuration, type UnitKind } from "@/lib/learning";
@@ -35,6 +38,8 @@ export default async function UnitPage({ params }: PageProps<"/app/learn/[course
   const unit = units[index];
   const doneSet = new Set((progress ?? []).map((p) => p.unit_id));
   const href = (id: string) => `/app/learn/${courseId}/${id}`;
+  const nextHref = index < units.length - 1 ? href(units[index + 1].id) : null;
+  const prevHref = index > 0 ? href(units[index - 1].id) : null;
 
   // تسليمات الطالب في تدريب الكتابة، وصورها بروابط موقّعة لساعة من المخزن الخاص
   let submissions: SubmissionView[] = [];
@@ -86,8 +91,8 @@ export default async function UnitPage({ params }: PageProps<"/app/learn/[course
               courseId={courseId}
               videoId={unit.youtube_video_id}
               done={doneSet.has(unit.id)}
-              nextHref={index < units.length - 1 ? href(units[index + 1].id) : null}
-              prevHref={index > 0 ? href(units[index - 1].id) : null}
+              nextHref={nextHref}
+              prevHref={prevHref}
             />
           ) : unit.kind === "writing" ? (
             <WritingUnit
@@ -98,8 +103,27 @@ export default async function UnitPage({ params }: PageProps<"/app/learn/[course
               topics={writingTopics(unit.content)}
               submissions={submissions}
             />
+          ) : unit.kind === "reading" ? (
+            <ReadingUnit
+              key={unit.id}
+              unitId={unit.id}
+              courseId={courseId}
+              body={unit.body ?? ""}
+              glossary={readingGlossary(unit.content)}
+              done={doneSet.has(unit.id)}
+              nextHref={nextHref}
+              prevHref={prevHref}
+            />
           ) : (
-            <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">هذا النوع من الدروس يُتاح قريباً.</p>
+            <VocabUnit
+              key={unit.id}
+              unitId={unit.id}
+              courseId={courseId}
+              cards={vocabCards(unit.content)}
+              done={doneSet.has(unit.id)}
+              nextHref={nextHref}
+              prevHref={prevHref}
+            />
           )}
         </div>
 

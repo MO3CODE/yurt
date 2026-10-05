@@ -17,6 +17,7 @@ import { formatShortDateISO, todayISO } from "@/lib/date";
 import { arNum } from "@/lib/quran";
 import { CATEGORY_LABELS, courseSchedule, formatDuration, unitsLabel, type CourseCategory, type UnitKind } from "@/lib/learning";
 import { writingTopics } from "@/lib/learning/writing";
+import { readingGlossary, vocabCards } from "@/lib/learning/content";
 
 export default async function AdminCoursePage({ params }: PageProps<"/admin/learning/[id]">) {
   await requirePermission("learning");
@@ -89,6 +90,8 @@ export default async function AdminCoursePage({ params }: PageProps<"/admin/lear
               durationSeconds: u.duration_seconds,
               body: u.body,
               topics: writingTopics(u.content),
+              glossary: readingGlossary(u.content),
+              cards: vocabCards(u.content),
             }))}
           />
         </CardContent>
