@@ -26,6 +26,7 @@ export function AppShell({
   subtitle,
   groups,
   mobileItems,
+  moreGroups,
   notificationsHref,
   unreadNotifications = 0,
   searchStudents = false,
@@ -37,6 +38,8 @@ export function AppShell({
   subtitle: string;
   groups: NavGroup[];
   mobileItems: NavItem[];
+  /** أقسام ورقة «المزيد» في الجوال؛ الافتراضي نفس مجموعات القائمة الجانبية */
+  moreGroups?: NavGroup[];
   notificationsHref: string;
   unreadNotifications?: number;
   searchStudents?: boolean;
@@ -106,7 +109,7 @@ export function AppShell({
         <div className="relative flex flex-1 flex-col gap-5 p-4 pb-28 md:gap-7 md:p-8 md:pb-10">{children}</div>
       </SidebarInset>
 
-      <MobileNav items={mobileItems} />
+      <MobileNav items={mobileItems} moreGroups={moreGroups ?? groups} notificationsHref={notificationsHref} unreadNotifications={unreadNotifications} />
       <LiveSync tables={liveTables} />
     </SidebarProvider>
   );

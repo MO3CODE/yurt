@@ -129,6 +129,24 @@ export const adminMobileNav: NavItem[] = [
   { title: "الشكاوى", href: "/admin/complaints", permission: "complaints", icon: "MessageSquareWarning" },
 ];
 
+// تقسيم أقسام الطالب في ورقة «المزيد» بالجوال: يومي، دراسة، وأنا والسكن (ما لم يُذكر يذهب لآخر مجموعة)
+const STUDENT_MORE_LAYOUT: { label: string; hrefs: string[] }[] = [
+  { label: "يومي", hrefs: ["/app/adhkar", "/app/attendance", "/app/notifications"] },
+  { label: "دراستي", hrefs: ["/app/learn", "/app/schedule", "/app/grades", "/app/academic-support"] },
+  { label: "أنا والسكن", hrefs: [] },
+];
+
+export function groupStudentMore(items: NavItem[]): NavGroup[] {
+  const placed = new Set(STUDENT_MORE_LAYOUT.flatMap((g) => g.hrefs));
+  return STUDENT_MORE_LAYOUT.map((g, i, all) => ({
+    label: g.label,
+    items:
+      i === all.length - 1
+        ? items.filter((it) => !placed.has(it.href))
+        : g.hrefs.map((h) => items.find((it) => it.href === h)).filter((it): it is NavItem => !!it),
+  }));
+}
+
 // تظهر للمدير العام فقط
 export const teamNavGroup: NavGroup = {
   label: "الإدارة",

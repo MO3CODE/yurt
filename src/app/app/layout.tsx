@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/nav/app-shell";
-import { studentMobileNav, studentNav, supervisorNavItem } from "@/components/nav/nav-config";
+import { groupStudentMore, studentMobileNav, studentNav, supervisorNavItem } from "@/components/nav/nav-config";
 import { requireUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,6 +34,7 @@ export default async function StudentLayout({ children }: { children: React.Reac
       subtitle={user.apartmentName ?? "طالب"}
       groups={[{ label: "القائمة", items }]}
       mobileItems={studentMobileNav}
+      moreGroups={groupStudentMore(items)}
       notificationsHref="/app/notifications"
       unreadNotifications={unread}
       liveTables={STUDENT_LIVE_TABLES}
