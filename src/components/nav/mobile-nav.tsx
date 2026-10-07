@@ -16,7 +16,7 @@ const TINTS = ["bg-primary/12 text-primary", "bg-gold/20 text-gold-foreground da
 
 /**
  * شريط سفلي للجوال: أهم الصفحات بلمسة إبهام حول زر «المزيد» في الوسط،
- * والزر يفتح ورقة سفلية بشبكة كل الأقسام الأخرى (مع بحث) بدل القائمة الجانبية الطويلة.
+ * والزر يفتح ورقة سفلية بشبكة كل الأقسام (مع بحث) بدل القائمة الجانبية الطويلة.
  */
 export function MobileNav({
   items,
@@ -35,11 +35,8 @@ export function MobileNav({
   const open = openedAt === pathname;
   const [query, setQuery] = useState("");
 
-  const barHrefs = new Set(items.map((i) => i.href));
-  const groups = moreGroups
-    .map((g) => ({ ...g, items: g.items.filter((i) => !barHrefs.has(i.href)) }))
-    .filter((g) => g.items.length > 0);
-  const moreActive = groups.some((g) => g.items.some((i) => isActive(pathname, i.href)));
+  // الورقة تعرض كل الأقسام (بما فيها الموجودة في الشريط) ليجد المستخدم كل شيء في مكان واحد
+  const groups = moreGroups.filter((g) => g.items.length > 0);
 
   const q = normalizeArabic(query);
   const shown = groups
@@ -181,21 +178,13 @@ export function MobileNav({
               aria-expanded={open}
               aria-haspopup="dialog"
               aria-label={open ? "إغلاق قائمة الأقسام" : "كل الأقسام"}
-              className="absolute -top-7 flex size-14 items-center justify-center rounded-full bg-sidebar text-sidebar-primary shadow-lift ring-4 ring-background transition-transform duration-300 active:scale-90"
+              className="absolute -top-7 flex size-14 items-center justify-center rounded-full bg-sidebar text-sidebar-primary shadow-lift ring-4 ring-white transition-transform duration-300 active:scale-90"
             >
               <LayoutGrid className={cn("absolute size-6 transition-all duration-300", open ? "scale-50 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} />
               <X className={cn("absolute size-6 transition-all duration-300", open ? "scale-100 rotate-0 opacity-100" : "scale-50 -rotate-90 opacity-0")} />
-              {!open && (moreActive || unreadNotifications > 0) && (
-                <span
-                  className={cn(
-                    "absolute top-0.5 end-0.5 size-3 rounded-full ring-2 ring-sidebar",
-                    unreadNotifications > 0 ? "bg-destructive" : "bg-sidebar-primary"
-                  )}
-                />
-              )}
             </button>
             <span aria-hidden className="size-5" />
-            <span className={cn("transition-colors", open || moreActive ? "text-primary" : "text-muted-foreground")}>{open ? "إغلاق" : "المزيد"}</span>
+            <span className={cn("transition-colors", open ? "text-primary" : "text-muted-foreground")}>{open ? "إغلاق" : "المزيد"}</span>
           </div>
 
           {bar(items.slice(mid))}

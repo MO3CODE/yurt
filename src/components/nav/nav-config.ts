@@ -131,7 +131,10 @@ export const adminMobileNav: NavItem[] = [
 
 // تقسيم أقسام الطالب في ورقة «المزيد» بالجوال: يومي، دراسة، وأنا والسكن (ما لم يُذكر يذهب لآخر مجموعة)
 const STUDENT_MORE_LAYOUT: { label: string; hrefs: string[] }[] = [
-  { label: "يومي", hrefs: ["/app/adhkar", "/app/attendance", "/app/notifications"] },
+  {
+    label: "يومي",
+    hrefs: ["/app", "/app/prayers", "/app/quran", "/app/adhkar", "/app/tasks", "/app/attendance", "/app/notifications"],
+  },
   { label: "دراستي", hrefs: ["/app/learn", "/app/schedule", "/app/grades", "/app/academic-support"] },
   { label: "أنا والسكن", hrefs: [] },
 ];
