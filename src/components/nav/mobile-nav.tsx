@@ -178,7 +178,7 @@ export function MobileNav({
               aria-expanded={open}
               aria-haspopup="dialog"
               aria-label={open ? "إغلاق قائمة الأقسام" : "كل الأقسام"}
-              className="absolute -top-7 flex size-14 items-center justify-center rounded-full bg-sidebar text-sidebar-primary shadow-lift ring-4 ring-white transition-transform duration-300 active:scale-90"
+              className="absolute -top-7 flex size-14 items-center justify-center rounded-full bg-sidebar text-sidebar-primary shadow-lift ring-4 ring-background transition-transform duration-300 active:scale-90"
             >
               <LayoutGrid className={cn("absolute size-6 transition-all duration-300", open ? "scale-50 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} />
               <X className={cn("absolute size-6 transition-all duration-300", open ? "scale-100 rotate-0 opacity-100" : "scale-50 -rotate-90 opacity-0")} />
