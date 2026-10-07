@@ -34,6 +34,8 @@ export function MobileNav({
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const open = openedAt === pathname;
   const [query, setQuery] = useState("");
+  // الشريط يبقى فوق الورقة حتى تنتهي حركة إغلاقها، وإلا تنزل فوقه وتخفيه ثم يعود فجأة
+  const [elevated, setElevated] = useState(false);
 
   // الورقة تعرض كل الأقسام (بما فيها الموجودة في الشريط) ليجد المستخدم كل شيء في مكان واحد
   const groups = moreGroups.filter((g) => g.items.length > 0);
@@ -45,7 +47,10 @@ export function MobileNav({
 
   function setOpen(next: boolean) {
     setOpenedAt(next ? pathname : null);
-    if (!next) setQuery("");
+    if (next) {
+      setElevated(true);
+      setQuery(""); // نمسح البحث عند الفتح لا الإغلاق حتى لا يقفز محتوى الورقة أثناء انزلاقها
+    }
   }
 
   const mid = Math.ceil(items.length / 2);
@@ -84,7 +89,7 @@ export function MobileNav({
         aria-hidden
         onClick={() => setOpen(false)}
         className={cn(
-          "fixed inset-0 z-[45] bg-black/35 backdrop-blur-[2px] transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-[45] bg-black/35 transition-opacity duration-200 md:hidden",
           open ? "opacity-100" : "pointer-events-none opacity-0"
         )}
       />
@@ -93,6 +98,9 @@ export function MobileNav({
         open={open}
         modal={false}
         showSwipeHandle
+        onOpenChangeComplete={(isOpen) => {
+          if (!isOpen) setElevated(false);
+        }}
         // الإغلاق بالضغط خارج الورقة يتولاه التعتيم وزر الوسط؛ لو أغلقها Base UI هنا ثم عاد الزر فتحها (نقرة واحدة = إغلاق ثم فتح)
         onOpenChange={(next, details) => {
           if (!next && (details.reason === "outside-press" || details.reason === "focus-out")) return;
@@ -101,7 +109,7 @@ export function MobileNav({
       >
         <DrawerContent
           className={cn(
-            "md:hidden data-[swipe-axis=y]:inset-x-3 data-[swipe-direction=down]:bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5.6rem)]",
+            "md:hidden duration-300 data-ending-style:duration-[240ms] data-[swipe-axis=y]:inset-x-3 data-[swipe-direction=down]:bottom-[calc(max(0.75rem,env(safe-area-inset-bottom))+5.6rem)]",
             "data-[swipe-direction=down]:rounded-3xl data-[swipe-direction=down]:border [--bleed:0px] shadow-lift"
           )}
         >
@@ -165,7 +173,7 @@ export function MobileNav({
         aria-label="التنقل السريع"
         className={cn(
           "mobile-nav fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden",
-          open ? "z-[55]" : "z-40"
+          open || elevated ? "z-[55]" : "z-40"
         )}
       >
         <div className="flex items-stretch justify-around rounded-2xl border bg-card/85 p-1.5 shadow-lift backdrop-blur-xl supports-backdrop-filter:bg-card/70">
@@ -180,8 +188,8 @@ export function MobileNav({
               aria-label={open ? "إغلاق قائمة الأقسام" : "كل الأقسام"}
               className="absolute -top-7 flex size-14 items-center justify-center rounded-full bg-sidebar text-sidebar-primary shadow-lift ring-4 ring-background transition-transform duration-300 active:scale-90"
             >
-              <LayoutGrid className={cn("absolute size-6 transition-all duration-300", open ? "scale-50 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} />
-              <X className={cn("absolute size-6 transition-all duration-300", open ? "scale-100 rotate-0 opacity-100" : "scale-50 -rotate-90 opacity-0")} />
+              <LayoutGrid className={cn("absolute size-6 transition-all duration-200", open ? "scale-50 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100")} />
+              <X className={cn("absolute size-6 transition-all duration-200", open ? "scale-100 rotate-0 opacity-100" : "scale-50 -rotate-90 opacity-0")} />
             </button>
             <span aria-hidden className="size-5" />
             <span className={cn("transition-colors", open ? "text-primary" : "text-muted-foreground")}>{open ? "إغلاق" : "المزيد"}</span>
