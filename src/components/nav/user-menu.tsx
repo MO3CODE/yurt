@@ -49,7 +49,14 @@ export function UserMenu({
           <User /> الملف الشخصي
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <form action={signOut} className="w-full">
+        <form
+          action={signOut}
+          className="w-full"
+          // عند الخروج نمسح أي ملفات مخزّنة على الجهاز عدا الثابتة (احتياط للأجهزة المشتركة)
+          onSubmit={() => {
+            if ("caches" in window) caches.keys().then((keys) => keys.filter((k) => !k.startsWith("yurt-static")).forEach((k) => caches.delete(k)));
+          }}
+        >
           <DropdownMenuItem variant="destructive" nativeButton render={<button type="submit" className="w-full" />}>
             <LogOut /> تسجيل الخروج
           </DropdownMenuItem>

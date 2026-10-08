@@ -18,6 +18,7 @@ import { MobileNav } from "@/components/nav/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/nav/user-menu";
 import { LiveSync } from "@/components/live-sync";
+import { OfflineBanner } from "@/components/offline-banner";
 import type { NavGroup, NavItem } from "@/components/nav/nav-config";
 import { hijriDate, longDate } from "@/lib/date";
 
@@ -119,6 +120,7 @@ export function AppShell({
           <UserMenu fullName={user.fullName} avatarUrl={user.avatarUrl} roleLabel={user.roleLabel} />
         </header>
 
+        <OfflineBanner />
         <div className="relative flex flex-1 flex-col gap-5 p-4 pb-28 md:gap-7 md:p-8 md:pb-10">{children}</div>
       </SidebarInset>
 

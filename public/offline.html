@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>لا يوجد اتصال — منصة السكن</title>
+<style>
+  :root { --bg:#faf7f0; --card:#fff; --ink:#12332f; --muted:#5b6b67; --em:#0b3f3b; --gold:#dba751; --line:#e7e2d6; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#06201f; --card:#0c2f2d; --ink:#eef3f0; --muted:#9db5af; --em:#dba751; --gold:#dba751; --line:#1b4a46; } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif; display: flex; align-items: center; justify-content: center; padding: 24px; line-height: 1.8; }
+  main { width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 40px 28px 32px; text-align: center; box-shadow: 0 24px 60px -30px rgba(11,63,59,.35); }
+  .mark { width: 76px; height: 76px; margin: 0 auto 18px; }
+  h1 { font-size: 24px; margin: 0 0 8px; font-weight: 600; }
+  p { margin: 0 0 24px; color: var(--muted); font-size: 16px; }
+  button { font: inherit; font-size: 16px; font-weight: 500; border: 0; border-radius: 14px; padding: 12px 28px; background: var(--em); color: #fff; cursor: pointer; width: 100%; }
+  @media (prefers-color-scheme: dark) { button { color: #06201f; } }
+  button:active { transform: scale(.98); }
+  .status { margin-top: 16px; font-size: 14px; color: var(--muted); min-height: 1.6em; }
+</style>
+</head>
+<body>
+<main>
+  <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+    <polygon points="16.00,1.00 20.39,5.39 26.61,5.39 26.61,11.61 31.00,16.00 26.61,20.39 26.61,26.61 20.39,26.61 16.00,31.00 11.61,26.61 5.39,26.61 5.39,20.39 1.00,16.00 5.39,11.61 5.39,5.39 11.61,5.39" fill="#dba751"/>
+    <polygon points="16.00,5.50 19.08,8.58 23.42,8.58 23.42,12.92 26.50,16.00 23.42,19.08 23.42,23.42 19.08,23.42 16.00,26.50 12.92,23.42 8.58,23.42 8.58,19.08 5.50,16.00 8.58,12.92 8.58,8.58 12.92,8.58" fill="#0b3f3b"/>
+  </svg>
+  <h1>لا يوجد اتصال بالإنترنت</h1>
+  <p>تحتاج المنصة إلى الاتصال لعرض بياناتك وحفظ تسجيلاتك. تأكد من الشبكة ثم أعد المحاولة.</p>
+  <button type="button" id="retry">إعادة المحاولة</button>
+  <div class="status" id="status" role="status" aria-live="polite"></div>
+</main>
+<script>
+  var statusEl = document.getElementById("status");
+  function retry() {
+    statusEl.textContent = "جارٍ التحقق من الاتصال…";
+    // نتأكد فعلياً من وصول الخادم قبل إعادة التحميل، وإلا بقينا في الصفحة
+    fetch("/offline.html?ping=" + Date.now(), { cache: "no-store" })
+      .then(function () { location.reload(); })
+      .catch(function () { statusEl.textContent = "ما زال الاتصال غير متاح."; });
+  }
+  document.getElementById("retry").addEventListener("click", retry);
+  window.addEventListener("online", function () { location.reload(); });
+</script>
+</body>
+</html>
