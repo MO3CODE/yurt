@@ -83,10 +83,23 @@ export function AppShell({
           className="pointer-events-none absolute inset-x-0 top-0 -z-0 h-80 bg-[radial-gradient(60%_100%_at_70%_0%,color-mix(in_oklch,var(--accent),transparent_20%),transparent)] dark:bg-[radial-gradient(60%_100%_at_70%_0%,color-mix(in_oklch,var(--primary),transparent_88%),transparent)]"
         />
 
-        <header className="app-header sticky top-0 z-30 flex h-16 shrink-0 items-center gap-2 border-b border-transparent bg-background/70 px-4 backdrop-blur-xl transition-colors supports-backdrop-filter:bg-background/55 md:px-6">
-          <SidebarTrigger className="-ms-1" />
+        <header className="app-header sticky top-0 z-30 flex h-16 shrink-0 items-center gap-1.5 border-b border-transparent bg-background/70 px-4 backdrop-blur-xl transition-colors supports-backdrop-filter:bg-background/55 sm:gap-2 md:px-6">
+          {/* على الجوال القائمة كلها في زر «المزيد» أسفل الشاشة، فيحلّ شعار المنصة محل زر الشريط الجانبي */}
+          <SidebarTrigger className="-ms-1 hidden md:inline-flex" />
+          <Link
+            href={homeHref}
+            aria-label="منصة السكن — الرئيسية"
+            className="flex min-w-0 items-center gap-2.5 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
+          >
+            <KhatamMark className="size-8 shrink-0 sm:size-9" />
+            <span className="flex min-w-0 flex-col leading-tight">
+              <span className="truncate font-heading text-[1.05rem] font-semibold">منصة السكن</span>
+              <span className="truncate text-[0.7rem] text-muted-foreground">{subtitle}</span>
+            </span>
+          </Link>
+          <div className="flex-1 md:hidden" />
           <CommandMenu groups={groups} searchStudents={searchStudents} />
-          <div className="flex-1" />
+          <div className="hidden flex-1 md:block" />
           <Button
             variant="ghost"
             size="icon"
