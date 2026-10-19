@@ -50,7 +50,7 @@ export async function createStudent(formData: FormData): Promise<ActionResult<Cr
       email_confirm: true,
       user_metadata: { full_name: parsed.full_name },
       // الدور في app_metadata لأن المستخدم لا يستطيع تعديلها (بخلاف user_metadata)
-      app_metadata: { role: "student" },
+      app_metadata: { role: "student", must_change_password: true },
     });
 
     if (createError || !created.user) {

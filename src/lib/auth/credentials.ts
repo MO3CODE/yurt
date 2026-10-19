@@ -27,7 +27,11 @@ export async function issueNewPassword(userId: string, allowedRoles: AppRole[]):
   if (!allowedRoles.includes(profile.role)) throw new Error("لا يمكنك إعادة تعيين كلمة مرور هذا الحساب");
 
   const password = generatePassword();
-  const { error } = await admin.auth.admin.updateUserById(userId, { password });
+  const { error } = await admin.auth.admin.updateUserById(userId, {
+    password,
+    // كلمة المرور المؤقتة تُرسل عبر واتساب: يُلزَم صاحب الحساب بتغييرها عند أول دخول
+    app_metadata: { must_change_password: true },
+  });
   if (error) throw new Error(error.message);
 
   return {

@@ -75,7 +75,7 @@ export async function importStudentsChunk(input: z.input<typeof chunkSchema>): P
             password,
             email_confirm: true,
             user_metadata: { full_name: row.name },
-            app_metadata: { role: "student" },
+            app_metadata: { role: "student", must_change_password: true },
           });
           if (createError || !created.user) {
             const exists = createError?.code === "email_exists" || /already been registered/i.test(createError?.message ?? "");

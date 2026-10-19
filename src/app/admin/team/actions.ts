@@ -55,7 +55,7 @@ export async function createStaff(formData: FormData): Promise<ActionResult<Acco
       password,
       email_confirm: true,
       // الدور في app_metadata (لا يعدّله المستخدم)؛ user_metadata.role للتوافق مع نسخة الـ trigger القديمة
-      app_metadata: { role: parsed.role },
+      app_metadata: { role: parsed.role, must_change_password: true },
       user_metadata: { full_name: parsed.full_name, role: parsed.role },
     });
     if (createError || !created.user) {

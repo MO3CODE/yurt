@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // /api/cron يحمي نفسه بسرّ مشترك (Authorization: Bearer) بدل جلسة مستخدم
 const PUBLIC_PATHS = ["/login", "/api/cron"];
+const CHANGE_PASSWORD_PATH = "/change-password";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -32,6 +33,17 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isPublicPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+
+  // كلمة مرور مؤقتة: لا شيء يعمل قبل تغييرها (app_metadata لا يعدّلها المستخدم)
+  if (user?.app_metadata?.must_change_password === true && !isPublicPath && pathname !== CHANGE_PASSWORD_PATH) {
+    if (request.method === "GET" || request.method === "HEAD") {
+      const url = request.nextUrl.clone();
+      url.pathname = CHANGE_PASSWORD_PATH;
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.json({ error: "must_change_password" }, { status: 403 });
+  }
 
   if (!user && !isPublicPath) {
     const url = request.nextUrl.clone();
