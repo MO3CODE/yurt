@@ -63,13 +63,14 @@ export function NewStudentDialog({ apartments }: { apartments: { id: string; nam
                   <Input id="full_name" name="full_name" required />
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="email">البريد الإلكتروني</FieldLabel>
-                  <Input id="email" name="email" type="email" required />
+                  <FieldLabel htmlFor="username">اسم المستخدم</FieldLabel>
+                  <Input id="username" name="username" placeholder="bawazir" dir="ltr" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
+                  <FieldDescription>حروف إنجليزية وأرقام، يدخل به الطالب. يكفي هو أو رقم الجوال</FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="phone">رقم الجوال (واتساب)</FieldLabel>
-                  <Input id="phone" name="phone" placeholder="9677xxxxxxx" required />
-                  <FieldDescription>بصيغة دولية بدون + أو أصفار زائدة، مثال: 9677xxxxxxx</FieldDescription>
+                  <Input id="phone" name="phone" placeholder="905xxxxxxxxx" dir="ltr" />
+                  <FieldDescription>بصيغة دولية، ويمكن إضافته لاحقاً من صفحة الطالب. بلا اسم مستخدم يصير الرقم اسم الدخول</FieldDescription>
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>

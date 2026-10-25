@@ -8,11 +8,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { assertPermission } from "@/lib/auth/current-user";
 import { generatePassword } from "@/lib/generate-password";
 import { issueNewPassword, type AccountCredentials } from "@/lib/auth/credentials";
+import { USERNAME_RE, isValidPhone, loginEmailFromPhone, loginEmailFromUsername, normalizePhone, normalizeUsername } from "@/lib/student-import";
 
 const newStudentSchema = z.object({
   full_name: z.string().min(1, "الاسم مطلوب"),
-  email: z.string().email("بريد إلكتروني غير صحيح"),
-  phone: z.string().min(6, "رقم الجوال مطلوب (بصيغة دولية مثل 9677xxxxxxx)"),
+  username: z.string().regex(USERNAME_RE, "اسم المستخدم: حروف إنجليزية وأرقام و . _ - ويبدأ بحرف (٣ أحرف فأكثر)").optional(),
+  email: z.string().email("بريد إلكتروني غير صحيح").optional(),
+  phone: z.string().optional(),
   apartment_id: z.string().uuid().optional().or(z.literal("")),
   university_name: z.string().optional(),
   major: z.string().optional(),
@@ -27,22 +29,26 @@ export async function createStudent(formData: FormData): Promise<ActionResult<Cr
   return runAction(async () => {
     await assertPermission("students");
 
+    const usernameRaw = String(formData.get("username") ?? "").trim();
     const parsed = newStudentSchema.parse({
       full_name: formData.get("full_name"),
-      email: formData.get("email"),
-      phone: formData.get("phone"),
+      username: usernameRaw ? normalizeUsername(usernameRaw) : undefined,
+      email: String(formData.get("email") ?? "").trim() || undefined,
+      phone: String(formData.get("phone") ?? "").trim() || undefined,
       apartment_id: formData.get("apartment_id") || "",
       university_name: formData.get("university_name") || undefined,
       major: formData.get("major") || undefined,
     });
 
-    // واتساب يحتاج أرقاماً فقط بصيغة دولية (بدون + أو 00)
-    const phone = parsed.phone.replace(/\D/g, "").replace(/^00/, "");
-    if (phone.length < 8) throw new Error("رقم الجوال غير صحيح — اكتبه بصيغة دولية مثل 905xxxxxxxxx");
+    // واتساب يحتاج أرقاماً فقط بصيغة دولية (بدون + أو 00)؛ الرقم اختياري لمن له اسم مستخدم
+    const phone = parsed.phone ? normalizePhone(parsed.phone) : "";
+    if (parsed.phone && !isValidPhone(phone)) throw new Error("رقم الجوال غير صحيح — اكتبه بصيغة دولية مثل 905xxxxxxxxx");
+    if (!phone && !parsed.username && !parsed.email) throw new Error("اكتب اسم المستخدم أو رقم الجوال (أحدهما اسم الدخول)");
 
     const admin = createAdminClient();
     const password = generatePassword();
-    const email = parsed.email.trim().toLowerCase();
+    // اسم الدخول: اسم المستخدم، ثم البريد، ثم الرقم
+    const email = parsed.username ? loginEmailFromUsername(parsed.username) : parsed.email ? parsed.email.toLowerCase() : loginEmailFromPhone(phone);
 
     const { data: created, error: createError } = await admin.auth.admin.createUser({
       email,
@@ -55,7 +61,7 @@ export async function createStudent(formData: FormData): Promise<ActionResult<Cr
 
     if (createError || !created.user) {
       if (createError?.code === "email_exists" || /already been registered/i.test(createError?.message ?? "")) {
-        throw new Error("هذا البريد مسجّل مسبقاً لطالب آخر");
+        throw new Error(parsed.username ? "اسم المستخدم مستخدم لحساب آخر — اختر غيره" : "اسم الدخول مسجّل مسبقاً لحساب آخر");
       }
       throw new Error(createError?.message ?? "تعذّر إنشاء حساب الطالب");
     }
@@ -72,7 +78,7 @@ export async function createStudent(formData: FormData): Promise<ActionResult<Cr
           major: parsed.major || null,
         })
         .eq("id", userId),
-      admin.from("profiles").update({ phone }).eq("id", userId),
+      admin.from("profiles").update({ phone: phone || null }).eq("id", userId),
     ]);
 
     if (studentError || profileError) {
@@ -134,6 +140,15 @@ export async function updateStudent(studentId: string, formData: FormData) {
       .eq("id", studentId);
 
     if (error) throw new Error(error.message);
+
+    // رقم الجوال (واتساب) — لا يغيّر اسم الدخول
+    if (formData.has("phone")) {
+      const raw = String(formData.get("phone") ?? "").trim();
+      const phone = raw ? normalizePhone(raw) : null;
+      if (phone && !isValidPhone(phone)) throw new Error("رقم الجوال غير صحيح — اكتبه بصيغة دولية مثل 905xxxxxxxxx");
+      const { error: phoneError } = await supabase.from("profiles").update({ phone }).eq("id", studentId);
+      if (phoneError) throw new Error(phoneError.message);
+    }
 
     // المشرف الذي نُقل لشقة أخرى أو لم يعد نشطاً يفقد إشرافه على الشقة القديمة
     // (وإلا تبقى له صلاحيات RLS على طلابها)

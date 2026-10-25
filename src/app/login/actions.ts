@@ -11,7 +11,7 @@ export async function signIn(_prevState: LoginState, formData: FormData): Promis
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    return { error: "الرجاء إدخال البريد الإلكتروني (أو رقم الهاتف) وكلمة المرور" };
+    return { error: "الرجاء إدخال اسم المستخدم (أو رقم الهاتف) وكلمة المرور" };
   }
 
   const supabase = await createClient();

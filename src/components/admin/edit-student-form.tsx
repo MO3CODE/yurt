@@ -27,6 +27,7 @@ export function EditStudentForm({
   studentId: string;
   apartments: { id: string; name: string }[];
   defaults: {
+    phone: string | null;
     apartment_id: string | null;
     university_name: string | null;
     major: string | null;
@@ -55,6 +56,10 @@ export function EditStudentForm({
   return (
     <form action={handleSubmit} className="flex flex-col gap-4">
       <FieldGroup>
+        <Field orientation="responsive">
+          <FieldLabel htmlFor="phone">رقم الجوال (واتساب)</FieldLabel>
+          <Input id="phone" name="phone" defaultValue={defaults.phone ?? ""} placeholder="905xxxxxxxxx" dir="ltr" />
+        </Field>
         <Field orientation="responsive">
           <FieldLabel htmlFor="apartment_id">الشقة</FieldLabel>
           <Select

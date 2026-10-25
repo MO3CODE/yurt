@@ -12,12 +12,13 @@ export function buildCredentialsMessage(params: {
   loginUrl: string;
 }): string {
   const { fullName, email, password, loginUrl } = params;
-  const byPhone = email.endsWith(`@${LOGIN_DOMAIN}`);
+  const internal = email.endsWith(`@${LOGIN_DOMAIN}`);
+  const label = !internal ? "اسم المستخدم (البريد الإلكتروني)" : /^\d+$/.test(displayLogin(email)) ? "اسم المستخدم (رقم هاتفك)" : "اسم المستخدم";
   return [
     `مرحباً ${fullName} 👋`,
     `تم إنشاء حسابك في منصة متابعة السكن.`,
     ``,
-    `${byPhone ? "اسم المستخدم (رقم هاتفك)" : "اسم المستخدم (البريد الإلكتروني)"}: ${displayLogin(email)}`,
+    `${label}: ${displayLogin(email)}`,
     `كلمة المرور: ${password}`,
     `رابط الدخول: ${loginUrl}`,
     ``,

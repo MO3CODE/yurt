@@ -86,7 +86,7 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
           warnings,
           apartmentId,
           apartmentName: apartmentId ? apartments.find((a) => a.id === apartmentId)?.name : undefined,
-          isUpdate: existing.has(r.phone),
+          isUpdate: !!r.phone && existing.has(r.phone),
         };
       }),
     [matrix, apartments, existing]
@@ -143,8 +143,9 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
             rows: chunk.map((r) => ({
               line: r.line,
               name: r.name,
-              phone: r.phone,
+              phone: r.phone || null,
               email: r.email,
+              username: r.username,
               major: r.major,
               university: r.university,
               academicYear: r.year,
@@ -204,8 +205,8 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
             <DialogHeader>
               <DialogTitle>استيراد الطلاب من Excel</DialogTitle>
               <DialogDescription>
-                الأعمدة بالترتيب: {["name", "major", "university", "apartment", "year", "phone", "gpa", "struggling"].map((f) => FIELD_LABELS[f as keyof typeof FIELD_LABELS]).join(" · ")}.
-                رقم الهاتف إلزامي لأنه اسم دخول الطالب. من سبق تسجيل رقمه يُحدَّث بدل أن يتكرر.
+                الأعمدة بالترتيب: {["name", "major", "university", "apartment", "year", "phone", "gpa", "struggling"].map((f) => FIELD_LABELS[f as keyof typeof FIELD_LABELS]).join(" · ")}، ويمكن إضافة عمود «اسم المستخدم».
+                الطالب يدخل برقم هاتفه أو باسم المستخدم (يكفي أحدهما، والرقم يُضاف لاحقاً). من سبق تسجيله يُحدَّث بدل أن يتكرر.
               </DialogDescription>
             </DialogHeader>
 
@@ -287,6 +288,7 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
                             </span>
                           ))}
                           <span className="flex flex-wrap gap-x-3 text-xs text-muted-foreground">
+                            {r.username && <span dir="ltr">@{r.username}</span>}
                             {r.phone && <span dir="ltr">{r.phone}</span>}
                             {r.apartmentName && <span>{r.apartmentName}</span>}
                             {r.university && <span>{r.university}</span>}
@@ -361,14 +363,18 @@ export function ImportStudentsDialog({ apartments, existingPhones }: { apartment
                           </span>
                           {r.error && <span className="text-xs text-destructive">{r.error}</span>}
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          nativeButton={false}
-                          render={<a href={buildWhatsAppLink(r.credentials!.phone, messageFor(r))} target="_blank" rel="noopener noreferrer" />}
-                        >
-                          <MessageCircle /> واتساب
-                        </Button>
+                        {r.credentials!.phone ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            nativeButton={false}
+                            render={<a href={buildWhatsAppLink(r.credentials!.phone, messageFor(r))} target="_blank" rel="noopener noreferrer" />}
+                          >
+                            <MessageCircle /> واتساب
+                          </Button>
+                        ) : (
+                          <span className="shrink-0 text-xs text-muted-foreground">بلا رقم — انسخ بياناته</span>
+                        )}
                       </li>
                     ))}
                   </ul>

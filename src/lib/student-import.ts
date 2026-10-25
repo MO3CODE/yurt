@@ -5,7 +5,7 @@ import { normalizeArabic, parseGpa, splitSubjects, toAsciiDigits, type Gpa } fro
 // الأعمدة
 // ---------------------------------------------------------------------
 
-export const FIELDS = ["name", "major", "university", "apartment", "year", "phone", "gpa", "struggling", "strong", "email"] as const;
+export const FIELDS = ["name", "major", "university", "apartment", "year", "phone", "gpa", "struggling", "strong", "email", "username"] as const;
 export type Field = (typeof FIELDS)[number];
 
 /** ترتيب الأعمدة إن لم يوجد سطر عناوين: الاسم، التخصص، الجامعة، الشقة، السنة الدراسية، الهاتف، المعدل، المواد المتعثرة */
@@ -22,6 +22,7 @@ export const FIELD_LABELS: Record<Field, string> = {
   struggling: "المواد المتعثرة",
   strong: "المواد القوية",
   email: "البريد الإلكتروني",
+  username: "اسم المستخدم",
 };
 
 /** يحدّد حقل العمود من عنوانه؛ null إن لم يُفهم */
@@ -31,6 +32,7 @@ export function fieldFromHeader(header: string): Field | null {
   if (/تعثر|ضعيف|تقويه|دعم/.test(t)) return "struggling";
   if (/قوي|متفوق/.test(t)) return "strong";
   if (/بريد|ايميل|email|e-mail|mail/.test(t)) return "email";
+  if (/مستخدم|يوزر|دخول|username|user name|login/.test(t)) return "username";
   if (/شق|سكن|غرف|apartment|flat/.test(t)) return "apartment";
   if (/هاتف|جوال|موبايل|واتس|phone|mobile|tel|رقم/.test(t)) return "phone";
   if (/معدل|gpa|تراكمي/.test(t)) return "gpa";
@@ -83,17 +85,29 @@ export function phoneLooksLocal(digits: string): boolean {
 
 export const LOGIN_DOMAIN = "yurt.local";
 
+/** اسم مستخدم بحروف إنجليزية صغيرة يبدأ بحرف (لا يلتبس برقم هاتف): bawazir، a.abdulwahid */
+export const USERNAME_RE = /^[a-z][a-z0-9._-]{2,29}$/;
+export const normalizeUsername = (raw: string) => toAsciiDigits(raw).trim().toLowerCase();
+export const isUsername = (raw: string) => USERNAME_RE.test(normalizeUsername(raw));
+
+/** اسم الدخول لمن يدخل باسم مستخدم (مثل bawazir@yurt.local) */
+export function loginEmailFromUsername(username: string): string {
+  return `${normalizeUsername(username)}@${LOGIN_DOMAIN}`;
+}
+
 /** اسم الدخول لمن لا بريد له: رقم هاتفه (مثل 905551234567@yurt.local) */
 export function loginEmailFromPhone(phone: string): string {
   return `${phone}@${LOGIN_DOMAIN}`;
 }
 
-/** ما يكتبه المستخدم في خانة الدخول → البريد الفعلي (الرقم وحده يصير بريداً داخلياً) */
+/** ما يكتبه المستخدم في خانة الدخول → البريد الفعلي (الرقم أو اسم المستخدم وحده يصير بريداً داخلياً) */
 export function resolveLoginIdentifier(input: string): string {
   const t = input.trim();
   if (t.includes("@")) return t;
   const digits = normalizePhone(t);
-  return isValidPhone(digits) && /^[\d\s+()-]+$/.test(toAsciiDigits(t)) ? loginEmailFromPhone(digits) : t;
+  if (isValidPhone(digits) && /^[\d\s+()-]+$/.test(toAsciiDigits(t))) return loginEmailFromPhone(digits);
+  if (isUsername(t)) return loginEmailFromUsername(t);
+  return t;
 }
 
 /** للعرض: الحساب الداخلي يظهر برقمه لا ببريد وهمي */
@@ -110,6 +124,7 @@ export type ParsedStudentRow = {
   name: string;
   phone: string;
   email: string | null;
+  username: string | null;
   major: string;
   university: string;
   apartmentText: string;
@@ -130,6 +145,7 @@ export function parseStudentMatrix(matrix: string[][]): ParsedStudentRow[] {
   const { fields, hasHeader } = detectColumns(matrix);
   const rows: ParsedStudentRow[] = [];
   const seenPhones = new Map<string, number>();
+  const seenUsernames = new Map<string, number>();
   let headerSkipped = !hasHeader;
 
   matrix.forEach((cells, i) => {
@@ -149,10 +165,20 @@ export function parseStudentMatrix(matrix: string[][]): ParsedStudentRow[] {
     const name = get("name");
     if (!name) errors.push("الاسم مطلوب");
 
+    const usernameRaw = get("username");
+    const username = usernameRaw ? normalizeUsername(usernameRaw) : null;
+    if (username && !USERNAME_RE.test(username)) errors.push("اسم المستخدم: حروف إنجليزية وأرقام و . _ - ويبدأ بحرف (٣ أحرف فأكثر)");
+    if (username && USERNAME_RE.test(username)) {
+      const dupLine = seenUsernames.get(username);
+      if (dupLine) errors.push(`اسم المستخدم مكرر مع السطر ${dupLine}`);
+      else seenUsernames.set(username, i + 1);
+    }
+
+    // الدخول برقم الهاتف أو باسم المستخدم؛ الرقم يُضاف لاحقاً لمن له اسم مستخدم
     const phoneRaw = get("phone");
     const phone = phoneRaw ? normalizePhone(phoneRaw) : "";
-    if (!phoneRaw) errors.push("رقم الهاتف مطلوب (هو اسم الدخول)");
-    else if (!isValidPhone(phone)) errors.push("رقم الهاتف غير صحيح");
+    if (!phoneRaw && !username) errors.push("اكتب رقم الهاتف أو اسم المستخدم (أحدهما اسم الدخول)");
+    else if (phoneRaw && !isValidPhone(phone)) errors.push("رقم الهاتف غير صحيح");
     else if (phoneLooksLocal(phone)) warnings.push("الرقم بلا مفتاح الدولة — قد لا يعمل رابط واتساب");
 
     if (phone && isValidPhone(phone)) {
@@ -174,6 +200,7 @@ export function parseStudentMatrix(matrix: string[][]): ParsedStudentRow[] {
       name,
       phone,
       email: email && EMAIL_RE.test(email) ? email : null,
+      username: username && USERNAME_RE.test(username) ? username : null,
       major: get("major"),
       university: get("university"),
       apartmentText: get("apartment"),
@@ -264,4 +291,4 @@ export function matchApartment(text: string, apartments: ApartmentRef[]): Apartm
 // القالب
 // ---------------------------------------------------------------------
 
-export const TEMPLATE_HEADERS = ["الاسم", "التخصص", "الجامعة", "الشقة", "السنة الدراسية", "رقم الهاتف", "المعدل الحالي", "المواد المتعثرة"];
+export const TEMPLATE_HEADERS = ["الاسم", "التخصص", "الجامعة", "الشقة", "السنة الدراسية", "رقم الهاتف", "اسم المستخدم", "المعدل الحالي", "المواد المتعثرة"];

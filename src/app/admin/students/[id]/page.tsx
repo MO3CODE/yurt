@@ -46,6 +46,7 @@ export default async function StudentDetailPage({ params }: PageProps<"/admin/st
             studentId={id}
             apartments={apartments ?? []}
             defaults={{
+              phone: profile.phone,
               apartment_id: student.apartment_id,
               university_name: student.university_name,
               major: student.major,
