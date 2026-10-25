@@ -12,6 +12,8 @@ import { GpaTrend } from "@/components/academic/gpa-trend";
 import { StudentGradeHistory } from "@/components/grades/student-grade-history";
 import { ScholarshipCard } from "@/components/academic/scholarship-card";
 import { LanguageProgressCard } from "@/components/academic/language-progress-card";
+import { TermCoursesEditor } from "@/components/grades/term-courses-editor";
+import { termSortKey } from "@/lib/grades";
 import { DEFAULT_SCALE_KEY, getScholarshipConfig } from "@/lib/scholarship-server";
 import type { AwardStatus, AwardTier, StandingFlag, StandingStatus, SupportPriority } from "@/lib/scholarship";
 import { getStudentGrades } from "@/lib/grades-server";
@@ -55,6 +57,11 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
     supabase.from("academic_support_requests").select("id, subject, status, priority, term_id").eq("student_id", id).order("created_at", { ascending: false }).limit(12),
   ]);
   const { data: language } = await supabase.from("student_language_progress").select("*").eq("student_id", id).maybeSingle();
+  // الترم الحالي: أحدث ترم غير أرشيفي
+  const currentTerm = grades.terms.filter((t) => !t.historical).sort((a, b) => termSortKey(b).localeCompare(termSortKey(a)))[0];
+  const { data: termCourses } = currentTerm
+    ? await supabase.from("student_term_courses").select("id, course_name, course_code, instructor").eq("student_id", id).eq("term_id", currentTerm.id).order("created_at")
+    : { data: [] };
   const termOrder = grades.terms.map((t) => t.id); // الأحدث أولاً
   const termName = new Map(grades.terms.map((t) => [t.id, t.name]));
   const byTermOrder = <T extends { term_id: string | null }>(xs: T[]) => [...xs].sort((a, b) => termOrder.indexOf(a.term_id ?? "") - termOrder.indexOf(b.term_id ?? ""));
@@ -175,6 +182,18 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
 
           {language && <LanguageProgressCard progress={language} />}
           <ScholarshipCard data={scholarship} />
+
+          {currentTerm && (
+            <Card>
+              <CardHeader>
+                <CardTitle>مواد {currentTerm.name}</CardTitle>
+                <CardDescription>يسجّلها الطالب من «درجاتي» أو تضيفها هنا</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TermCoursesEditor termId={currentTerm.id} studentId={id} courses={termCourses ?? []} />
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

@@ -187,8 +187,9 @@ export default async function AdminGradesPage({ searchParams }: PageProps<"/admi
               const state = windowState(term, c.kind, today);
               return (
                 <span key={c.kind}>
-                  {c.kind === "midterm" ? "النصفي" : "النهائي"}: {formatShortDateISO(w.from)} – {formatShortDateISO(w.to)} ·{" "}
-                  {state === "upcoming" ? "لم تُفتح" : state === "open" ? "مفتوحة" : "انتهت"} · رفع {arNum(c.submitted)} من{" "}
+                  {c.kind === "midterm" ? "النصفي" : "النهائي"}:{" "}
+                  {w.from && w.to ? `${formatShortDateISO(w.from)} – ${formatShortDateISO(w.to)}` : "لم تُحدَّد فترة الرفع"} ·{" "}
+                  {state === "unscheduled" ? "—" : state === "upcoming" ? "لم تُفتح" : state === "open" ? "مفتوحة" : "انتهت"} · رفع {arNum(c.submitted)} من{" "}
                   {arNum(rows.length)}
                   {c.pending ? ` · ${arNum(c.pending)} بانتظار المراجعة` : ""}
                 </span>

@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { GradeUploadCard, type AwardView, type GradeReportView, type StandingView } from "@/components/grades/grade-upload-card";
-import { draftFromCourse } from "@/lib/course-drafts";
+import { draftFromCourse, emptyCourse } from "@/lib/course-drafts";
+import { TermCoursesEditor, type TermCourse } from "@/components/grades/term-courses-editor";
 import { HistoricalTermResult } from "@/components/grades/historical-term-result";
 import { LanguageProgressCard } from "@/components/academic/language-progress-card";
 import { todayISO } from "@/lib/date";
@@ -24,14 +25,21 @@ export default async function GradesPage() {
     supabase.from("academic_standings").select("term_id, status, flags, term_gpa, cum_gpa, courses_count, failed_count").eq("student_id", user.id),
     supabase.from("academic_awards").select("term_id, tier, amount, currency, status").eq("student_id", user.id),
   ]);
-  const { data: language } = await supabase.from("student_language_progress").select("*").eq("student_id", user.id).maybeSingle();
+  const [{ data: language }, { data: termCourses }] = await Promise.all([
+    supabase.from("student_language_progress").select("*").eq("student_id", user.id).maybeSingle(),
+    supabase.from("student_term_courses").select("id, term_id, course_name, course_code, instructor").eq("student_id", user.id).order("created_at"),
+  ]);
+  const termCoursesBy = new Map<string, TermCourse[]>();
+  for (const c of termCourses ?? []) termCoursesBy.set(c.term_id, [...(termCoursesBy.get(c.term_id) ?? []), c]);
   const standingBy = new Map((standings ?? []).map((s) => [s.term_id, { status: s.status as StandingStatus, flags: s.flags as StandingFlag[] }]));
   const resultBy = new Map((standings ?? []).map((s) => [s.term_id, s]));
   const awardBy = new Map(
     (awards ?? []).map((a) => [a.term_id, { tier: a.tier as AwardTier, amount: Number(a.amount), currency: a.currency, status: a.status as AwardStatus }])
   );
   // أسماء المواد السابقة للاقتراح التلقائي
-  const suggestions = [...new Set([...coursesByReport.values()].flat().map((c) => c.course_name))].sort((a, b) => a.localeCompare(b, "ar"));
+  const suggestions = [...new Set([...[...coursesByReport.values()].flat(), ...(termCourses ?? [])].map((c) => c.course_name))].sort((a, b) =>
+    a.localeCompare(b, "ar")
+  );
 
   const reportBy = new Map(reports.map((r) => [`${r.term_id}:${r.kind}`, r]));
   const view = (termId: string, kind: string): GradeReportView | null => {
@@ -110,7 +118,13 @@ export default async function GradesPage() {
                 <HistoricalTermResult result={resultBy.get(term.id) ?? null} award={awardBy.get(term.id) ?? null} />
               </CardContent>
             ) : (
-            <CardContent className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[repeat(2,minmax(0,1fr))]">
+            <CardContent className="flex flex-col gap-4">
+            <section className="flex flex-col gap-2">
+              <h3 className="text-sm font-semibold">موادي هذا الترم</h3>
+              <p className="text-xs text-muted-foreground">سجّل كل موادك وأساتذتها، لتعرف الإدارة المواد المشتركة بينك وبين زملائك وتنظّم التقوية مبكراً.</p>
+              <TermCoursesEditor termId={term.id} courses={termCoursesBy.get(term.id) ?? []} suggestions={suggestions} />
+            </section>
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[repeat(2,minmax(0,1fr))]">
               {REPORT_KINDS.map((kind) => (
                 <GradeUploadCard
                   key={kind}
@@ -125,8 +139,10 @@ export default async function GradesPage() {
                   suggestions={suggestions}
                   standing={(kind === "final" ? standingBy.get(term.id) : null) ?? (null as StandingView)}
                   award={(kind === "final" ? awardBy.get(term.id) : null) ?? (null as AwardView)}
+                  prefill={(termCoursesBy.get(term.id) ?? []).map((c) => ({ ...emptyCourse(), name: c.course_name, code: c.course_code ?? "" }))}
                 />
               ))}
+            </div>
             </CardContent>
             )}
           </Card>

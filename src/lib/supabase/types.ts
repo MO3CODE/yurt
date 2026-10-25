@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      student_term_courses: {
+        Row: {
+          course_code: string | null
+          course_name: string
+          created_at: string
+          created_by: string | null
+          id: string
+          instructor: string | null
+          student_id: string
+          term_id: string
+        }
+        Insert: {
+          course_code?: string | null
+          course_name: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instructor?: string | null
+          student_id: string
+          term_id: string
+        }
+        Update: {
+          course_code?: string | null
+          course_name?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instructor?: string | null
+          student_id?: string
+          term_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_term_courses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_term_courses_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_language_progress: {
         Row: {
           current_level: string | null
@@ -480,33 +528,33 @@ export type Database = {
           historical: boolean
           created_at: string
           created_by: string | null
-          final_from: string
-          final_to: string
+          final_from: string | null
+          final_to: string | null
           id: string
-          midterm_from: string
-          midterm_to: string
+          midterm_from: string | null
+          midterm_to: string | null
           name: string
         }
         Insert: {
           historical?: boolean
           created_at?: string
           created_by?: string | null
-          final_from: string
-          final_to: string
+          final_from: string | null
+          final_to: string | null
           id?: string
-          midterm_from: string
-          midterm_to: string
+          midterm_from: string | null
+          midterm_to: string | null
           name: string
         }
         Update: {
           historical?: boolean
           created_at?: string
           created_by?: string | null
-          final_from?: string
-          final_to?: string
+          final_from?: string | null
+          final_to?: string | null
           id?: string
-          midterm_from?: string
-          midterm_to?: string
+          midterm_from?: string | null
+          midterm_to?: string | null
           name?: string
         }
         Relationships: [

@@ -70,12 +70,12 @@ export async function getGradeTasks(supabase: Db, studentId: string, today: stri
     for (const kind of REPORT_KINDS) {
       const status = statusOf.get(`${term.id}:${kind}`);
       if (status === "returned") {
-        tasks.push({ termId: term.id, termName: term.name, kind, due: windowOf(term, kind).to, overdue: false, returned: true });
+        tasks.push({ termId: term.id, termName: term.name, kind, due: windowOf(term, kind).to ?? "", overdue: false, returned: true });
         continue;
       }
       if (status) continue;
       const state = windowState(term, kind, today);
-      const { to } = windowOf(term, kind);
+      const to = windowOf(term, kind).to ?? "";
       if (state === "open" || (state === "closed" && to >= addDaysISO(today, -30))) {
         tasks.push({ termId: term.id, termName: term.name, kind, due: to, overdue: state === "closed" });
       }

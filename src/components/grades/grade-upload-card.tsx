@@ -63,11 +63,12 @@ export function GradeUploadCard({
   suggestions,
   standing,
   award,
+  prefill = [],
 }: {
   termId: string;
   kind: ReportKind;
   userId: string;
-  window: { from: string; to: string };
+  window: { from: string | null; to: string | null };
   state: WindowState;
   report: GradeReportView | null;
   scale: GradeScale;
@@ -75,11 +76,15 @@ export function GradeUploadCard({
   suggestions: string[];
   standing: StandingView;
   award: AwardView;
+  /** مواد الترم المسجّلة: تُملأ بها صفوف الكشف الجديد */
+  prefill?: CourseDraft[];
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
-  const [rows, setRows] = useState<CourseDraft[]>(report?.courses.length ? report.courses : [emptyCourse(), emptyCourse(), emptyCourse()]);
+  const [rows, setRows] = useState<CourseDraft[]>(
+    report?.courses.length ? report.courses : prefill.length ? prefill : [emptyCourse(), emptyCourse(), emptyCourse()]
+  );
   const [termGpa, setTermGpa] = useState(report?.termGpa != null ? String(report.termGpa) : "");
   const [cumGpa, setCumGpa] = useState(report?.cumulativeGpa != null ? String(report.cumulativeGpa) : "");
   const [note, setNote] = useState(report?.note ?? "");
@@ -90,7 +95,7 @@ export function GradeUploadCard({
   const isFinal = kind === "final";
   const reviewed = report?.status === "reviewed";
   const returned = report?.status === "returned";
-  const showForm = state !== "upcoming" && !reviewed && (!report || editing || returned);
+  const showForm = state !== "upcoming" && state !== "unscheduled" && !reviewed && (!report || editing || returned);
   const late = state === "closed" && !report;
   const keepFiles = !!report && files.length === 0;
 
@@ -167,12 +172,14 @@ export function GradeUploadCard({
     </Badge>
   ) : report ? (
     <Badge variant="outline">بانتظار المراجعة</Badge>
+  ) : state === "unscheduled" ? (
+    <Badge variant="outline">لم تُحدَّد فترة الرفع بعد</Badge>
   ) : state === "upcoming" ? (
-    <Badge variant="outline">تُفتح {formatShortDateISO(win.from)}</Badge>
+    <Badge variant="outline">تُفتح {formatShortDateISO(win.from as string)}</Badge>
   ) : late ? (
     <Badge className="bg-destructive/12 text-destructive">انتهت الفترة — ارفعه الآن</Badge>
   ) : (
-    <Badge className="bg-warning/20 text-warning-foreground dark:text-warning">مطلوب حتى {formatShortDateISO(win.to)}</Badge>
+    <Badge className="bg-warning/20 text-warning-foreground dark:text-warning">مطلوب حتى {formatShortDateISO(win.to as string)}</Badge>
   );
 
   const adminNote = report?.adminNote && (
@@ -192,9 +199,11 @@ export function GradeUploadCard({
         <span className="font-medium">كشف {KIND_LABELS[kind]}</span>
         {stateBadge}
       </div>
-      <p className="text-xs text-muted-foreground">
-        فترة الرفع: {formatShortDateISO(win.from)} – {formatShortDateISO(win.to)}
-      </p>
+      {win.from && win.to && (
+        <p className="text-xs text-muted-foreground">
+          فترة الرفع: {formatShortDateISO(win.from)} – {formatShortDateISO(win.to)}
+        </p>
+      )}
 
       {report && !showForm && (
         <div className="flex flex-col gap-2.5">

@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { SubjectActions, type SubjectActionRow } from "@/components/academic/subject-actions";
 import { todayISO } from "@/lib/date";
+import { termSortKey } from "@/lib/grades";
+import { subjectKey } from "@/lib/academic";
+import { TermSharedCourses, type SharedCourse } from "@/components/academic/term-shared-courses";
 import { cn } from "@/lib/utils";
 
 type Person = { id: string; name: string };
@@ -15,6 +18,12 @@ export default async function SharedSubjectsPage() {
   await requirePermission("academic");
   const supabase = await createClient();
   const today = todayISO();
+
+  const { data: termRows } = await supabase.from("academic_terms").select("id, name, midterm_from, created_at, historical").eq("historical", false);
+  const currentTerm = (termRows ?? []).sort((a, b) => termSortKey(b).localeCompare(termSortKey(a)))[0];
+  const { data: termCourses } = currentTerm
+    ? await supabase.from("student_term_courses").select("student_id, course_name, instructor").eq("term_id", currentTerm.id)
+    : { data: [] };
 
   const [{ data: subjects }, { data: links }, { data: students }, { data: actions }, { data: profiles }] = await Promise.all([
     supabase.from("academic_subjects").select("id, name"),
@@ -53,8 +62,38 @@ export default async function SharedSubjectsPage() {
   const visibleActions = cards.flatMap((c) => c.actions);
   const top = cards[0];
 
+  // مواد الترم المشتركة: نفس المادة (بعد توحيد الكتابة) عند طالبين فأكثر
+  const byCourse = new Map<string, { names: Map<string, number>; instructors: Set<string>; students: Map<string, string> }>();
+  for (const c of termCourses ?? []) {
+    if (!nameById.has(c.student_id)) continue;
+    const key = subjectKey(c.course_name);
+    const entry = byCourse.get(key) ?? { names: new Map(), instructors: new Set(), students: new Map() };
+    entry.names.set(c.course_name, (entry.names.get(c.course_name) ?? 0) + 1);
+    if (c.instructor) entry.instructors.add(c.instructor);
+    entry.students.set(c.student_id, nameById.get(c.student_id) ?? "—");
+    byCourse.set(key, entry);
+  }
+  const termShared: SharedCourse[] = [...byCourse.values()]
+    .filter((e) => e.students.size >= 2)
+    .map((e) => ({
+      name: [...e.names.entries()].sort((a, b) => b[1] - a[1])[0][0], // الكتابة الأكثر تكراراً
+      instructors: [...e.instructors],
+      students: [...e.students.entries()].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, "ar")),
+    }))
+    .sort((a, b) => b.students.length - a.students.length || a.name.localeCompare(b.name));
+  const termSection = currentTerm ? (
+    <TermSharedCourses
+      termName={currentTerm.name}
+      shared={termShared}
+      registered={new Set((termCourses ?? []).filter((c) => nameById.has(c.student_id)).map((c) => c.student_id)).size}
+      total={nameById.size}
+    />
+  ) : null;
+
   if (cards.length === 0) {
     return (
+      <div className="flex flex-col gap-6">
+      {termSection}
       <Empty>
         <EmptyMedia variant="icon">
           <BookOpenCheck />
@@ -68,11 +107,13 @@ export default async function SharedSubjectsPage() {
           ، وسيُجمَّع هنا تلقائياً ما يتعثر فيه أكثر من طالب لتعالجه.
         </EmptyDescription>
       </Empty>
+      </div>
     );
   }
 
   return (
     <div className="stagger flex flex-col gap-6">
+      {termSection}
       <div className="stagger grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard label="مواد يتعثر فيها طلاب" value={cards.length} icon={BookOpenCheck} />
         <StatCard label="مواد مشتركة (٢ طالب فأكثر)" value={shared.length} icon={Users} tone="destructive" />

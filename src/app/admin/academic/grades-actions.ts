@@ -15,19 +15,23 @@ import { historicalTermDates } from "@/lib/term-import";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاريخ غير صحيح");
 
+const optionalDate = isoDate.nullable();
 const termSchema = z
   .object({
     name: z.string().trim().min(2, "اكتب اسم الترم").max(80),
-    midterm_from: isoDate,
-    midterm_to: isoDate,
-    final_from: isoDate,
-    final_to: isoDate,
+    midterm_from: optionalDate,
+    midterm_to: optionalDate,
+    final_from: optionalDate,
+    final_to: optionalDate,
   })
-  .refine((t) => t.midterm_to >= t.midterm_from && t.final_to >= t.final_from, "نهاية الفترة قبل بدايتها")
-  .refine((t) => t.final_from >= t.midterm_from, "فترة النهائي قبل فترة النصفي");
+  .refine((t) => !t.midterm_from === !t.midterm_to && !t.final_from === !t.final_to, "حدّد بداية الفترة ونهايتها معاً، أو اتركهما فارغتين")
+  .refine((t) => (!t.midterm_from || t.midterm_to! >= t.midterm_from) && (!t.final_from || t.final_to! >= t.final_from), "نهاية الفترة قبل بدايتها")
+  .refine((t) => !t.final_from || !t.midterm_from || t.final_from >= t.midterm_from, "فترة النهائي قبل فترة النصفي");
 
 function parseTerm(formData: FormData) {
-  return termSchema.parse(Object.fromEntries(["name", "midterm_from", "midterm_to", "final_from", "final_to"].map((k) => [k, formData.get(k)])));
+  return termSchema.parse(
+    Object.fromEntries(["name", "midterm_from", "midterm_to", "final_from", "final_to"].map((k) => [k, formData.get(k) || (k === "name" ? "" : null)]))
+  );
 }
 
 function refresh() {
@@ -47,15 +51,17 @@ export async function createTerm(formData: FormData) {
     const { data, error } = await supabase.from("academic_terms").insert({ ...v, created_by: user.id }).select("id").single();
     if (error) throw new Error(error.message);
 
-    // الإشعار عبر service role لأن صلاحية الإشعارات قد لا تكون لدى هذا الإداري
-    const admin = createAdminClient();
-    await admin.from("notifications").insert({
-      title: `رفع درجات ${v.name}`,
-      body: `ارفع كشف النصفي بين ${formatShortDateISO(v.midterm_from)} و${formatShortDateISO(v.midterm_to)}، والنهائي بين ${formatShortDateISO(v.final_from)} و${formatShortDateISO(v.final_to)} من صفحة «درجاتي».`,
-      target_type: "role",
-      target_role: "student",
-      created_by: user.id,
-    });
+    // الإشعار عبر service role لأن صلاحية الإشعارات قد لا تكون لدى هذا الإداري؛ ترم بلا فترات بعد لا إشعار له
+    if (v.midterm_from && v.final_from) {
+      const admin = createAdminClient();
+      await admin.from("notifications").insert({
+        title: `رفع درجات ${v.name}`,
+        body: `ارفع كشف النصفي بين ${formatShortDateISO(v.midterm_from)} و${formatShortDateISO(v.midterm_to!)}، والنهائي بين ${formatShortDateISO(v.final_from)} و${formatShortDateISO(v.final_to!)} من صفحة «درجاتي».`,
+        target_type: "role",
+        target_role: "student",
+        created_by: user.id,
+      });
+    }
     refresh();
     return { id: data.id };
   });

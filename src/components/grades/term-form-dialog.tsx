@@ -12,7 +12,11 @@ export function TermFormDialog({ trigger, term }: { trigger: React.ReactNode; te
     <CrudDialog
       trigger={trigger}
       title={term ? "تعديل الترم" : "ترم جديد"}
-      description={term ? undefined : "يصل للطلاب إشعار بفترتي الرفع، وتظهر لهم مهمة الرفع حين تُفتح الفترة"}
+      description={
+        term
+          ? "اترك فترة فارغة إن لم يُحدَّد موعدها بعد"
+          : "يسجّل الطلاب مواد الترم من الآن. حدّد فترتي الرفع الآن أو لاحقاً؛ يصلهم إشعار حين تُحدَّدان عند الإنشاء"
+      }
       action={(fd) => (term ? updateTerm(term.id, fd) : createTerm(fd))}
       submitLabel={term ? "حفظ" : "فتح الترم"}
     >
@@ -24,19 +28,19 @@ export function TermFormDialog({ trigger, term }: { trigger: React.ReactNode; te
         <div className="grid grid-cols-2 gap-3">
           <Field>
             <FieldLabel htmlFor="mid-from">رفع النصفي من</FieldLabel>
-            <Input id="mid-from" name="midterm_from" type="date" required defaultValue={term?.midterm_from} />
+            <Input id="mid-from" name="midterm_from" type="date" defaultValue={term?.midterm_from ?? undefined} />
           </Field>
           <Field>
             <FieldLabel htmlFor="mid-to">إلى</FieldLabel>
-            <Input id="mid-to" name="midterm_to" type="date" required defaultValue={term?.midterm_to} />
+            <Input id="mid-to" name="midterm_to" type="date" defaultValue={term?.midterm_to ?? undefined} />
           </Field>
           <Field>
             <FieldLabel htmlFor="fin-from">رفع النهائي من</FieldLabel>
-            <Input id="fin-from" name="final_from" type="date" required defaultValue={term?.final_from} />
+            <Input id="fin-from" name="final_from" type="date" defaultValue={term?.final_from ?? undefined} />
           </Field>
           <Field>
             <FieldLabel htmlFor="fin-to">إلى</FieldLabel>
-            <Input id="fin-to" name="final_to" type="date" required defaultValue={term?.final_to} />
+            <Input id="fin-to" name="final_to" type="date" defaultValue={term?.final_to ?? undefined} />
           </Field>
         </div>
       </FieldGroup>

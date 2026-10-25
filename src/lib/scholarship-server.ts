@@ -2,6 +2,7 @@ import "server-only";
 import type { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { subjectKey } from "@/lib/academic";
+import { termSortKey } from "@/lib/grades";
 import {
   PRIORITY_RANK,
   analyzeFinal,
@@ -173,14 +174,15 @@ async function saveCourseResults(db: Db, rows: { id: string; points: number | nu
 /** حالات الترمات السابقة لهذا الترم، الأحدث أولاً */
 export async function previousStandings(db: Db, studentId: string, termId: string) {
   const [{ data: terms }, { data: standings }] = await Promise.all([
-    db.from("academic_terms").select("id, midterm_from").order("midterm_from", { ascending: false }),
+    db.from("academic_terms").select("id, midterm_from, created_at"),
     db.from("academic_standings").select("term_id, term_gpa, cum_gpa, term_credits").eq("student_id", studentId),
   ]);
   const list = terms ?? [];
   const current = list.find((t) => t.id === termId);
   const byTerm = new Map((standings ?? []).map((s) => [s.term_id, s]));
   return list
-    .filter((t) => current && t.midterm_from < current.midterm_from)
+    .filter((t) => current && termSortKey(t) < termSortKey(current))
+    .sort((a, b) => termSortKey(b).localeCompare(termSortKey(a)))
     .map((t) => byTerm.get(t.id))
     .filter((s) => !!s)
     .map((s) => ({ termGpa: s.term_gpa, cumGpa: s.cum_gpa, credits: Number(s.term_credits) }));

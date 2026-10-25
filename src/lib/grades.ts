@@ -13,15 +13,17 @@ export const KIND_LABELS: Record<ReportKind, string> = { midterm: "النصفي 
 export type AcademicTerm = {
   id: string;
   name: string;
-  midterm_from: string;
-  midterm_to: string;
-  final_from: string;
-  final_to: string;
+  /** فترتا الرفع تُحدَّدان لاحقاً (null) لترم أُنشئ لتسجيل المواد أولاً */
+  midterm_from: string | null;
+  midterm_to: string | null;
+  final_from: string | null;
+  final_to: string | null;
+  created_at?: string;
   /** ترم أرشيفي: نتائجه مستوردة من تقرير، فلا رفع فيه */
   historical?: boolean;
 };
 
-export type WindowState = "upcoming" | "open" | "closed";
+export type WindowState = "unscheduled" | "upcoming" | "open" | "closed";
 
 export function windowOf(term: AcademicTerm, kind: ReportKind) {
   return kind === "midterm" ? { from: term.midterm_from, to: term.midterm_to } : { from: term.final_from, to: term.final_to };
@@ -29,13 +31,20 @@ export function windowOf(term: AcademicTerm, kind: ReportKind) {
 
 export function windowState(term: AcademicTerm, kind: ReportKind, today: string): WindowState {
   const { from, to } = windowOf(term, kind);
+  if (!from || !to) return "unscheduled";
   if (today < from) return "upcoming";
   if (today > to) return "closed";
   return "open";
 }
 
 /** يُقبل الرفع منذ فتح الفترة (والمتأخر يُرفع أيضاً ويُعلَّم متأخراً) */
-export const canSubmit = (term: AcademicTerm, kind: ReportKind, today: string) => today >= windowOf(term, kind).from;
+export const canSubmit = (term: AcademicTerm, kind: ReportKind, today: string) => {
+  const { from } = windowOf(term, kind);
+  return !!from && today >= from;
+};
+
+/** ترتيب الترمات زمنياً: بداية رفع النصفي، أو تاريخ الإنشاء لترم بلا فترات بعد */
+export const termSortKey = (t: { midterm_from: string | null; created_at?: string }) => t.midterm_from ?? t.created_at?.slice(0, 10) ?? "9999";
 
 /** «٣٫٢٥» */
 export const formatGpa = (n: number | null | undefined) =>
