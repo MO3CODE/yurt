@@ -2,6 +2,7 @@ import { AppShell } from "@/components/nav/app-shell";
 import { adminMobileNav, adminNav, teamNavGroup, type NavItem } from "@/components/nav/nav-config";
 import { hasPermission, requireAdmin } from "@/lib/auth/current-user";
 import { ROLE_LABELS } from "@/lib/auth/permissions";
+import { WhatsAppLinkHandler } from "@/components/whatsapp-link-handler";
 
 // ما يكتبه الطلاب والمشرفون ويجب أن يظهر للإدارة فوراً
 const ADMIN_LIVE_TABLES = [
@@ -35,6 +36,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       liveTables={ADMIN_LIVE_TABLES}
       user={{ fullName: user.fullName, avatarUrl: user.avatarUrl, roleLabel: ROLE_LABELS[user.role] ?? "إداري" }}
     >
+      <WhatsAppLinkHandler />
       {children}
     </AppShell>
   );

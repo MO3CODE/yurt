@@ -1,16 +1,27 @@
 import { requirePermission } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import { ReminderComposer, type ComposerStudent } from "@/components/academic/reminder-composer";
-import type { ReminderKind } from "@/lib/academic";
+import { COURSES_REMINDER_MARK, type ReminderKind } from "@/lib/academic";
+import { termSortKey } from "@/lib/grades";
 import { addDaysISO, dateISOInAppTz, todayISO } from "@/lib/date";
 
-const KINDS: ReminderKind[] = ["session", "grades", "tutoring", "custom"];
+const KINDS: ReminderKind[] = ["session", "grades", "courses", "tutoring", "custom"];
 
 export default async function AcademicRemindersPage({ searchParams }: PageProps<"/admin/academic/reminders">) {
   await requirePermission("academic");
   const sp = await searchParams;
   const supabase = await createClient();
   const today = todayISO();
+
+  const { data: termRows } = await supabase.from("academic_terms").select("id, midterm_from, created_at").eq("historical", false);
+  const currentTerm = (termRows ?? []).sort((a, b) => termSortKey(b).localeCompare(termSortKey(a)))[0];
+  const [{ data: languageRows }, { data: termCourseRows }] = await Promise.all([
+    supabase.from("student_language_progress").select("student_id, status"),
+    currentTerm ? supabase.from("student_term_courses").select("student_id").eq("term_id", currentTerm.id) : Promise.resolve({ data: [] }),
+  ]);
+  // طالب اللغة = له متابعة لغة لم تكتمل؛ ومن سواه طالب جامعة
+  const inLanguageYear = new Set((languageRows ?? []).filter((l) => l.status !== "completed").map((l) => l.student_id));
+  const withCourses = new Set((termCourseRows ?? []).map((c) => c.student_id));
 
   const [{ data: students }, { data: profiles }, { data: links }, { data: subjects }, { data: reminders }] = await Promise.all([
     supabase.from("students").select("id, profiles!students_id_fkey(full_name, phone)").eq("status", "active"),
@@ -19,7 +30,7 @@ export default async function AcademicRemindersPage({ searchParams }: PageProps<
     supabase.from("academic_subjects").select("id, name"),
     supabase
       .from("academic_reminders")
-      .select("student_id, kind, created_at")
+      .select("student_id, kind, created_at, message")
       .gte("created_at", `${addDaysISO(today, -60)}T00:00:00Z`)
       .order("created_at", { ascending: false }),
   ]);
@@ -31,7 +42,7 @@ export default async function AcademicRemindersPage({ searchParams }: PageProps<
   const lastSentBy = new Map<string, ComposerStudent["lastSent"]>();
   for (const r of reminders ?? []) {
     const entry = lastSentBy.get(r.student_id) ?? {};
-    const kind = r.kind as ReminderKind;
+    const kind = (r.kind === "custom" && r.message.includes(COURSES_REMINDER_MARK) ? "courses" : r.kind) as ReminderKind;
     // مرتّبة من الأحدث، فأول ظهور هو الأحدث
     if (!entry[kind]) entry[kind] = dateISOInAppTz(r.created_at);
     lastSentBy.set(r.student_id, entry);
@@ -48,6 +59,8 @@ export default async function AcademicRemindersPage({ searchParams }: PageProps<
       profileUpdatedDay: p ? dateISOInAppTz(p.updated_at) : null,
       struggling: strugglingBy.get(s.id) ?? [],
       lastSent: lastSentBy.get(s.id) ?? {},
+      isUniversity: !inLanguageYear.has(s.id),
+      hasTermCourses: withCourses.has(s.id),
     };
   });
 

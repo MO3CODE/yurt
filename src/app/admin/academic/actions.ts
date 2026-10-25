@@ -204,7 +204,7 @@ export async function deleteSubjectAction(actionId: string): Promise<ActionResul
 
 const reminderSchema = z.object({
   studentId: z.string().uuid(),
-  kind: z.enum(["session", "grades", "tutoring", "custom"]),
+  kind: z.enum(["session", "grades", "courses", "tutoring", "custom"]),
   subjectId: z.string().uuid().nullable().optional(),
   message: z.string().trim().min(1).max(2000),
 });
@@ -216,7 +216,7 @@ export async function logReminder(input: z.input<typeof reminderSchema>): Promis
     const supabase = await createClient();
     const { error } = await supabase.from("academic_reminders").insert({
       student_id: v.studentId,
-      kind: v.kind,
+      kind: v.kind === "courses" ? "custom" : v.kind,
       subject_id: v.subjectId ?? null,
       message: v.message,
       sent_by: user.id,

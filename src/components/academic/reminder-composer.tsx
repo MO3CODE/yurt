@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { Check, Copy, MessageCircle, PhoneOff, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +11,7 @@ import { logReminder } from "@/app/admin/academic/actions";
 import { REMINDER_KINDS, REMINDER_VARIABLES, fillTemplate, firstName, type ReminderKind } from "@/lib/academic";
 import { daysBetweenISO, formatLongDateISO } from "@/lib/date";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { getWhatsAppMode, openWhatsApp, setWhatsAppMode, type WhatsAppMode } from "@/lib/whatsapp-open";
 import { toastOnError } from "@/lib/unwrap";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,11 +27,19 @@ export type ComposerStudent = {
   struggling: string[];
   /** يوم آخر تذكير لكل نوع (YYYY-MM-DD) */
   lastSent: Partial<Record<ReminderKind, string>>;
+  /** ليس في سنة اللغة */
+  isUniversity: boolean;
+  /** سجّل مواد الترم الحالي */
+  hasTermCourses: boolean;
 };
 
-type Target = "session_soon" | "no_session" | "stale" | "subject" | "all";
+const noopSubscribe = () => () => {};
+
+type Target = "session_soon" | "no_session" | "stale" | "subject" | "university_no_courses" | "university" | "all";
 
 const TARGETS: { key: Target; label: string }[] = [
+  { key: "university_no_courses", label: "طلاب الجامعة بلا مواد مسجّلة" },
+  { key: "university", label: "كل طلاب الجامعة" },
   { key: "session_soon", label: "جلسته خلال ٧ أيام أو متأخرة" },
   { key: "no_session", label: "بلا موعد جلسة" },
   { key: "stale", label: "لم يُحدَّث ملفه منذ ٣٠ يوماً" },
@@ -41,6 +50,7 @@ const TARGETS: { key: Target; label: string }[] = [
 const DEFAULT_TARGET: Record<ReminderKind, Target> = {
   session: "session_soon",
   grades: "stale",
+  courses: "university_no_courses",
   tutoring: "subject",
   custom: "all",
 };
@@ -67,6 +77,10 @@ export function ReminderComposer({
   const [message, setMessage] = useState(REMINDER_KINDS.find((k) => k.kind === initialKind)!.template);
   const [focusStudent, setFocusStudent] = useState<string | null>(initialStudent);
   const [sent, setSent] = useState<Set<string>>(new Set());
+  // الإعداد محفوظ في المتصفح؛ على السيرفر الافتراضي «ويب»
+  const savedMode = useSyncExternalStore(noopSubscribe, getWhatsAppMode, () => "web" as WhatsAppMode);
+  const [chosenMode, setWaMode] = useState<WhatsAppMode | null>(null);
+  const waMode = chosenMode ?? savedMode;
   const [, startTransition] = useTransition();
 
   const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
@@ -109,6 +123,12 @@ export function ReminderComposer({
         include = age === null || age >= 30;
         reason = age === null ? "لم تُدخل بياناته بعد" : `آخر تحديث منذ ${age} يوم`;
         sortKey = -(age ?? 9999);
+      } else if (target === "university_no_courses") {
+        include = s.isUniversity && !s.hasTermCourses;
+        reason = "لم تُسجَّل مواده هذا الترم";
+      } else if (target === "university") {
+        include = s.isUniversity;
+        reason = s.hasTermCourses ? "مواده مسجّلة" : "لم تُسجَّل مواده";
       } else if (target === "subject") {
         include = !!subjectId && s.struggling.includes(subjectId);
         reason = `متعثر في ${subjectName}`;
@@ -153,7 +173,7 @@ export function ReminderComposer({
   function sendNext() {
     const next = pending[0];
     if (!next?.s.phone) return;
-    window.open(buildWhatsAppLink(next.s.phone, next.text), "_blank", "noopener,noreferrer");
+    openWhatsApp(next.s.phone, next.text);
     markSent(next);
   }
 
@@ -294,6 +314,32 @@ export function ReminderComposer({
           <Button onClick={sendNext} disabled={pending.length === 0}>
             <Send /> {pending.length > 0 ? `أرسل للتالي (${firstName(pending[0].s.name)})` : "اكتمل الإرسال"}
           </Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span>تُفتح المحادثات في:</span>
+          {(
+            [
+              { mode: "web", label: "تبويب واتساب ويب واحد" },
+              { mode: "app", label: "تطبيق واتساب على الكمبيوتر" },
+            ] as const
+          ).map((o) => (
+            <button
+              key={o.mode}
+              type="button"
+              aria-pressed={waMode === o.mode}
+              onClick={() => {
+                setWaMode(o.mode);
+                setWhatsAppMode(o.mode);
+              }}
+              className={cn(
+                "rounded-full border px-2.5 py-1 font-medium transition-colors",
+                waMode === o.mode ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary/40 hover:text-primary"
+              )}
+            >
+              {o.label}
+            </button>
+          ))}
         </div>
 
         {rows.length === 0 ? (

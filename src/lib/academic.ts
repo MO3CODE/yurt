@@ -285,7 +285,10 @@ export function parsePlanText(text: string, defaultTrack: PlanTrack = "other"): 
 // تذكيرات واتساب
 // ---------------------------------------------------------------------
 
-export type ReminderKind = "session" | "grades" | "tutoring" | "custom";
+export type ReminderKind = "session" | "grades" | "courses" | "tutoring" | "custom";
+
+/** «مواد الترم» يُحفظ في السجل كرسالة حرّة (قيد kind في القاعدة)، ويُعرف بهذه العبارة في نصه */
+export const COURSES_REMINDER_MARK = "موادك لهذا الترم";
 
 export const REMINDER_KINDS: { kind: ReminderKind; label: string; hint: string; template: string }[] = [
   {
@@ -301,6 +304,13 @@ export const REMINDER_KINDS: { kind: ReminderKind; label: string; hint: string; 
     hint: "للطلاب الذين لم يُحدَّث ملفهم منذ مدة",
     template:
       "السلام عليكم ورحمة الله {name} 🌿\nحتى نحدّث ملفك الأكاديمي قبل جلستك القادمة، نرجو إرسال درجاتك ونتائجك الأخيرة (الاختبارات والواجبات) في موادك هذا الفصل.\nشكراً لتعاونك.",
+  },
+  {
+    kind: "courses",
+    label: "مواد الترم",
+    hint: "لطلاب الجامعة: صورة شاشة لموادهم",
+    template:
+      "السلام عليكم ورحمة الله {name} 🌿\nنرجو أن ترسل لنا هنا صورة شاشة (سكرين شوت) لموادك لهذا الترم من نظام الجامعة، تظهر فيها أسماء المواد والأساتذة، حتى نعرف المواد المشتركة بينك وبين زملائك ونرتّب التقوية مبكراً.\nويمكنك أيضاً تسجيلها بنفسك من صفحة «درجاتي» في منصة السكن.\nشكراً لتعاونك.",
   },
   {
     kind: "tutoring",
