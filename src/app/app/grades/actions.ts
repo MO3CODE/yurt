@@ -6,7 +6,9 @@ import { runAction } from "@/lib/action-result";
 import { requireUser } from "@/lib/auth/current-user";
 import { createClient } from "@/lib/supabase/server";
 import { todayISO } from "@/lib/date";
-import { GRADES_BUCKET, MAX_GRADE_FILES, canSubmit, type AcademicTerm } from "@/lib/grades";
+import { GRADES_BUCKET, MAX_GRADE_FILES, canSubmit, courseSchema, type AcademicTerm } from "@/lib/grades";
+import { findScaleItem } from "@/lib/scholarship";
+import { getStudentScholarshipContext } from "@/lib/scholarship-server";
 
 const gpa = z.number().min(0, "المعدل بين ٠ و٤").max(4, "المعدل بين ٠ و٤ (مقياس ٤)").nullable();
 
@@ -17,11 +19,12 @@ const schema = z.object({
   termGpa: gpa,
   cumulativeGpa: gpa,
   note: z.string().trim().max(1000).nullable(),
+  courses: z.array(courseSchema).min(1, "أضف موادك هذا الترم").max(15, "حتى ١٥ مادة"),
 });
 
 /**
- * يسجّل كشف الدرجات بعد رفع الملفات من المتصفح إلى المخزن الخاص.
- * إن كان للطالب كشف سابق لم يُراجع يُستبدل (وتُحذف ملفاته القديمة).
+ * يسجّل كشف الدرجات ومواده بعد رفع الملفات من المتصفح إلى المخزن الخاص.
+ * إن كان للطالب كشف سابق لم يُراجع (أو أُعيد إليه) يُستبدل (وتُحذف ملفاته القديمة).
  */
 export async function submitGradeReport(input: z.input<typeof schema>) {
   return runAction(async () => {
@@ -30,6 +33,11 @@ export async function submitGradeReport(input: z.input<typeof schema>) {
     const v = schema.parse(input);
     if (!v.paths.every((p) => p.startsWith(`${user.id}/${v.termId}/`))) throw new Error("مسار ملف غير صالح");
     if (v.kind === "final" && (v.termGpa === null || v.cumulativeGpa === null)) throw new Error("اكتب المعدل الفصلي والتراكمي كما في كشفك");
+    if (v.kind === "final") {
+      const { scale } = await getStudentScholarshipContext(user.id);
+      const bad = v.courses.find((c) => !findScaleItem(scale, c.letter));
+      if (bad) throw new Error(`درجة «${bad.courseName}» ليست في سلّم ${scale.name}`);
+    }
 
     const supabase = await createClient();
     const { data: term } = await supabase.from("academic_terms").select("*").eq("id", v.termId).single();
@@ -46,16 +54,36 @@ export async function submitGradeReport(input: z.input<typeof schema>) {
     if (existing?.status === "reviewed") throw new Error("رُوجع كشفك بالفعل؛ تواصل مع الإدارة إن أردت تعديله");
 
     const values = {
+      status: "pending",
       file_paths: v.paths,
       term_gpa: v.kind === "final" ? v.termGpa : null,
       cumulative_gpa: v.kind === "final" ? v.cumulativeGpa : null,
       note: v.note,
       updated_at: new Date().toISOString(),
     };
-    const { error } = existing
-      ? await supabase.from("grade_reports").update(values).eq("id", existing.id)
-      : await supabase.from("grade_reports").insert({ ...values, student_id: user.id, term_id: v.termId, kind: v.kind });
-    if (error) throw new Error(error.message);
+    const { data: saved, error } = existing
+      ? await supabase.from("grade_reports").update(values).eq("id", existing.id).select("id").single()
+      : await supabase.from("grade_reports").insert({ ...values, student_id: user.id, term_id: v.termId, kind: v.kind }).select("id").single();
+    if (error || !saved) throw new Error(error?.message ?? "تعذّر حفظ الكشف");
+
+    // المواد تُستبدل كاملة
+    const { error: delError } = await supabase.from("grade_report_courses").delete().eq("report_id", saved.id);
+    if (delError) throw new Error(delError.message);
+    const { error: courseError } = await supabase.from("grade_report_courses").insert(
+      v.courses.map((c, i) => ({
+        report_id: saved.id,
+        student_id: user.id,
+        sort_order: i,
+        course_name: c.courseName,
+        course_code: c.courseCode,
+        credits: c.credits,
+        letter: v.kind === "final" ? c.letter : null,
+        percent: v.kind === "midterm" ? c.percent : null,
+        is_repeat: c.isRepeat,
+        help_requested: c.helpRequested,
+      }))
+    );
+    if (courseError) throw new Error(courseError.message);
 
     // الملفات القديمة لم تعد مستعملة
     const old = (existing?.file_paths ?? []).filter((p) => !v.paths.includes(p));

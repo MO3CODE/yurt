@@ -3,24 +3,39 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2, FileText, FileUp, MessageSquareText, Send, X } from "lucide-react";
+import { CheckCircle2, FileText, FileUp, MessageSquareText, Send, Trophy, Undo2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
+import { CourseRowsEditor } from "@/components/grades/course-rows-editor";
+import { emptyCourse, parseCourses, previewCourses, type CourseDraft } from "@/lib/course-drafts";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { submitGradeReport } from "@/app/app/grades/actions";
 import { compressImage, uploadErrorMessage } from "@/lib/image-compress";
 import { formatShortDateISO } from "@/lib/date";
 import { GRADES_BUCKET, KIND_LABELS, MAX_GRADE_FILES, formatGpa, parseGpa, type ReportKind, type WindowState } from "@/lib/grades";
+import {
+  AWARD_STATUS_LABELS,
+  FLAG_LABELS,
+  RISK_META,
+  STATUS_META,
+  TIER_META,
+  type AwardStatus,
+  type AwardTier,
+  type GradeScale,
+  type ScholarshipSettings,
+  type StandingFlag,
+  type StandingStatus,
+} from "@/lib/scholarship";
 
 const MAX_PDF_MB = 10;
 
 export type GradeReportView = {
-  status: "pending" | "reviewed";
+  status: "pending" | "returned" | "reviewed";
   termGpa: number | null;
   cumulativeGpa: number | null;
   verifiedTermGpa: number | null;
@@ -28,8 +43,13 @@ export type GradeReportView = {
   note: string | null;
   adminNote: string | null;
   submittedAt: string;
+  paths: string[];
   files: { url: string; isPdf: boolean }[];
+  courses: CourseDraft[];
 };
+
+export type StandingView = { status: StandingStatus; flags: StandingFlag[] } | null;
+export type AwardView = { tier: AwardTier; amount: number; currency: string; status: AwardStatus } | null;
 
 export function GradeUploadCard({
   termId,
@@ -38,6 +58,11 @@ export function GradeUploadCard({
   window: win,
   state,
   report,
+  scale,
+  settings,
+  suggestions,
+  standing,
+  award,
 }: {
   termId: string;
   kind: ReportKind;
@@ -45,10 +70,16 @@ export function GradeUploadCard({
   window: { from: string; to: string };
   state: WindowState;
   report: GradeReportView | null;
+  scale: GradeScale;
+  settings: ScholarshipSettings;
+  suggestions: string[];
+  standing: StandingView;
+  award: AwardView;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [rows, setRows] = useState<CourseDraft[]>(report?.courses.length ? report.courses : [emptyCourse(), emptyCourse(), emptyCourse()]);
   const [termGpa, setTermGpa] = useState(report?.termGpa != null ? String(report.termGpa) : "");
   const [cumGpa, setCumGpa] = useState(report?.cumulativeGpa != null ? String(report.cumulativeGpa) : "");
   const [note, setNote] = useState(report?.note ?? "");
@@ -58,8 +89,10 @@ export function GradeUploadCard({
 
   const isFinal = kind === "final";
   const reviewed = report?.status === "reviewed";
-  const showForm = state !== "upcoming" && !reviewed && (!report || editing);
+  const returned = report?.status === "returned";
+  const showForm = state !== "upcoming" && !reviewed && (!report || editing || returned);
   const late = state === "closed" && !report;
+  const keepFiles = !!report && files.length === 0;
 
   function pick(list: FileList | null) {
     if (!list) return;
@@ -78,7 +111,9 @@ export function GradeUploadCard({
   }
 
   function submit() {
-    if (files.length === 0) return toast.error("ارفع ملف الدرجات (PDF أو صورة)");
+    if (files.length === 0 && !report) return toast.error("ارفع ملف الدرجات (PDF أو صورة)");
+    const parsed = parseCourses(rows, kind);
+    if ("error" in parsed) return toast.error(parsed.error);
     const t = parseGpa(termGpa);
     const c = parseGpa(cumGpa);
     if (isFinal && (t === null || c === null)) return toast.error("اكتب المعدل الفصلي والتراكمي كما في كشفك");
@@ -86,17 +121,20 @@ export function GradeUploadCard({
 
     startTransition(async () => {
       try {
-        const supabase = createClient();
-        const stamp = Date.now();
-        const paths: string[] = [];
-        for (const [i, file] of files.entries()) {
-          setStage(`رفع الملف ${i + 1} من ${files.length}…`);
-          const isPdf = file.type === "application/pdf";
-          const body = isPdf ? file : await compressImage(file, 2000, 0.85);
-          const path = `${userId}/${termId}/${kind}-${stamp}-${i + 1}.${isPdf ? "pdf" : "jpg"}`;
-          const { error } = await supabase.storage.from(GRADES_BUCKET).upload(path, body, { contentType: isPdf ? "application/pdf" : "image/jpeg" });
-          if (error) throw new Error(uploadErrorMessage(error.message));
-          paths.push(path);
+        let paths = report?.paths ?? [];
+        if (files.length) {
+          const supabase = createClient();
+          const stamp = Date.now();
+          paths = [];
+          for (const [i, file] of files.entries()) {
+            setStage(`رفع الملف ${i + 1} من ${files.length}…`);
+            const isPdf = file.type === "application/pdf";
+            const body = isPdf ? file : await compressImage(file, 2000, 0.85);
+            const path = `${userId}/${termId}/${kind}-${stamp}-${i + 1}.${isPdf ? "pdf" : "jpg"}`;
+            const { error } = await supabase.storage.from(GRADES_BUCKET).upload(path, body, { contentType: isPdf ? "application/pdf" : "image/jpeg" });
+            if (error) throw new Error(uploadErrorMessage(error.message));
+            paths.push(path);
+          }
         }
         setStage("إرسال…");
         const r = await submitGradeReport({
@@ -106,6 +144,7 @@ export function GradeUploadCard({
           termGpa: isFinal ? t : null,
           cumulativeGpa: isFinal ? c : null,
           note: note.trim() || null,
+          courses: parsed.courses,
         });
         if (!r.ok) throw new Error(r.error);
         toast.success("أُرسل كشفك، ستراجعه الإدارة");
@@ -120,18 +159,32 @@ export function GradeUploadCard({
     });
   }
 
-  const stateBadge =
-    reviewed ? (
-      <Badge className="bg-success/15 text-success">رُوجع ✓</Badge>
-    ) : report ? (
-      <Badge variant="outline">بانتظار المراجعة</Badge>
-    ) : state === "upcoming" ? (
-      <Badge variant="outline">تُفتح {formatShortDateISO(win.from)}</Badge>
-    ) : late ? (
-      <Badge className="bg-destructive/12 text-destructive">انتهت الفترة — ارفعه الآن</Badge>
-    ) : (
-      <Badge className="bg-warning/20 text-warning-foreground dark:text-warning">مطلوب حتى {formatShortDateISO(win.to)}</Badge>
-    );
+  const stateBadge = reviewed ? (
+    <Badge className="bg-success/15 text-success">رُوجع ✓</Badge>
+  ) : returned ? (
+    <Badge className="bg-destructive/12 text-destructive">
+      <Undo2 /> أُعيد إليك للتعديل
+    </Badge>
+  ) : report ? (
+    <Badge variant="outline">بانتظار المراجعة</Badge>
+  ) : state === "upcoming" ? (
+    <Badge variant="outline">تُفتح {formatShortDateISO(win.from)}</Badge>
+  ) : late ? (
+    <Badge className="bg-destructive/12 text-destructive">انتهت الفترة — ارفعه الآن</Badge>
+  ) : (
+    <Badge className="bg-warning/20 text-warning-foreground dark:text-warning">مطلوب حتى {formatShortDateISO(win.to)}</Badge>
+  );
+
+  const adminNote = report?.adminNote && (
+    <p className={cn("flex gap-2 rounded-lg p-2.5 text-sm", returned ? "bg-destructive/[0.07]" : "bg-muted/60")}>
+      <MessageSquareText className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span className="whitespace-pre-line">{report.adminNote}</span>
+    </p>
+  );
+
+  // ملخص المواد بعد الإرسال (بنفس تصنيف النظام)
+  const summary = report ? previewCourses(report.courses, kind, scale, settings) : null;
+  const needSupport = summary?.classified.filter((c) => c.risk && c.risk !== "ok" && c.risk !== "excluded") ?? [];
 
   return (
     <section className="flex flex-col gap-3 rounded-xl border bg-card p-4">
@@ -144,7 +197,7 @@ export function GradeUploadCard({
       </p>
 
       {report && !showForm && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           <div className="flex flex-wrap gap-2">
             {report.files.map((f, i) => (
               <a key={i} href={f.url} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm hover:bg-muted/50">
@@ -159,15 +212,64 @@ export function GradeUploadCard({
               {reviewed && <CheckCircle2 className="ms-1 inline size-4 text-success" aria-label="مؤكَّد من الإدارة" />}
             </p>
           )}
-          {report.adminNote && (
-            <p className="flex gap-2 rounded-lg bg-muted/60 p-2.5 text-sm">
-              <MessageSquareText className="mt-0.5 size-4 shrink-0 text-primary" />
-              <span className="whitespace-pre-line">{report.adminNote}</span>
+
+          {summary && report.courses.length > 0 && (
+            <ul className="flex flex-col divide-y rounded-lg border text-sm">
+              {summary.classified.map((c, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 px-2.5 py-1.5">
+                  <span className="min-w-0 truncate">{c.name}</span>
+                  <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+                    <span dir="ltr" className="tabular-nums">
+                      {isFinal ? c.letter : c.percent !== null && c.percent !== undefined ? `${c.percent}%` : "—"}
+                    </span>
+                    {c.risk && c.risk !== "ok" && (
+                      <span className={cn("rounded-full px-1.5 py-0.5 text-[10px] font-medium", RISK_META[c.risk].className)}>{RISK_META[c.risk].label}</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {reviewed && standing && (
+            <div className="flex flex-col gap-1.5 rounded-lg border p-2.5 text-sm">
+              <span className="flex flex-wrap items-center gap-2">
+                حالتك مع المنحة:
+                <span className={cn("rounded-full px-2 py-0.5 text-xs font-semibold", STATUS_META[standing.status].className)}>{STATUS_META[standing.status].label}</span>
+              </span>
+              {standing.flags.length > 0 && (
+                <span className="text-xs text-muted-foreground">{standing.flags.filter((f) => f !== "gpa_mismatch").map((f) => FLAG_LABELS[f]).join(" · ")}</span>
+              )}
+              {needSupport.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  ستتواصل معك الإدارة لترتيب دعم في: {needSupport.map((c) => c.name).join("، ")}
+                </span>
+              )}
+            </div>
+          )}
+          {reviewed && !isFinal && needSupport.length > 0 && (
+            <p className="rounded-lg border p-2.5 text-xs text-muted-foreground">
+              تنبيه مبكر — ستتواصل معك الإدارة لترتيب دعم في: {needSupport.map((c) => c.name).join("، ")}
             </p>
           )}
+
+          {award && award.status !== "cancelled" && (
+            <p className="flex items-start gap-2 rounded-lg border border-gold/40 bg-gold/[0.08] p-2.5 text-sm">
+              <Trophy className="mt-0.5 size-4 shrink-0 text-gold-foreground dark:text-gold" />
+              <span>
+                مبارك! أنت من المتميزين هذا الترم — {TIER_META[award.tier].medal} الفئة {TIER_META[award.tier].label} ·{" "}
+                <span className="font-semibold tabular-nums" dir="ltr">
+                  {award.amount} {award.currency}
+                </span>{" "}
+                ({AWARD_STATUS_LABELS[award.status]})
+              </span>
+            </p>
+          )}
+
+          {adminNote}
           {!reviewed && (
             <Button variant="ghost" size="sm" className="w-fit" onClick={() => setEditing(true)}>
-              تبديل الملف أو تعديل المعدل
+              تعديل المواد أو الملف أو المعدل
             </Button>
           )}
         </div>
@@ -175,7 +277,17 @@ export function GradeUploadCard({
 
       {showForm && (
         <div className="flex flex-col gap-3">
+          {returned && adminNote}
+
+          <CourseRowsEditor rows={rows} onChange={setRows} kind={kind} scale={scale} settings={settings} suggestions={suggestions} allowHelp disabled={isPending} />
+
           <div className="flex flex-wrap gap-2">
+            {keepFiles &&
+              report.files.map((f, i) => (
+                <span key={i} className="flex items-center gap-1.5 rounded-lg border bg-muted/40 px-2 py-1 text-xs">
+                  <FileText className="size-3.5" /> الملف الحالي {i + 1}
+                </span>
+              ))}
             {files.map((f, i) => (
               <span key={i} className="flex items-center gap-1.5 rounded-lg border bg-muted/40 px-2 py-1 text-xs">
                 <FileText className="size-3.5" />
@@ -194,7 +306,8 @@ export function GradeUploadCard({
               onClick={() => input.current?.click()}
               className="flex items-center justify-center gap-2 rounded-xl border border-dashed p-4 text-sm text-muted-foreground hover:bg-muted/50"
             >
-              <FileUp className="size-5" /> {files.length ? "أضف ملفاً آخر" : "اختر ملف الدرجات (PDF أو صورة من نظام الجامعة)"}
+              <FileUp className="size-5" />{" "}
+              {files.length ? "أضف ملفاً آخر" : report ? "استبدل الملف (اختياري)" : "اختر ملف الدرجات (PDF أو صورة من نظام الجامعة)"}
             </button>
           )}
           <input ref={input} type="file" accept="application/pdf,image/*" multiple hidden onChange={(e) => pick(e.target.files)} />
@@ -209,14 +322,15 @@ export function GradeUploadCard({
                 <Label htmlFor={`cg-${termId}`}>المعدل التراكمي (GANO)</Label>
                 <Input id={`cg-${termId}`} value={cumGpa} onChange={(e) => setCumGpa(e.target.value)} inputMode="decimal" placeholder="3.10" dir="ltr" />
               </div>
+              <p className="col-span-2 text-[11px] text-muted-foreground">انقلهما كما في كشف الجامعة؛ المعدل المحسوب من موادك يُقارَن بهما.</p>
             </div>
           )}
           <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={1000} placeholder="ملاحظة للإدارة (اختياري)" />
           <div className="flex gap-2">
-            <Button onClick={submit} disabled={isPending || files.length === 0} className={cn("w-fit")}>
+            <Button onClick={submit} disabled={isPending || (files.length === 0 && !report)} className="w-fit">
               {isPending ? <Spinner /> : <Send />} {stage ?? (report ? "إرسال التعديل" : "إرسال")}
             </Button>
-            {editing && (
+            {editing && !returned && (
               <Button variant="ghost" onClick={() => setEditing(false)} disabled={isPending}>
                 إلغاء
               </Button>

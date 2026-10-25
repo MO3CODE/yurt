@@ -8,6 +8,9 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pushConfigured, sendPush } from "@/lib/push";
 import { formatShortDateISO } from "@/lib/date";
+import { courseSchema } from "@/lib/grades";
+import { applyReportAnalysis, recomputeTerm } from "@/lib/scholarship-server";
+import { STATUS_META, TIER_META, type AwardTier } from "@/lib/scholarship";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاريخ غير صحيح");
 
@@ -28,6 +31,7 @@ function parseTerm(formData: FormData) {
 
 function refresh() {
   revalidatePath("/admin/academic", "layout");
+  revalidatePath("/admin/academic-support");
   revalidatePath("/app/grades");
   revalidatePath("/app/tasks");
   revalidatePath("/app");
@@ -78,14 +82,60 @@ export async function deleteTerm(termId: string) {
 }
 
 const gpa = z.number().min(0).max(4).nullable();
-const reviewSchema = z.object({ id: z.string().uuid(), termGpa: gpa, cumulativeGpa: gpa, note: z.string().trim().max(2000) });
+const reviewSchema = z.object({
+  id: z.string().uuid(),
+  termGpa: gpa,
+  cumulativeGpa: gpa,
+  note: z.string().trim().max(2000),
+  // إن صحّحت الإدارة المواد تُستبدل قبل التحليل
+  courses: z.array(courseSchema).max(15).nullable(),
+});
 
-/** تأكيد الكشف (أو تصحيح المعدل): يحدّث معدل الطالب في المتابعة ويُشعره */
+async function pushToStudent(studentId: string, payload: { title: string; body: string; url: string; tag: string }) {
+  try {
+    if (!pushConfigured()) return;
+    const admin = createAdminClient();
+    const { data: targets } = await admin.from("push_subscriptions").select("id, endpoint, p256dh, auth_key").eq("profile_id", studentId);
+    if (targets?.length) await sendPush(targets, payload, 86400);
+  } catch (e) {
+    console.error("grades push", e);
+  }
+}
+
+/**
+ * تأكيد الكشف (أو تصحيح المعدل والمواد): يحدّث معدل الطالب في المتابعة ويُشعره،
+ * ثم يحلّل الكشف: تصنيف المواد، حالة المنحة، طلبات الدعم، وجوائز الترم
+ */
 export async function reviewGradeReport(input: z.input<typeof reviewSchema>) {
   return runAction(async () => {
-    await assertPermission("academic");
+    const user = await assertPermission("academic");
     const v = reviewSchema.parse(input);
     const supabase = await createClient();
+
+    const { data: rep } = await supabase.from("grade_reports").select("student_id, term_id, kind").eq("id", v.id).single();
+    if (!rep) throw new Error("الكشف غير موجود");
+
+    if (v.courses) {
+      if (v.courses.length === 0) throw new Error("أضف مواد الكشف");
+      const { error: delError } = await supabase.from("grade_report_courses").delete().eq("report_id", v.id);
+      if (delError) throw new Error(delError.message);
+      const { error: insError } = await supabase.from("grade_report_courses").insert(
+        v.courses.map((c, i) => ({
+          report_id: v.id,
+          student_id: rep.student_id,
+          sort_order: i,
+          course_name: c.courseName,
+          course_code: c.courseCode,
+          credits: c.credits,
+          letter: rep.kind === "final" ? c.letter : null,
+          percent: rep.kind === "midterm" ? c.percent : null,
+          is_repeat: c.isRepeat,
+          help_requested: c.helpRequested,
+        }))
+      );
+      if (insError) throw new Error(insError.message);
+    }
+
     const { error } = await supabase.rpc("review_grade_report", {
       p_id: v.id,
       p_term_gpa: v.termGpa,
@@ -94,20 +144,67 @@ export async function reviewGradeReport(input: z.input<typeof reviewSchema>) {
     });
     if (error) throw new Error(error.message);
 
-    try {
-      if (pushConfigured()) {
-        const admin = createAdminClient();
-        const { data: rep } = await admin.from("grade_reports").select("student_id").eq("id", v.id).single();
-        const { data: targets } = rep
-          ? await admin.from("push_subscriptions").select("id, endpoint, p256dh, auth_key").eq("profile_id", rep.student_id)
-          : { data: [] };
-        if (targets?.length) {
-          await sendPush(targets, { title: "رُوجع كشف درجاتك ✓", body: v.note ? v.note.slice(0, 140) : "افتح «درجاتي» لترى التفاصيل", url: "/app/grades", tag: `grades-${v.id}` }, 86400);
-        }
+    const summary = await applyReportAnalysis(supabase, v.id);
+
+    await pushToStudent(rep.student_id, {
+      title: "رُوجع كشف درجاتك ✓",
+      body: summary.status ? `حالتك مع المنحة: ${STATUS_META[summary.status].label}` : v.note ? v.note.slice(0, 140) : "افتح «درجاتي» لترى التفاصيل",
+      url: "/app/grades",
+      tag: `grades-${v.id}`,
+    });
+
+    // تهنئة من صار مؤهلاً للجائزة لأول مرة
+    if (summary.newAwardStudentIds.length) {
+      const admin = createAdminClient();
+      const { data: awards } = await admin
+        .from("academic_awards")
+        .select("student_id, tier, amount, currency")
+        .eq("term_id", rep.term_id)
+        .in("student_id", summary.newAwardStudentIds);
+      const { data: term } = await admin.from("academic_terms").select("name").eq("id", rep.term_id).single();
+      for (const a of awards ?? []) {
+        const tier = TIER_META[a.tier as AwardTier];
+        const body = `${tier.medal} أنت من المتميزين في ${term?.name ?? "هذا الترم"} — الفئة ${tier.label}، جائزة ${a.amount} ${a.currency}.`;
+        await admin.from("notifications").insert({ title: "مبارك! جائزة التميز الأكاديمي", body, target_type: "student", target_student_id: a.student_id, created_by: user.id });
+        await pushToStudent(a.student_id, { title: "مبارك! جائزة التميز الأكاديمي", body, url: "/app/grades", tag: `award-${rep.term_id}` });
       }
-    } catch (e) {
-      console.error("grade review push", e);
     }
+
     refresh();
+    return summary;
+  });
+}
+
+/** إعادة الكشف للطالب بملاحظة ليعدّله (حتى بعد تأكيده) */
+export async function returnGradeReport(input: { id: string; note: string }) {
+  return runAction(async () => {
+    const user = await assertPermission("academic");
+    const v = z.object({ id: z.string().uuid(), note: z.string().trim().min(3, "اكتب للطالب ما الذي يعدّله").max(2000) }).parse(input);
+    // لا سياسة تعديل للإدارة على الكشوف (التأكيد عبر دالة)، فالإعادة عبر service role بعد التحقق من الصلاحية
+    const admin = createAdminClient();
+    const { data: rep, error } = await admin
+      .from("grade_reports")
+      .update({ status: "returned", admin_note: v.note, reviewed_by: null, reviewed_at: null, verified_term_gpa: null, verified_cumulative_gpa: null, updated_at: new Date().toISOString() })
+      .eq("id", v.id)
+      .select("student_id, kind, term_id")
+      .single();
+    if (error || !rep) throw new Error(error?.message ?? "الكشف غير موجود");
+    const { data: term } = await admin.from("academic_terms").select("name").eq("id", rep.term_id).single();
+    const title = "أُعيد كشف درجاتك للتعديل";
+    const body = `${term?.name ?? ""} — ${rep.kind === "midterm" ? "النصفي" : "النهائي"}: ${v.note.slice(0, 160)}`;
+    await admin.from("notifications").insert({ title, body, target_type: "student", target_student_id: rep.student_id, created_by: user.id });
+    await pushToStudent(rep.student_id, { title, body, url: "/app/grades", tag: `grades-${v.id}` });
+    refresh();
+  });
+}
+
+/** إعادة حساب ترم كامل بعد تغيير الإعدادات (الجوائز المصروفة لا تتغير) */
+export async function recomputeTermAction(termId: string) {
+  return runAction(async () => {
+    await assertPermission("academic");
+    const supabase = await createClient();
+    const count = await recomputeTerm(supabase, z.string().uuid().parse(termId));
+    refresh();
+    return { count };
   });
 }

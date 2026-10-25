@@ -68,7 +68,7 @@ export const adminNav: NavGroup[] = [
     label: "الدعم والمتابعة",
     items: [
       { title: "المتابعة الأكاديمية", href: "/admin/academic", permission: "academic", icon: "NotebookPen" },
-      { title: "الدعم الأكاديمي", href: "/admin/academic-support", permission: "academic", icon: "GraduationCap" },
+      { title: "الدعم الأكاديمي", href: "/admin/academic/support", permission: "academic", icon: "GraduationCap" },
       { title: "المنصة التعليمية", href: "/admin/learning", permission: "learning", icon: "MonitorPlay" },
       { title: "الشكاوى والمقترحات", href: "/admin/complaints", permission: "complaints", icon: "MessageSquareWarning" },
     ],

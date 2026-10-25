@@ -14,13 +14,19 @@ import {
 } from "@/components/ui/sidebar";
 import type { NavGroup, NavItem } from "@/components/nav/nav-config";
 
-export function isActive(pathname: string, href: string) {
+function matches(pathname: string, href: string) {
   if (href === "/admin" || href === "/app") return pathname === href;
   return pathname === href || pathname.startsWith(href + "/");
 }
 
+/** others: بقية روابط القائمة — إن طابق رابط أدق (مثل /admin/academic/support) فهو النشط لا الأعم */
+export function isActive(pathname: string, href: string, others: string[] = []) {
+  return matches(pathname, href) && !others.some((o) => o.length > href.length && o.startsWith(href + "/") && matches(pathname, o));
+}
+
 export function SidebarNavGroups({ groups }: { groups: NavGroup[] }) {
   const pathname = usePathname();
+  const hrefs = groups.flatMap((g) => g.items.map((i) => i.href));
   return (
     <>
       {groups.map((group) => (
@@ -29,7 +35,7 @@ export function SidebarNavGroups({ groups }: { groups: NavGroup[] }) {
           <SidebarGroupContent>
             <SidebarMenu>
               {group.items.map((item) => (
-                <NavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
+                <NavLink key={item.href} item={item} active={isActive(pathname, item.href, hrefs)} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -41,12 +47,13 @@ export function SidebarNavGroups({ groups }: { groups: NavGroup[] }) {
 
 export function SidebarNavFlat({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
+  const hrefs = items.map((i) => i.href);
   return (
     <SidebarGroup>
       <SidebarGroupContent>
         <SidebarMenu>
           {items.map((item) => (
-            <NavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
+            <NavLink key={item.href} item={item} active={isActive(pathname, item.href, hrefs)} />
           ))}
         </SidebarMenu>
       </SidebarGroupContent>

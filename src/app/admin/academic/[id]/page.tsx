@@ -10,6 +10,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { SessionDialog } from "@/components/academic/session-dialog";
 import { GpaTrend } from "@/components/academic/gpa-trend";
 import { StudentGradeHistory } from "@/components/grades/student-grade-history";
+import { ScholarshipCard } from "@/components/academic/scholarship-card";
+import { DEFAULT_SCALE_KEY, getScholarshipConfig } from "@/lib/scholarship-server";
+import type { AwardStatus, AwardTier, StandingFlag, StandingStatus, SupportPriority } from "@/lib/scholarship";
 import { getStudentGrades } from "@/lib/grades-server";
 import { GPA_TONE_CLASSES, REMINDER_KINDS, formatGpa, gpaRatio, gpaTone } from "@/lib/academic";
 import { daysBetweenISO, formatLongDateISO, formatShortDateISO, todayISO } from "@/lib/date";
@@ -42,8 +45,44 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
 
   if (!student) notFound();
 
-  // كشوف الدرجات التي رفعها الطالب (بالملفات بروابط موقّعة)
-  const grades = await getStudentGrades(supabase, id);
+  // كشوف الدرجات التي رفعها الطالب (بالملفات بروابط موقّعة) والمنحة: الحالة والجوائز والدعم
+  const [grades, { scales }, { data: standingRows }, { data: awardRows }, { data: supportRows }] = await Promise.all([
+    getStudentGrades(supabase, id),
+    getScholarshipConfig(supabase),
+    supabase.from("academic_standings").select("term_id, term_gpa, cum_gpa, status, flags, gpa_source").eq("student_id", id),
+    supabase.from("academic_awards").select("term_id, tier, amount, currency, status").eq("student_id", id),
+    supabase.from("academic_support_requests").select("id, subject, status, priority, term_id").eq("student_id", id).order("created_at", { ascending: false }).limit(12),
+  ]);
+  const termOrder = grades.terms.map((t) => t.id); // الأحدث أولاً
+  const termName = new Map(grades.terms.map((t) => [t.id, t.name]));
+  const byTermOrder = <T extends { term_id: string | null }>(xs: T[]) => [...xs].sort((a, b) => termOrder.indexOf(a.term_id ?? "") - termOrder.indexOf(b.term_id ?? ""));
+  const scholarship = {
+    studentId: id,
+    scaleKey: profile?.grade_scale ?? DEFAULT_SCALE_KEY,
+    scales: scales.map((s) => ({ key: s.key, name: s.name })),
+    standings: byTermOrder(standingRows ?? []).map((s) => ({
+      termName: termName.get(s.term_id) ?? "—",
+      termGpa: s.term_gpa,
+      cumGpa: s.cum_gpa,
+      status: s.status as StandingStatus,
+      flags: s.flags as StandingFlag[],
+      source: s.gpa_source,
+    })),
+    awards: byTermOrder(awardRows ?? []).map((a) => ({
+      termName: termName.get(a.term_id) ?? "—",
+      tier: a.tier as AwardTier,
+      amount: Number(a.amount),
+      currency: a.currency,
+      status: a.status as AwardStatus,
+    })),
+    support: (supportRows ?? []).map((r) => ({
+      id: r.id,
+      subject: r.subject,
+      status: r.status,
+      priority: r.priority as SupportPriority | null,
+      termName: r.term_id ? (termName.get(r.term_id) ?? null) : null,
+    })),
+  };
 
   const person = student.profiles as unknown as { full_name: string; phone: string | null } | null;
   const name = person?.full_name ?? "—";
@@ -131,6 +170,8 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
               <GpaTrend points={trend} />
             </CardContent>
           </Card>
+
+          <ScholarshipCard data={scholarship} />
 
           <Card>
             <CardHeader>

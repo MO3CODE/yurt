@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { arNum } from "@/lib/quran";
 
 // كشوف الدرجات: ترمات بفترتي رفع (النصفي والنهائي)، والطالب يرفع ملفه ويكتب معدله
@@ -38,6 +39,9 @@ export const canSubmit = (term: AcademicTerm, kind: ReportKind, today: string) =
 export const formatGpa = (n: number | null | undefined) =>
   n === null || n === undefined ? "—" : new Intl.NumberFormat("ar-u-nu-arab", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 
+/** «١٢» أو «٣٫٥» ساعة */
+export const formatCredits = (n: number) => new Intl.NumberFormat("ar-u-nu-arab", { maximumFractionDigits: 1 }).format(n);
+
 /** يقبل «3.25» أو «3,25» أو «٣٫٢٥» */
 export function parseGpa(raw: string): number | null {
   const s = raw
@@ -50,3 +54,14 @@ export function parseGpa(raw: string): number | null {
 }
 
 export const filesLabel = (n: number) => (n === 1 ? "ملف واحد" : n === 2 ? "ملفان" : `${arNum(n)} ملفات`);
+
+/** مادة في الكشف كما يرسلها الطالب (أو تصحّحها الإدارة) */
+export const courseSchema = z.object({
+  courseName: z.string().trim().min(2, "اكتب اسم المادة").max(120),
+  courseCode: z.string().trim().max(20).nullable(),
+  credits: z.number().positive("الساعات رقم موجب").max(30),
+  letter: z.string().trim().max(4).nullable(),
+  percent: z.number().min(0).max(100).nullable(),
+  isRepeat: z.boolean(),
+  helpRequested: z.boolean(),
+});

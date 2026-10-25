@@ -39,6 +39,7 @@ export function MobileNav({
 
   // الورقة تعرض كل الأقسام (بما فيها الموجودة في الشريط) ليجد المستخدم كل شيء في مكان واحد
   const groups = moreGroups.filter((g) => g.items.length > 0);
+  const hrefs = [...items, ...groups.flatMap((g) => g.items)].map((i) => i.href);
 
   const q = normalizeArabic(query);
   const shown = groups
@@ -57,7 +58,7 @@ export function MobileNav({
   const bar = (list: NavItem[]) =>
     list.map((item) => {
       const Icon = iconMap[item.icon];
-      const active = isActive(pathname, item.href);
+      const active = isActive(pathname, item.href, hrefs);
       return (
         <Link
           key={item.href}
@@ -137,7 +138,7 @@ export function MobileNav({
                 <ul className="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2">
                   {g.items.map((item) => {
                     const Icon = iconMap[item.icon];
-                    const active = isActive(pathname, item.href);
+                    const active = isActive(pathname, item.href, hrefs);
                     const badge = item.href === notificationsHref ? unreadNotifications : 0;
                     return (
                       <li key={item.href}>

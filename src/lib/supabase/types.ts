@@ -14,6 +14,348 @@ export type Database = {
   }
   public: {
     Tables: {
+      academic_grade_scales: {
+        Row: {
+          items: Json
+          key: string
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          items: Json
+          key: string
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          items?: Json
+          key?: string
+          name?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      academic_settings: {
+        Row: {
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grade_report_courses: {
+        Row: {
+          course_code: string | null
+          course_name: string
+          credits: number
+          help_requested: boolean
+          id: string
+          is_repeat: boolean
+          letter: string | null
+          percent: number | null
+          points: number | null
+          report_id: string
+          risk_level: string | null
+          sort_order: number
+          student_id: string
+        }
+        Insert: {
+          course_code?: string | null
+          course_name: string
+          credits: number
+          help_requested?: boolean
+          id?: string
+          is_repeat?: boolean
+          letter?: string | null
+          percent?: number | null
+          points?: number | null
+          report_id: string
+          risk_level?: string | null
+          sort_order?: number
+          student_id: string
+        }
+        Update: {
+          course_code?: string | null
+          course_name?: string
+          credits?: number
+          help_requested?: boolean
+          id?: string
+          is_repeat?: boolean
+          letter?: string | null
+          percent?: number | null
+          points?: number | null
+          report_id?: string
+          risk_level?: string | null
+          sort_order?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade_report_courses_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "grade_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "grade_report_courses_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_standings: {
+        Row: {
+          calc_term_gpa: number | null
+          computed_at: string
+          cum_gpa: number | null
+          flags: string[]
+          gpa_source: string
+          has_fail: boolean
+          report_id: string | null
+          status: string
+          student_id: string
+          term_credits: number
+          term_gpa: number | null
+          term_id: string
+        }
+        Insert: {
+          calc_term_gpa?: number | null
+          computed_at?: string
+          cum_gpa?: number | null
+          flags?: string[]
+          gpa_source: string
+          has_fail?: boolean
+          report_id?: string | null
+          status: string
+          student_id: string
+          term_credits?: number
+          term_gpa?: number | null
+          term_id: string
+        }
+        Update: {
+          calc_term_gpa?: number | null
+          computed_at?: string
+          cum_gpa?: number | null
+          flags?: string[]
+          gpa_source?: string
+          has_fail?: boolean
+          report_id?: string | null
+          status?: string
+          student_id?: string
+          term_credits?: number
+          term_gpa?: number | null
+          term_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_standings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_standings_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_standings_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "grade_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_awards: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          currency: string
+          gpa_used: number
+          id: string
+          paid_at: string | null
+          payment_method: string | null
+          payment_ref: string | null
+          status: string
+          student_id: string
+          term_id: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string
+          gpa_used: number
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          status?: string
+          student_id: string
+          term_id: string
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          currency?: string
+          gpa_used?: number
+          id?: string
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          status?: string
+          student_id?: string
+          term_id?: string
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_awards_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_awards_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academic_tutors: {
+        Row: {
+          created_at: string
+          currency: string
+          full_name: string
+          hourly_rate: number | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string | null
+          rating: number | null
+          subjects: string[]
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          full_name: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          subjects?: string[]
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          full_name?: string
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          subjects?: string[]
+        }
+        Relationships: []
+      }
+      academic_tutoring_sessions: {
+        Row: {
+          attended: boolean
+          cost: number | null
+          created_at: string
+          created_by: string | null
+          duration_hours: number
+          id: string
+          note: string | null
+          request_id: string
+          session_date: string
+          tutor_id: string | null
+        }
+        Insert: {
+          attended?: boolean
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          duration_hours: number
+          id?: string
+          note?: string | null
+          request_id: string
+          session_date: string
+          tutor_id?: string | null
+        }
+        Update: {
+          attended?: boolean
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          duration_hours?: number
+          id?: string
+          note?: string | null
+          request_id?: string
+          session_date?: string
+          tutor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academic_tutoring_sessions_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "academic_support_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academic_tutoring_sessions_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "academic_tutors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academic_reminders: {
         Row: {
           created_at: string
@@ -135,6 +477,14 @@ export type Database = {
       }
       academic_support_requests: {
         Row: {
+          baseline_percent: number | null
+          baseline_points: number | null
+          course_id: string | null
+          outcome_points: number | null
+          priority: string | null
+          source: string
+          term_id: string | null
+          tutor_id: string | null
           admin_notes: string | null
           assigned_to_name: string | null
           assigned_to_profile_id: string | null
@@ -147,6 +497,14 @@ export type Database = {
           subject: string
         }
         Insert: {
+          baseline_percent?: number | null
+          baseline_points?: number | null
+          course_id?: string | null
+          outcome_points?: number | null
+          priority?: string | null
+          source?: string
+          term_id?: string | null
+          tutor_id?: string | null
           admin_notes?: string | null
           assigned_to_name?: string | null
           assigned_to_profile_id?: string | null
@@ -159,6 +517,14 @@ export type Database = {
           subject: string
         }
         Update: {
+          baseline_percent?: number | null
+          baseline_points?: number | null
+          course_id?: string | null
+          outcome_points?: number | null
+          priority?: string | null
+          source?: string
+          term_id?: string | null
+          tutor_id?: string | null
           admin_notes?: string | null
           assigned_to_name?: string | null
           assigned_to_profile_id?: string | null
@@ -1974,6 +2340,7 @@ export type Database = {
       }
       student_academic_profiles: {
         Row: {
+          grade_scale: string
           created_at: string
           gpa: number | null
           gpa_scale: number
@@ -1984,6 +2351,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          grade_scale?: string
           created_at?: string
           gpa?: number | null
           gpa_scale?: number
@@ -1994,6 +2362,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          grade_scale?: string
           created_at?: string
           gpa?: number | null
           gpa_scale?: number

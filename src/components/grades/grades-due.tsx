@@ -24,8 +24,8 @@ export function GradesDue({ tasks }: { tasks: GradeTask[] }) {
             <span>
               كشف {t.kind === "midterm" ? "النصفي" : "النهائي"} — {t.termName}
             </span>
-            <span className={t.overdue ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
-              {t.overdue ? "متأخر" : `حتى ${formatShortDateISO(t.due)}`}
+            <span className={t.overdue || t.returned ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
+              {t.returned ? "أُعيد إليك للتعديل" : t.overdue ? "متأخر" : `حتى ${formatShortDateISO(t.due)}`}
             </span>
           </Link>
         ))}

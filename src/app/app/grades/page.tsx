@@ -4,23 +4,37 @@ import { requireUser } from "@/lib/auth/current-user";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { GradeUploadCard, type GradeReportView } from "@/components/grades/grade-upload-card";
+import { GradeUploadCard, type AwardView, type GradeReportView, type StandingView } from "@/components/grades/grade-upload-card";
+import { draftFromCourse } from "@/lib/course-drafts";
 import { todayISO } from "@/lib/date";
 import { REPORT_KINDS, formatGpa, windowOf, windowState } from "@/lib/grades";
 import { getStudentGrades } from "@/lib/grades-server";
+import { getStudentScholarshipContext } from "@/lib/scholarship-server";
+import type { AwardStatus, AwardTier, StandingFlag, StandingStatus } from "@/lib/scholarship";
 
 export default async function GradesPage() {
   const user = await requireUser();
   const supabase = await createClient();
   const today = todayISO();
-  const { terms, reports, urlBy } = await getStudentGrades(supabase, user.id);
+  const [{ terms, reports, urlBy, coursesByReport }, { scale, settings }, { data: standings }, { data: awards }] = await Promise.all([
+    getStudentGrades(supabase, user.id),
+    getStudentScholarshipContext(user.id),
+    supabase.from("academic_standings").select("term_id, status, flags").eq("student_id", user.id),
+    supabase.from("academic_awards").select("term_id, tier, amount, currency, status").eq("student_id", user.id),
+  ]);
+  const standingBy = new Map((standings ?? []).map((s) => [s.term_id, { status: s.status as StandingStatus, flags: s.flags as StandingFlag[] }]));
+  const awardBy = new Map(
+    (awards ?? []).map((a) => [a.term_id, { tier: a.tier as AwardTier, amount: Number(a.amount), currency: a.currency, status: a.status as AwardStatus }])
+  );
+  // أسماء المواد السابقة للاقتراح التلقائي
+  const suggestions = [...new Set([...coursesByReport.values()].flat().map((c) => c.course_name))].sort((a, b) => a.localeCompare(b, "ar"));
 
   const reportBy = new Map(reports.map((r) => [`${r.term_id}:${r.kind}`, r]));
   const view = (termId: string, kind: string): GradeReportView | null => {
     const r = reportBy.get(`${termId}:${kind}`);
     if (!r) return null;
     return {
-      status: r.status as "pending" | "reviewed",
+      status: r.status as GradeReportView["status"],
       termGpa: r.term_gpa,
       cumulativeGpa: r.cumulative_gpa,
       verifiedTermGpa: r.verified_term_gpa,
@@ -28,7 +42,9 @@ export default async function GradesPage() {
       note: r.note,
       adminNote: r.admin_note,
       submittedAt: r.created_at,
+      paths: r.file_paths,
       files: r.file_paths.map((p) => ({ url: urlBy.get(p) ?? "#", isPdf: p.endsWith(".pdf") })),
+      courses: (coursesByReport.get(r.id) ?? []).map(draftFromCourse),
     };
   };
 
@@ -44,7 +60,7 @@ export default async function GradesPage() {
 
   return (
     <div className="stagger flex flex-col gap-6">
-      <PageHeader title="درجاتي" description="ارفع كشف درجاتك في كل ترم (النصفي والنهائي) ومعدلك، لتتابع معك الإدارة" />
+      <PageHeader title="درجاتي" description="اكتب موادك ودرجاتك في كل ترم (النصفي والنهائي) وارفع كشف الجامعة، لتتابع معك الإدارة وتعرف حالتك مع المنحة" />
 
       {trend.length > 0 && (
         <Card>
@@ -93,6 +109,11 @@ export default async function GradesPage() {
                   window={windowOf(term, kind)}
                   state={windowState(term, kind, today)}
                   report={view(term.id, kind)}
+                  scale={scale}
+                  settings={settings}
+                  suggestions={suggestions}
+                  standing={(kind === "final" ? standingBy.get(term.id) : null) ?? (null as StandingView)}
+                  award={(kind === "final" ? awardBy.get(term.id) : null) ?? (null as AwardView)}
                 />
               ))}
             </CardContent>
