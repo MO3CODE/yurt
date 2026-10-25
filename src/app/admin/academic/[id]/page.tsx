@@ -11,6 +11,7 @@ import { SessionDialog } from "@/components/academic/session-dialog";
 import { GpaTrend } from "@/components/academic/gpa-trend";
 import { StudentGradeHistory } from "@/components/grades/student-grade-history";
 import { ScholarshipCard } from "@/components/academic/scholarship-card";
+import { LanguageProgressCard } from "@/components/academic/language-progress-card";
 import { DEFAULT_SCALE_KEY, getScholarshipConfig } from "@/lib/scholarship-server";
 import type { AwardStatus, AwardTier, StandingFlag, StandingStatus, SupportPriority } from "@/lib/scholarship";
 import { getStudentGrades } from "@/lib/grades-server";
@@ -53,6 +54,7 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
     supabase.from("academic_awards").select("term_id, tier, amount, currency, status").eq("student_id", id),
     supabase.from("academic_support_requests").select("id, subject, status, priority, term_id").eq("student_id", id).order("created_at", { ascending: false }).limit(12),
   ]);
+  const { data: language } = await supabase.from("student_language_progress").select("*").eq("student_id", id).maybeSingle();
   const termOrder = grades.terms.map((t) => t.id); // الأحدث أولاً
   const termName = new Map(grades.terms.map((t) => [t.id, t.name]));
   const byTermOrder = <T extends { term_id: string | null }>(xs: T[]) => [...xs].sort((a, b) => termOrder.indexOf(a.term_id ?? "") - termOrder.indexOf(b.term_id ?? ""));
@@ -171,6 +173,7 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
             </CardContent>
           </Card>
 
+          {language && <LanguageProgressCard progress={language} />}
           <ScholarshipCard data={scholarship} />
 
           <Card>

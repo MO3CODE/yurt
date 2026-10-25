@@ -17,6 +17,8 @@ export type AcademicTerm = {
   midterm_to: string;
   final_from: string;
   final_to: string;
+  /** ترم أرشيفي: نتائجه مستوردة من تقرير، فلا رفع فيه */
+  historical?: boolean;
 };
 
 export type WindowState = "upcoming" | "open" | "closed";

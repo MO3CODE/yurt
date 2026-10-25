@@ -9,8 +9,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { pushConfigured, sendPush } from "@/lib/push";
 import { formatShortDateISO } from "@/lib/date";
 import { courseSchema } from "@/lib/grades";
-import { applyReportAnalysis, recomputeTerm } from "@/lib/scholarship-server";
-import { STATUS_META, TIER_META, type AwardTier } from "@/lib/scholarship";
+import { applyReportAnalysis, getScholarshipConfig, previousStandings, recomputeTerm, recomputeTermAwards } from "@/lib/scholarship-server";
+import { STATUS_META, TIER_META, round2, standingWithHistory, type AwardTier, type PriorStanding } from "@/lib/scholarship";
+import { historicalTermDates } from "@/lib/term-import";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "تاريخ غير صحيح");
 
@@ -206,5 +207,120 @@ export async function recomputeTermAction(termId: string) {
     const count = await recomputeTerm(supabase, z.string().uuid().parse(termId));
     refresh();
     return { count };
+  });
+}
+
+const termResult = z
+  .object({
+    courses: z.number().int().min(0).max(30).nullable(),
+    passed: z.number().int().min(0).max(30).nullable(),
+    failed: z.number().int().min(0).max(30).nullable(),
+    gpa: z.number().min(0).max(4),
+  })
+  .nullable();
+
+const importSchema = z.object({
+  startYear: z.number().int().min(2015).max(2100),
+  fallName: z.string().trim().min(2).max(80),
+  springName: z.string().trim().min(2).max(80),
+  rows: z
+    .array(z.object({ studentId: z.string().uuid(), t1: termResult, t2: termResult, overall: z.number().min(0).max(4).nullable() }))
+    .min(1, "لا صفوف مطابقة للاستيراد")
+    .max(300),
+});
+
+/**
+ * استيراد نتائج سنة دراسية من تقرير: يُنشئ الترمين «أرشيفيين» (بلا مهمة رفع ولا إشعار) إن لم يوجدا،
+ * ويسجّل حالة كل طالب في كل ترم، ويحدّث معدله، ويحسب جوائز الترمين. إعادة الاستيراد تستبدل ولا تكرر،
+ * ولا تمس حالة ترم حُسبت من كشف رفعه الطالب.
+ */
+export async function importTermResults(input: z.input<typeof importSchema>) {
+  return runAction(async () => {
+    const user = await assertPermission("academic");
+    const v = importSchema.parse(input);
+    const supabase = await createClient();
+    const { settings } = await getScholarshipConfig(supabase);
+    const dates = historicalTermDates(v.startYear);
+
+    async function termId(name: string, range: { from: string; to: string }) {
+      const { data: existing } = await supabase.from("academic_terms").select("id").eq("name", name).maybeSingle();
+      if (existing) return existing.id;
+      const { data, error } = await supabase
+        .from("academic_terms")
+        .insert({ name, historical: true, midterm_from: range.from, midterm_to: range.to, final_from: range.from, final_to: range.to, created_by: user.id })
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      return data.id;
+    }
+    const fallId = await termId(v.fallName, dates.fall);
+    const springId = await termId(v.springName, dates.spring);
+
+    const { data: fromReports } = await supabase
+      .from("academic_standings")
+      .select("student_id, term_id")
+      .in("term_id", [fallId, springId])
+      .eq("source", "report");
+    const locked = new Set((fromReports ?? []).map((r) => `${r.student_id}:${r.term_id}`));
+
+    let written = 0;
+    for (const row of v.rows) {
+      const older = await previousStandings(supabase, row.studentId, fallId);
+      const save = async (termIdValue: string, t: NonNullable<typeof row.t1>, cum: number, official: boolean, previous: PriorStanding[]) => {
+        const { status, flags } = standingWithHistory({ termGpa: t.gpa, cumGpa: cum, credits: null, previous, settings });
+        if (locked.has(`${row.studentId}:${termIdValue}`) || !status) return;
+        const { error } = await supabase.from("academic_standings").upsert(
+          {
+            student_id: row.studentId,
+            term_id: termIdValue,
+            report_id: null,
+            term_gpa: t.gpa,
+            cum_gpa: cum,
+            calc_term_gpa: null,
+            term_credits: null,
+            courses_count: t.courses,
+            passed_count: t.passed,
+            failed_count: t.failed,
+            has_fail: (t.failed ?? 0) > 0,
+            gpa_source: official ? "official" : "calculated",
+            status,
+            flags,
+            source: "import",
+            computed_at: new Date().toISOString(),
+          },
+          { onConflict: "student_id,term_id" }
+        );
+        if (error) throw new Error(error.message);
+        written++;
+      };
+
+      // تراكمي نهاية الفصل الأول لا يذكره التقرير إلا إن لم يوجد فصل ثانٍ؛ وإلا يُقدَّر بمعدل الفصل الأول
+      let fallCum: number | null = null;
+      if (row.t1) {
+        const official = !row.t2 && row.overall !== null;
+        fallCum = official ? (row.overall as number) : row.t1.gpa;
+        await save(fallId, row.t1, fallCum, official, older);
+      }
+      if (row.t2) {
+        const c1 = row.t1?.courses ?? 0;
+        const c2 = row.t2.courses ?? 0;
+        const estimated = row.t1 && c1 + c2 > 0 ? round2((row.t1.gpa * c1 + row.t2.gpa * c2) / (c1 + c2)) : row.t2.gpa;
+        const previous = row.t1 ? [{ termGpa: row.t1.gpa, cumGpa: fallCum, credits: 0 }, ...older] : older;
+        await save(springId, row.t2, row.overall ?? estimated, row.overall !== null, previous);
+      }
+
+      const latest = row.overall ?? row.t2?.gpa ?? row.t1?.gpa ?? null;
+      if (latest !== null) {
+        const { error } = await supabase
+          .from("student_academic_profiles")
+          .upsert({ student_id: row.studentId, gpa: latest, gpa_scale: 4 }, { onConflict: "student_id" });
+        if (error) throw new Error(error.message);
+      }
+    }
+
+    await recomputeTermAwards(supabase, fallId, settings);
+    await recomputeTermAwards(supabase, springId, settings);
+    refresh();
+    return { students: v.rows.length, standings: written, springId };
   });
 }

@@ -171,7 +171,7 @@ async function saveCourseResults(db: Db, rows: { id: string; points: number | nu
 }
 
 /** حالات الترمات السابقة لهذا الترم، الأحدث أولاً */
-async function previousStandings(db: Db, studentId: string, termId: string) {
+export async function previousStandings(db: Db, studentId: string, termId: string) {
   const [{ data: terms }, { data: standings }] = await Promise.all([
     db.from("academic_terms").select("id, midterm_from").order("midterm_from", { ascending: false }),
     db.from("academic_standings").select("term_id, term_gpa, cum_gpa, term_credits").eq("student_id", studentId),
@@ -317,7 +317,7 @@ export async function recomputeTermAwards(db: Db, termId: string, settings: Scho
       studentId: s.student_id,
       termGpa: s.term_gpa,
       cumGpa: s.cum_gpa,
-      credits: Number(s.term_credits),
+      credits: s.term_credits === null ? null : Number(s.term_credits),
       hasFail: s.has_fail,
     })),
     settings

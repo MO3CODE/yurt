@@ -66,6 +66,7 @@ export async function getGradeTasks(supabase: Db, studentId: string, today: stri
   const statusOf = new Map((reports ?? []).map((r) => [`${r.term_id}:${r.kind}`, r.status]));
   const tasks: GradeTask[] = [];
   for (const term of (terms ?? []) as AcademicTerm[]) {
+    if (term.historical) continue;
     for (const kind of REPORT_KINDS) {
       const status = statusOf.get(`${term.id}:${kind}`);
       if (status === "returned") {

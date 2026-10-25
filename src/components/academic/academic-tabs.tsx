@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenCheck, FileSpreadsheet, LifeBuoy, ListChecks, MessageCircle, Settings2, Trophy, Users } from "lucide-react";
+import { BookOpenCheck, FileSpreadsheet, Languages, LifeBuoy, ListChecks, MessageCircle, Settings2, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/admin/academic", label: "الطلاب", short: "الطلاب", icon: Users, exact: true },
   { href: "/admin/academic/grades", label: "كشوف الدرجات", short: "الدرجات", icon: FileSpreadsheet },
+  { href: "/admin/academic/language", label: "سنة اللغة", short: "اللغة", icon: Languages },
   { href: "/admin/academic/awards", label: "مسابقة التميز", short: "التميز", icon: Trophy },
   { href: "/admin/academic/support", label: "الدعم والمدرّسون", short: "الدعم", icon: LifeBuoy },
   { href: "/admin/academic/subjects", label: "المواد المشتركة", short: "المواد", icon: BookOpenCheck },

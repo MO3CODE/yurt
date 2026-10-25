@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      student_language_progress: {
+        Row: {
+          current_level: string | null
+          levels_passed: string[]
+          next_exam_at: string | null
+          notes: string | null
+          status: string
+          student_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          current_level?: string | null
+          levels_passed?: string[]
+          next_exam_at?: string | null
+          notes?: string | null
+          status?: string
+          student_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          current_level?: string | null
+          levels_passed?: string[]
+          next_exam_at?: string | null
+          notes?: string | null
+          status?: string
+          student_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_language_progress_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       academic_grade_scales: {
         Row: {
           items: Json
@@ -129,6 +170,10 @@ export type Database = {
       }
       academic_standings: {
         Row: {
+          courses_count: number | null
+          failed_count: number | null
+          passed_count: number | null
+          source: string
           calc_term_gpa: number | null
           computed_at: string
           cum_gpa: number | null
@@ -138,11 +183,15 @@ export type Database = {
           report_id: string | null
           status: string
           student_id: string
-          term_credits: number
+          term_credits: number | null
           term_gpa: number | null
           term_id: string
         }
         Insert: {
+          courses_count?: number | null
+          failed_count?: number | null
+          passed_count?: number | null
+          source?: string
           calc_term_gpa?: number | null
           computed_at?: string
           cum_gpa?: number | null
@@ -152,11 +201,15 @@ export type Database = {
           report_id?: string | null
           status: string
           student_id: string
-          term_credits?: number
+          term_credits?: number | null
           term_gpa?: number | null
           term_id: string
         }
         Update: {
+          courses_count?: number | null
+          failed_count?: number | null
+          passed_count?: number | null
+          source?: string
           calc_term_gpa?: number | null
           computed_at?: string
           cum_gpa?: number | null
@@ -166,7 +219,7 @@ export type Database = {
           report_id?: string | null
           status?: string
           student_id?: string
-          term_credits?: number
+          term_credits?: number | null
           term_gpa?: number | null
           term_id?: string
         }
@@ -424,6 +477,7 @@ export type Database = {
       }
       academic_terms: {
         Row: {
+          historical: boolean
           created_at: string
           created_by: string | null
           final_from: string
@@ -434,6 +488,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          historical?: boolean
           created_at?: string
           created_by?: string | null
           final_from: string
@@ -444,6 +499,7 @@ export type Database = {
           name: string
         }
         Update: {
+          historical?: boolean
           created_at?: string
           created_by?: string | null
           final_from?: string

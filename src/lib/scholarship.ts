@@ -167,6 +167,36 @@ export function standingStatus(cumGpa: number, belowWatchStreak: number, s: Scho
 
 export type PriorStanding = { termGpa: number | null; cumGpa: number | null; credits: number };
 
+/**
+ * حالة الترم من معدليه وتاريخ الطالب (الأحدث أولاً): الحالة، والهبوط الحاد، والعبء الناقص.
+ * credits = null ← الساعات غير معروفة (نتائج مستوردة من تقرير) فلا يُحكم بالعبء الناقص.
+ */
+export function standingWithHistory(input: {
+  termGpa: number | null;
+  cumGpa: number | null;
+  credits: number | null;
+  previous: PriorStanding[];
+  settings: ScholarshipSettings;
+}): { status: StandingStatus | null; flags: StandingFlag[] } {
+  const s = input.settings;
+  let status: StandingStatus | null = null;
+  if (input.cumGpa !== null) {
+    let streak = input.cumGpa < s.statusBands.watch ? 1 : 0;
+    if (streak) {
+      for (const p of input.previous) {
+        if (p.cumGpa !== null && p.cumGpa < s.statusBands.watch) streak++;
+        else break;
+      }
+    }
+    status = standingStatus(input.cumGpa, streak, s);
+  }
+  const flags: StandingFlag[] = [];
+  const prevTerm = input.previous[0]?.termGpa ?? null;
+  if (prevTerm !== null && input.termGpa !== null && round2(prevTerm - input.termGpa) > s.sharpDropThreshold) flags.push("sharp_drop");
+  if (input.credits !== null && input.credits < s.minTermCredits) flags.push("low_load");
+  return { status, flags };
+}
+
 export type FinalAnalysis<C extends CourseInput> = {
   courses: ClassifiedCourse<C>[];
   calcTermGpa: number | null;
@@ -209,22 +239,7 @@ export function analyzeFinal<C extends CourseInput>(input: {
     cumGpa = totalCredits ? round2(parts.reduce((a, p) => a + p.gpa * p.credits, 0) / totalCredits) : termGpa;
   }
 
-  let status: StandingStatus | null = null;
-  if (cumGpa !== null) {
-    let streak = cumGpa < s.statusBands.watch ? 1 : 0;
-    if (streak) {
-      for (const p of input.previous) {
-        if (p.cumGpa !== null && p.cumGpa < s.statusBands.watch) streak++;
-        else break;
-      }
-    }
-    status = standingStatus(cumGpa, streak, s);
-  }
-
-  const flags: StandingFlag[] = [];
-  const prevTerm = input.previous[0]?.termGpa ?? null;
-  if (prevTerm !== null && termGpa !== null && round2(prevTerm - termGpa) > s.sharpDropThreshold) flags.push("sharp_drop");
-  if (credits < s.minTermCredits) flags.push("low_load");
+  const { status, flags } = standingWithHistory({ termGpa, cumGpa, credits, previous: input.previous, settings: s });
   const mismatch = isMismatch(calc, input.reportedTermGpa, s);
   if (mismatch) flags.push("gpa_mismatch");
 
@@ -271,7 +286,8 @@ export type AwardCandidate = {
   studentId: string;
   termGpa: number | null;
   cumGpa: number | null;
-  credits: number;
+  /** null ← الساعات غير معروفة (نتائج مستوردة) فلا يُطبَّق شرط العبء */
+  credits: number | null;
   hasFail: boolean;
 };
 
@@ -282,7 +298,7 @@ export const awardGpa = (c: AwardCandidate, s: ScholarshipSettings) => (s.awardB
 export function isAwardEligible(c: AwardCandidate, s: ScholarshipSettings): boolean {
   const gpa = awardGpa(c, s);
   if (gpa === null || gpa < s.awardMinGpa) return false;
-  if (c.credits < s.minTermCredits) return false;
+  if (c.credits !== null && c.credits < s.minTermCredits) return false;
   if (s.awardRequireNoFail && c.hasFail) return false;
   return true;
 }
@@ -383,3 +399,39 @@ export const AWARD_STATUS_LABELS: Record<AwardStatus, string> = {
   paid: "مصروفة",
   cancelled: "ملغاة",
 };
+
+// ---------------------------------------------------------------------
+// سنة اللغة
+// ---------------------------------------------------------------------
+
+export const LANGUAGE_LEVELS = ["A1", "A2", "B1", "B1+", "B2", "C1", "C2"] as const;
+
+export type LanguageStatus = "studying" | "awaiting_result" | "final_exam_prep" | "last_chance" | "completed";
+export const LANGUAGE_STATUS_ORDER: LanguageStatus[] = ["last_chance", "final_exam_prep", "awaiting_result", "studying", "completed"];
+
+export const LANGUAGE_STATUS_META: Record<LanguageStatus, { label: string; className: string }> = {
+  studying: { label: "يدرس", className: "bg-muted text-foreground" },
+  awaiting_result: { label: "منتظر النتيجة", className: "bg-warning/20 text-warning-foreground dark:text-warning" },
+  final_exam_prep: { label: "يستعد للاختبار النهائي", className: "bg-primary/10 text-primary" },
+  last_chance: { label: "فرصة أخيرة — قد يخسر المنحة", className: "bg-destructive text-white" },
+  completed: { label: "اجتاز وانتقل للتخصص", className: "bg-success/15 text-success" },
+};
+
+/** يفهم الحالة من اسمها أو من نص الملاحظة كما يُكتب في التقارير */
+export function inferLanguageStatus(...texts: (string | null | undefined)[]): LanguageStatus {
+  const t = texts.filter(Boolean).join(" ");
+  for (const [key, meta] of Object.entries(LANGUAGE_STATUS_META)) if (t.includes(meta.label)) return key as LanguageStatus;
+  if (/فرصة واحدة|فرصة أخيرة|يخسر المنحة/.test(t)) return "last_chance";
+  if (/متخرج|انتقل إلى التخصص|اجتاز سنة اللغة/.test(t)) return "completed";
+  if (/استعداد|يستعد/.test(t)) return "final_exam_prep";
+  if (/منتظر|ينتظر/.test(t)) return "awaiting_result";
+  return "studying";
+}
+
+/** «A2 – B1 – B1+» ← ["A2", "B1", "B1+"]؛ و«كامل» تبقى كما هي */
+export function parseLevels(raw: string): string[] {
+  return raw
+    .split(/[–—\-،,/|\s]+/)
+    .map((x) => x.trim().toUpperCase())
+    .filter((x) => x && x !== "-");
+}

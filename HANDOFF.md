@@ -6,7 +6,7 @@
 ## الحالة الآن
 - الموقع منشور: https://yurt-tau.vercel.app (GitHub `MO3CODE/yurt` فرع `main` ← Vercel تلقائياً).
 - آخر commit منشور: `7301f39` (كشوف الدرجات). قبله: المنصة التعليمية بمراحلها الثلاث ومكتبة الكلمات.
-- Supabase: المشروع `hnxhtjbprgsmndfsvent` (منطقة eu-central-1، فرانكفورت)، كل الـ migrations حتى `0019` مطبّقة.
+- Supabase: المشروع `hnxhtjbprgsmndfsvent` (منطقة eu-central-1، فرانكفورت)، كل الـ migrations حتى `0020` مطبّقة.
 - Vercel: المشروع `prj_WIsg8SG2DjGxpHFMTvlSz4GqCMk7`، الفريق `team_A1rO2zCI4aGUJAku451JVxDH`. الدوال تعمل في `fra1` (عبر `vercel.json`) بجانب القاعدة.
   - متغيرات البيئة: Supabase (URL، anon، service role)، VAPID، `CRON_SECRET`، و`YOUTUBE_API_KEY` (أضافه المستخدم، نوع sensitive، Production وPreview) لاستيراد بلاي ليست يوتيوب.
 - تعديلات غير مرفوعة في المجلد المحلي (مقصودة، لا تُرفع): `src/app/manifest.ts` و`src/components/brand/khatam-icon.tsx` (انظر «معلّق» أدناه).
@@ -77,6 +77,9 @@
 - التأكيد في `reviewGradeReport` يشغّل `applyReportAnalysis` (`src/lib/scholarship-server.ts`): نقاط وتصنيف كل مادة، حالة الترم (`academic_standings`: متميز/آمن/مراقبة/إنذار/خطر + هبوط حاد/عبء ناقص/تعارض)، طلبات دعم تلقائية بأولوية في `academic_support_requests`، تحديث `student_subjects` (فيغذّي «المواد المشتركة»)، وجوائز الترم (`academic_awards`). كله يعاد حسابه بلا تكرار.
 - القواعد نقية في `src/lib/scholarship.ts` (مختبرة على أمثلة المواصفات ١–٥)، والحدود من `academic_settings` (تبويب «الإعدادات»)، والسلالم في `academic_grade_scales` (YÖK افتراضي؛ `NA`/`DZ` تُحسب صفراً).
 - «أُعيد للطالب»: حالة `returned` للكشف، تظهر للطالب مهمةً في «مهامي».
+- استيراد نتائج سنة سابقة من تقرير (migration `0020`): زر «استيراد نتائج سنة سابقة» في «كشوف الدرجات» (`importTermResults`، المحلل `src/lib/term-import.ts`). يُنشئ ترمين `historical` (بلا رفع ولا إشعار ولا مهمة)، ويحفظ في `academic_standings` عدد المواد والناجح والراسب (`source = 'import'`، الساعات null فلا يُطبَّق شرط العبء)، ولا يمس حالة حُسبت من كشف حقيقي.
+- سنة اللغة: جدول `student_language_progress` وتبويب «سنة اللغة» (استيراد من تقرير أو إدخال يدوي)، وتظهر بطاقتها للطالب في «درجاتي» وفي ملفه.
+- ملفات التقرير الحقيقي الجاهزة للاستيراد في `data-imports/` (مستثناة من git لأنها بيانات طلاب).
 - تبويبات جديدة في `/admin/academic`: «مسابقة التميز» (اعتماد ← صرف، تصدير Excel، قريبون من التأهل)، «الدعم والمدرّسون» (حلّ محل `/admin/academic-support` الذي يحوّل إليه: مجموعات تقوية، جلسات وتكلفتها، أثر الدعم)، «الإعدادات».
 
 ## لم يُختبر من البداية للنهاية (يحتاج حسابات حقيقية)

@@ -42,3 +42,6 @@ next-env.d.ts
 
 # design work (not part of the app)
 /design-practice/
+
+# real student data for imports (never commit)
+/data-imports/

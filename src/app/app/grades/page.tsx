@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { GradeUploadCard, type AwardView, type GradeReportView, type StandingView } from "@/components/grades/grade-upload-card";
 import { draftFromCourse } from "@/lib/course-drafts";
+import { HistoricalTermResult } from "@/components/grades/historical-term-result";
+import { LanguageProgressCard } from "@/components/academic/language-progress-card";
 import { todayISO } from "@/lib/date";
 import { REPORT_KINDS, formatGpa, windowOf, windowState } from "@/lib/grades";
 import { getStudentGrades } from "@/lib/grades-server";
@@ -19,10 +21,12 @@ export default async function GradesPage() {
   const [{ terms, reports, urlBy, coursesByReport }, { scale, settings }, { data: standings }, { data: awards }] = await Promise.all([
     getStudentGrades(supabase, user.id),
     getStudentScholarshipContext(user.id),
-    supabase.from("academic_standings").select("term_id, status, flags").eq("student_id", user.id),
+    supabase.from("academic_standings").select("term_id, status, flags, term_gpa, cum_gpa, courses_count, failed_count").eq("student_id", user.id),
     supabase.from("academic_awards").select("term_id, tier, amount, currency, status").eq("student_id", user.id),
   ]);
+  const { data: language } = await supabase.from("student_language_progress").select("*").eq("student_id", user.id).maybeSingle();
   const standingBy = new Map((standings ?? []).map((s) => [s.term_id, { status: s.status as StandingStatus, flags: s.flags as StandingFlag[] }]));
+  const resultBy = new Map((standings ?? []).map((s) => [s.term_id, s]));
   const awardBy = new Map(
     (awards ?? []).map((a) => [a.term_id, { tier: a.tier as AwardTier, amount: Number(a.amount), currency: a.currency, status: a.status as AwardStatus }])
   );
@@ -62,6 +66,8 @@ export default async function GradesPage() {
     <div className="stagger flex flex-col gap-6">
       <PageHeader title="درجاتي" description="اكتب موادك ودرجاتك في كل ترم (النصفي والنهائي) وارفع كشف الجامعة، لتتابع معك الإدارة وتعرف حالتك مع المنحة" />
 
+      {language && <LanguageProgressCard progress={language} />}
+
       {trend.length > 0 && (
         <Card>
           <CardHeader>
@@ -99,6 +105,11 @@ export default async function GradesPage() {
             <CardHeader>
               <CardTitle>{term.name}</CardTitle>
             </CardHeader>
+            {term.historical ? (
+              <CardContent>
+                <HistoricalTermResult result={resultBy.get(term.id) ?? null} award={awardBy.get(term.id) ?? null} />
+              </CardContent>
+            ) : (
             <CardContent className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-[repeat(2,minmax(0,1fr))]">
               {REPORT_KINDS.map((kind) => (
                 <GradeUploadCard
@@ -117,6 +128,7 @@ export default async function GradesPage() {
                 />
               ))}
             </CardContent>
+            )}
           </Card>
         ))
       )}
