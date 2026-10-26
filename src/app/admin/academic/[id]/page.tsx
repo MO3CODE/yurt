@@ -14,6 +14,7 @@ import { ScholarshipCard } from "@/components/academic/scholarship-card";
 import { LanguageProgressCard } from "@/components/academic/language-progress-card";
 import { TermCoursesEditor } from "@/components/grades/term-courses-editor";
 import { termSortKey } from "@/lib/grades";
+import { subjectKey } from "@/lib/academic";
 import { DEFAULT_SCALE_KEY, getScholarshipConfig } from "@/lib/scholarship-server";
 import type { AwardStatus, AwardTier, StandingFlag, StandingStatus, SupportPriority } from "@/lib/scholarship";
 import { getStudentGrades } from "@/lib/grades-server";
@@ -59,9 +60,21 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
   const { data: language } = await supabase.from("student_language_progress").select("*").eq("student_id", id).maybeSingle();
   // الترم الحالي: أحدث ترم غير أرشيفي
   const currentTerm = grades.terms.filter((t) => !t.historical).sort((a, b) => termSortKey(b).localeCompare(termSortKey(a)))[0];
-  const { data: termCourses } = currentTerm
-    ? await supabase.from("student_term_courses").select("id, course_name, course_code, instructor").eq("student_id", id).eq("term_id", currentTerm.id).order("created_at")
-    : { data: [] };
+  const [{ data: termCourses }, { data: termAll }] = currentTerm
+    ? await Promise.all([
+        supabase.from("student_term_courses").select("id, course_name, course_code, instructor").eq("student_id", id).eq("term_id", currentTerm.id).order("created_at"),
+        supabase.from("student_term_courses").select("student_id, course_name, student:student_id(profiles!students_id_fkey(full_name))").eq("term_id", currentTerm.id).neq("student_id", id),
+      ])
+    : [{ data: [] }, { data: [] }];
+  // زملاؤه في كل مادة (نفس المادة بعد توحيد الكتابة)
+  const classmates: Record<string, string[]> = {};
+  for (const c of termCourses ?? []) {
+    const key = subjectKey(c.course_name);
+    classmates[c.id] = (termAll ?? [])
+      .filter((o) => subjectKey(o.course_name) === key)
+      .map((o) => (o.student as unknown as { profiles: { full_name: string } | null } | null)?.profiles?.full_name ?? "—")
+      .sort((a, b) => a.localeCompare(b, "ar"));
+  }
   const termOrder = grades.terms.map((t) => t.id); // الأحدث أولاً
   const termName = new Map(grades.terms.map((t) => [t.id, t.name]));
   const byTermOrder = <T extends { term_id: string | null }>(xs: T[]) => [...xs].sort((a, b) => termOrder.indexOf(a.term_id ?? "") - termOrder.indexOf(b.term_id ?? ""));
@@ -190,7 +203,7 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
                 <CardDescription>يسجّلها الطالب من «درجاتي» أو تضيفها هنا</CardDescription>
               </CardHeader>
               <CardContent>
-                <TermCoursesEditor termId={currentTerm.id} studentId={id} courses={termCourses ?? []} />
+                <TermCoursesEditor termId={currentTerm.id} studentId={id} courses={termCourses ?? []} classmates={classmates} />
               </CardContent>
             </Card>
           )}

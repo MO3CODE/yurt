@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     staleTimes: {
       dynamic: 30,
     },
+    // صور المواد تُرسل لقراءتها (حتى ٤ صور مضغوطة)
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
   },
 };
 
