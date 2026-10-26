@@ -98,3 +98,25 @@ export async function removeTermCourse(id: string) {
     refresh(data[0].student_id);
   });
 }
+
+/** تجميد الطالب لترم (kayıt dondurma) أو إلغاؤه — الإدارة فقط */
+export async function setTermFreeze(input: { studentId: string; termId: string; frozen: boolean; reason?: string }) {
+  return runAction(async () => {
+    const user = await requireUser();
+    if (!hasPermission(user, "academic")) throw new Error("لا تملك صلاحية المتابعة الأكاديمية");
+    const v = z
+      .object({ studentId: z.string().uuid(), termId: z.string().uuid(), frozen: z.boolean(), reason: z.string().trim().max(300).optional() })
+      .parse(input);
+    const supabase = await createClient();
+    const { error } = v.frozen
+      ? await supabase
+          .from("student_term_freezes")
+          .upsert({ student_id: v.studentId, term_id: v.termId, reason: v.reason || null, created_by: user.id }, { onConflict: "student_id,term_id" })
+      : await supabase.from("student_term_freezes").delete().eq("student_id", v.studentId).eq("term_id", v.termId);
+    if (error) throw new Error(error.message);
+    refresh(v.studentId);
+    revalidatePath("/admin/academic", "layout");
+    revalidatePath("/app/tasks");
+    revalidatePath("/app");
+  });
+}

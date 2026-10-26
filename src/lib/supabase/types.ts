@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      student_term_freezes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          reason: string | null
+          student_id: string
+          term_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          reason?: string | null
+          student_id: string
+          term_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          reason?: string | null
+          student_id?: string
+          term_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_term_freezes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_term_freezes_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "academic_terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_term_courses: {
         Row: {
           course_code: string | null

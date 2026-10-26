@@ -59,14 +59,16 @@ export type GradeTask = { termId: string; termName: string; kind: ReportKind; du
  * وكل كشف أعادته الإدارة للتعديل.
  */
 export async function getGradeTasks(supabase: Db, studentId: string, today: string): Promise<GradeTask[]> {
-  const [{ data: terms }, { data: reports }] = await Promise.all([
+  const [{ data: terms }, { data: reports }, { data: freezes }] = await Promise.all([
     supabase.from("academic_terms").select("*").gte("final_to", addDaysISO(today, -30)),
     supabase.from("grade_reports").select("term_id, kind, status").eq("student_id", studentId),
+    supabase.from("student_term_freezes").select("term_id").eq("student_id", studentId),
   ]);
+  const frozen = new Set((freezes ?? []).map((f) => f.term_id));
   const statusOf = new Map((reports ?? []).map((r) => [`${r.term_id}:${r.kind}`, r.status]));
   const tasks: GradeTask[] = [];
   for (const term of (terms ?? []) as AcademicTerm[]) {
-    if (term.historical) continue;
+    if (term.historical || frozen.has(term.id)) continue;
     for (const kind of REPORT_KINDS) {
       const status = statusOf.get(`${term.id}:${kind}`);
       if (status === "returned") {

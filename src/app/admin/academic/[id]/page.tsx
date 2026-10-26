@@ -13,6 +13,7 @@ import { StudentGradeHistory } from "@/components/grades/student-grade-history";
 import { ScholarshipCard } from "@/components/academic/scholarship-card";
 import { LanguageProgressCard } from "@/components/academic/language-progress-card";
 import { TermCoursesEditor } from "@/components/grades/term-courses-editor";
+import { TermFreezeControl } from "@/components/grades/term-freeze-control";
 import { termSortKey } from "@/lib/grades";
 import { subjectKey } from "@/lib/academic";
 import { DEFAULT_SCALE_KEY, getScholarshipConfig } from "@/lib/scholarship-server";
@@ -66,6 +67,9 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
         supabase.from("student_term_courses").select("student_id, course_name, student:student_id(profiles!students_id_fkey(full_name))").eq("term_id", currentTerm.id).neq("student_id", id),
       ])
     : [{ data: [] }, { data: [] }];
+  const { data: freeze } = currentTerm
+    ? await supabase.from("student_term_freezes").select("reason").eq("student_id", id).eq("term_id", currentTerm.id).maybeSingle()
+    : { data: null };
   // زملاؤه في كل مادة (نفس المادة بعد توحيد الكتابة)
   const classmates: Record<string, string[]> = {};
   for (const c of termCourses ?? []) {
@@ -200,10 +204,11 @@ export default async function AcademicStudentPage({ params }: PageProps<"/admin/
             <Card>
               <CardHeader>
                 <CardTitle>مواد {currentTerm.name}</CardTitle>
-                <CardDescription>يسجّلها الطالب من «درجاتي» أو تضيفها هنا</CardDescription>
+                <CardDescription>{freeze ? "الترم مجمّد" : "يسجّلها الطالب من «درجاتي» أو تضيفها هنا"}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <TermCoursesEditor termId={currentTerm.id} studentId={id} courses={termCourses ?? []} classmates={classmates} />
+              <CardContent className="flex flex-col gap-3">
+                <TermFreezeControl studentId={id} termId={currentTerm.id} termName={currentTerm.name} frozen={!!freeze} reason={freeze?.reason ?? null} />
+                {!freeze && <TermCoursesEditor termId={currentTerm.id} studentId={id} courses={termCourses ?? []} classmates={classmates} />}
               </CardContent>
             </Card>
           )}

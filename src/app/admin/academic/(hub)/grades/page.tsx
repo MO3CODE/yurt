@@ -94,7 +94,7 @@ export default async function AdminGradesPage({ searchParams }: PageProps<"/admi
     );
   }
 
-  const [{ data: reportRows }, { settings, scales }, { data: profiles }, { data: standingRows }, { data: awardRows }] = await Promise.all([
+  const [{ data: reportRows }, { settings, scales }, { data: profiles }, { data: standingRows }, { data: awardRows }, { data: freezeRows }] = await Promise.all([
     supabase.from("grade_reports").select("*").eq("term_id", term.id),
     getScholarshipConfig(supabase),
     supabase.from("student_academic_profiles").select("student_id, grade_scale"),
@@ -103,7 +103,10 @@ export default async function AdminGradesPage({ searchParams }: PageProps<"/admi
       .select("student_id, term_gpa, cum_gpa, status, flags, courses_count, passed_count, failed_count, gpa_source")
       .eq("term_id", term.id),
     supabase.from("academic_awards").select("amount, status").eq("term_id", term.id),
+    supabase.from("student_term_freezes").select("student_id, reason").eq("term_id", term.id),
   ]);
+  const frozen = new Map((freezeRows ?? []).map((f) => [f.student_id, f.reason]));
+  const expected = rows.filter((r) => !frozen.has(r.id)).length;
   const reports = (reportRows ?? []) as ReportRow[];
   const reportIds = reports.map((r) => r.id);
   const [{ data: signed }, { data: courseRows }] = await Promise.all([
@@ -159,7 +162,7 @@ export default async function AdminGradesPage({ searchParams }: PageProps<"/admi
         .filter((f) => f === "sharp_drop" || f === "gpa_mismatch")
         .map((f) => ({ id: s.student_id, text: FLAG_LABELS[f], tone: "warning" as const }))
     ),
-    ...(finalState === "closed" && !term.historical ? rows.filter((s) => !reportBy.has(`${s.id}:final`)).map((s) => ({ id: s.id, text: "لم يرفع النهائي", tone: "muted" as const })) : []),
+    ...(finalState === "closed" && !term.historical ? rows.filter((s) => !reportBy.has(`${s.id}:final`) && !frozen.has(s.id)).map((s) => ({ id: s.id, text: "لم يرفع النهائي", tone: "muted" as const })) : []),
   ];
 
   return (
@@ -190,7 +193,8 @@ export default async function AdminGradesPage({ searchParams }: PageProps<"/admi
                   {c.kind === "midterm" ? "النصفي" : "النهائي"}:{" "}
                   {w.from && w.to ? `${formatShortDateISO(w.from)} – ${formatShortDateISO(w.to)}` : "لم تُحدَّد فترة الرفع"} ·{" "}
                   {state === "unscheduled" ? "—" : state === "upcoming" ? "لم تُفتح" : state === "open" ? "مفتوحة" : "انتهت"} · رفع {arNum(c.submitted)} من{" "}
-                  {arNum(rows.length)}
+                  {arNum(expected)}
+                  {frozen.size ? ` · ${arNum(frozen.size)} مجمّد` : ""}
                   {c.pending ? ` · ${arNum(c.pending)} بانتظار المراجعة` : ""}
                 </span>
               );
@@ -335,7 +339,11 @@ export default async function AdminGradesPage({ searchParams }: PageProps<"/admi
                         const state = windowState(term, kind, today);
                         return (
                           <TableCell key={kind}>
-                            {r ? (
+                            {!r && frozen.has(s.id) ? (
+                              <Badge variant="outline" title={frozen.get(s.id) ?? undefined}>
+                                مجمّد
+                              </Badge>
+                            ) : r ? (
                               <ReviewGradeDialog
                                 studentName={s.name}
                                 report={toAdmin(r)}

@@ -1,4 +1,4 @@
-import { FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Snowflake } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth/current-user";
 import { PageHeader } from "@/components/page-header";
@@ -25,10 +25,12 @@ export default async function GradesPage() {
     supabase.from("academic_standings").select("term_id, status, flags, term_gpa, cum_gpa, courses_count, failed_count").eq("student_id", user.id),
     supabase.from("academic_awards").select("term_id, tier, amount, currency, status").eq("student_id", user.id),
   ]);
-  const [{ data: language }, { data: termCourses }] = await Promise.all([
+  const [{ data: language }, { data: termCourses }, { data: freezes }] = await Promise.all([
     supabase.from("student_language_progress").select("*").eq("student_id", user.id).maybeSingle(),
     supabase.from("student_term_courses").select("id, term_id, course_name, course_code, instructor").eq("student_id", user.id).order("created_at"),
+    supabase.from("student_term_freezes").select("term_id, reason").eq("student_id", user.id),
   ]);
+  const freezeBy = new Map((freezes ?? []).map((f) => [f.term_id, f]));
   const termCoursesBy = new Map<string, TermCourse[]>();
   for (const c of termCourses ?? []) termCoursesBy.set(c.term_id, [...(termCoursesBy.get(c.term_id) ?? []), c]);
   const standingBy = new Map((standings ?? []).map((s) => [s.term_id, { status: s.status as StandingStatus, flags: s.flags as StandingFlag[] }]));
@@ -116,6 +118,16 @@ export default async function GradesPage() {
             {term.historical ? (
               <CardContent>
                 <HistoricalTermResult result={resultBy.get(term.id) ?? null} award={awardBy.get(term.id) ?? null} />
+              </CardContent>
+            ) : freezeBy.has(term.id) ? (
+              <CardContent>
+                <p className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/[0.05] p-3 text-sm">
+                  <Snowflake className="size-4 shrink-0 text-primary" />
+                  <span>
+                    جمّدت هذا الترم، فلا يُطلب منك فيه رفع كشف ولا تسجيل مواد.
+                    {freezeBy.get(term.id)?.reason && <span className="text-muted-foreground"> ({freezeBy.get(term.id)?.reason})</span>}
+                  </span>
+                </p>
               </CardContent>
             ) : (
             <CardContent className="flex flex-col gap-4">

@@ -21,9 +21,12 @@ export default async function SharedSubjectsPage() {
 
   const { data: termRows } = await supabase.from("academic_terms").select("id, name, midterm_from, created_at, historical").eq("historical", false);
   const currentTerm = (termRows ?? []).sort((a, b) => termSortKey(b).localeCompare(termSortKey(a)))[0];
-  const { data: termCourses } = currentTerm
-    ? await supabase.from("student_term_courses").select("student_id, course_name, instructor").eq("term_id", currentTerm.id)
-    : { data: [] };
+  const [{ data: termCourses }, { data: termFreezes }] = currentTerm
+    ? await Promise.all([
+        supabase.from("student_term_courses").select("student_id, course_name, instructor").eq("term_id", currentTerm.id),
+        supabase.from("student_term_freezes").select("student_id").eq("term_id", currentTerm.id),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const [{ data: subjects }, { data: links }, { data: students }, { data: actions }, { data: profiles }] = await Promise.all([
     supabase.from("academic_subjects").select("id, name"),
@@ -86,7 +89,7 @@ export default async function SharedSubjectsPage() {
       termName={currentTerm.name}
       shared={termShared}
       registered={new Set((termCourses ?? []).filter((c) => nameById.has(c.student_id)).map((c) => c.student_id)).size}
-      total={nameById.size}
+      total={nameById.size - new Set((termFreezes ?? []).map((f) => f.student_id).filter((sid) => nameById.has(sid))).size}
     />
   ) : null;
 
